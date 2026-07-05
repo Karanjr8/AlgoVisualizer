@@ -1,0 +1,79 @@
+{
+  "segment-tree-intro": {
+    "id": "segment-tree-intro",
+    "introduction": "A Segment Tree is a binary tree used to store information about array segments. It allows you to query range aggregates (like Sum, Min, Max) and update individual elements, both in O(log N) time.",
+    "intuition": "Instead of recalculating the sum of a range linearly O(N), we precalculate sums of varying sized intervals. When querying a range, we combine the precalculated intervals that exactly cover the range.",
+    "walkthrough": [
+      { "phase": "Build", "description": "Recursively divide the array in half until base cases (single elements). The parent node stores the sum/min/max of its two children. Takes O(N)." },
+      { "phase": "Query", "description": "Recursively check if current segment is entirely within query range (return value), completely outside (return 0), or partially overlapping (split and sum). Takes O(log N)." },
+      { "phase": "Point Update", "description": "Recursively find the leaf node, update its value, and update all its ancestors on the way back up. Takes O(log N)." }
+    ],
+    "dryRun": {
+      "input": "Array: [1, 3, 5, 7, 9, 11]",
+      "output": "Tree built",
+      "steps": [
+        "Root (0-5) = Sum of (0-2) and (3-5).",
+        "Left child (0-2) = Sum of (0-1) and (2-2).",
+        "(2-2) is leaf = 5. (0-1) is Sum of (0-0)=1 and (1-1)=3, which is 4.",
+        "Left child (0-2) = 4 + 5 = 9."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(log N)", "average": "O(log N)", "worst": "O(log N)" },
+      "space": "O(N)",
+      "analysis": "The tree array needs to be size 4*N to safely accommodate all nodes of the complete binary tree."
+    },
+    "code": {
+      "cpp": "class SegmentTree {\n    vector<int> tree;\npublic:\n    SegmentTree(int n) { tree.resize(4 * n); }\n    void build(int node, int start, int end, vector<int>& arr) {\n        if (start == end) { tree[node] = arr[start]; return; }\n        int mid = (start + end) / 2;\n        build(2 * node, start, mid, arr);\n        build(2 * node + 1, mid + 1, end, arr);\n        tree[node] = tree[2 * node] + tree[2 * node + 1];\n    }\n    int query(int node, int start, int end, int l, int r) {\n        if (r < start || end < l) return 0;\n        if (l <= start && end <= r) return tree[node];\n        int mid = (start + end) / 2;\n        return query(2 * node, start, mid, l, r) + query(2 * node + 1, mid + 1, end, l, r);\n    }\n    void update(int node, int start, int end, int idx, int val) {\n        if (start == end) { tree[node] = val; return; }\n        int mid = (start + end) / 2;\n        if (start <= idx && idx <= mid) update(2 * node, start, mid, idx, val);\n        else update(2 * node + 1, mid + 1, end, idx, val);\n        tree[node] = tree[2 * node] + tree[2 * node + 1];\n    }\n};",
+      "java": "// Segment Tree Basics. Code omitted.",
+      "python": "# Segment Tree Basics. Code omitted.",
+      "javascript": "// Segment Tree Basics. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Sizing the tree array as `2*N`. It must be `4*N` to avoid out-of-bounds errors on skewed trees.", "0-indexing issues between tree array (usually 1-indexed for child calculations `2*node`) and data array."],
+      "edgeCases": ["Single element array", "Query range outside bounds"],
+      "tips": ["Segment Trees are incredibly versatile. You can store objects or multiple values in a node to solve very complex queries."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "lazy-propagation": {
+    "id": "lazy-propagation",
+    "introduction": "Lazy Propagation is an optimization for Segment Trees that allows updating an entire range of values in O(log N) time instead of O(N).",
+    "intuition": "When asked to add a value to a large range, we don't update every single leaf node immediately. Instead, we mark the root node of the range with a 'lazy' value. We only propagate this value down to children when we are forced to visit them later.",
+    "walkthrough": [
+      { "phase": "Lazy Array", "description": "Create a `lazy` array of the same size as the segment tree, initialized to 0." },
+      { "phase": "Push Down", "description": "At the start of any Query or Update, if the current node has a pending lazy value, apply it to the current node, push it down to children, and clear it." },
+      { "phase": "Range Update", "description": "If current segment is completely within update range, update current node, add value to children's lazy, and return immediately!" }
+    ],
+    "dryRun": {
+      "input": "Range Add(0, 3, val=10)",
+      "output": "Node covering (0,3) updated, children marked lazy.",
+      "steps": [
+        "Traverse to node covering range (0-3).",
+        "It perfectly matches the update range.",
+        "Add 10 * (size of range) to the node's sum.",
+        "Set lazy[left_child] += 10, lazy[right_child] += 10.",
+        "Do not visit children. Return."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(log N)", "average": "O(log N)", "worst": "O(log N)" },
+      "space": "O(N)",
+      "analysis": "Range updates and Range queries both remain O(log N)."
+    },
+    "code": {
+      "cpp": "class LazySegmentTree {\n    vector<int> tree, lazy;\npublic:\n    LazySegmentTree(int n) { tree.resize(4 * n); lazy.resize(4 * n, 0); }\n    void updateRange(int node, int start, int end, int l, int r, int val) {\n        if (lazy[node] != 0) { // Pending updates\n            tree[node] += (end - start + 1) * lazy[node];\n            if (start != end) { lazy[2*node] += lazy[node]; lazy[2*node+1] += lazy[node]; }\n            lazy[node] = 0;\n        }\n        if (start > end || start > r || end < l) return;\n        if (start >= l && end <= r) { // Complete overlap\n            tree[node] += (end - start + 1) * val;\n            if (start != end) { lazy[2*node] += val; lazy[2*node+1] += val; }\n            return;\n        }\n        int mid = (start + end) / 2; // Partial overlap\n        updateRange(2*node, start, mid, l, r, val);\n        updateRange(2*node+1, mid+1, end, l, r, val);\n        tree[node] = tree[2*node] + tree[2*node+1];\n    }\n    // Query logic similar to updateRange logic\n};",
+      "java": "// Lazy Propagation. Code omitted.",
+      "python": "# Lazy Propagation. Code omitted.",
+      "javascript": "// Lazy Propagation. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Forgetting to push down lazy values at the start of the `query` function.", "Applying the lazy value incorrectly (e.g., adding `val` instead of `val * length_of_segment` for sum queries)."],
+      "edgeCases": ["Multiple overlapping range updates"],
+      "tips": ["Lazy propagation is overkill for most interviews unless you are aiming for senior roles at quantitative finance firms or FAANG."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}

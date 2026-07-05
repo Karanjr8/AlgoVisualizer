@@ -1,0 +1,421 @@
+{
+  "generate-subsets": {
+    "id": "generate-subsets",
+    "introduction": "Given an integer array of unique elements, return all possible subsets (the power set). The solution set must not contain duplicate subsets.",
+    "intuition": "For every element in the array, we have exactly two choices: either include it in the current subset, or exclude it. By exploring both branches for every element, we generate all 2^N subsets.",
+    "walkthrough": [
+      { "phase": "Base Case", "description": "If we have considered all elements (index reaches the end of the array), add the current subset to our results." },
+      { "phase": "Exclude Choice", "description": "Make a recursive call moving to the next index WITHOUT adding the current element to the subset." },
+      { "phase": "Include Choice", "description": "Add the current element to the subset. Make a recursive call moving to the next index." },
+      { "phase": "Backtrack", "description": "Remove the recently added element from the subset before returning to the previous state." }
+    ],
+    "dryRun": {
+      "input": "Array: [1, 2]",
+      "output": "[[], [1], [2], [1, 2]]",
+      "steps": [
+        "Start at index 0, subset [].",
+        "Exclude 1 -> subset []. Exclude 2 -> subset [] (Base case).",
+        "Include 2 -> subset [2] (Base case). Backtrack 2.",
+        "Include 1 -> subset [1]. Exclude 2 -> [1] (Base case).",
+        "Include 2 -> subset [1, 2] (Base case)."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N * 2^N)", "average": "O(N * 2^N)", "worst": "O(N * 2^N)" },
+      "space": "O(N)",
+      "analysis": "There are 2^N subsets. For each subset, it takes O(N) time to copy it into the final results array. The recursion depth is O(N)."
+    },
+    "code": {
+      "cpp": "void solve(int idx, vector<int>& nums, vector<int>& curr, vector<vector<int>>& ans) {\n    if (idx == nums.size()) {\n        ans.push_back(curr);\n        return;\n    }\n    // Exclude\n    solve(idx + 1, nums, curr, ans);\n    // Include\n    curr.push_back(nums[idx]);\n    solve(idx + 1, nums, curr, ans);\n    curr.pop_back(); // Backtrack\n}\nvector<vector<int>> subsets(vector<int>& nums) {\n    vector<vector<int>> ans;\n    vector<int> curr;\n    solve(0, nums, curr, ans);\n    return ans;\n}",
+      "java": "public void solve(int idx, int[] nums, List<Integer> curr, List<List<Integer>> ans) {\n    if(idx == nums.length) {\n        ans.add(new ArrayList<>(curr));\n        return;\n    }\n    solve(idx + 1, nums, curr, ans);\n    curr.add(nums[idx]);\n    solve(idx + 1, nums, curr, ans);\n    curr.remove(curr.size() - 1);\n}",
+      "python": "def subsets(nums):\n    ans = []\n    def solve(idx, curr):\n        if idx == len(nums):\n            ans.append(curr[:])\n            return\n        solve(idx + 1, curr)\n        curr.append(nums[idx])\n        solve(idx + 1, curr)\n        curr.pop()\n    solve(0, [])\n    return ans",
+      "javascript": "function subsets(nums) {\n    const ans = [];\n    function solve(idx, curr) {\n        if (idx === nums.length) {\n            ans.push([...curr]);\n            return;\n        }\n        solve(idx + 1, curr);\n        curr.push(nums[idx]);\n        solve(idx + 1, curr);\n        curr.pop();\n    }\n    solve(0, []);\n    return ans;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Forgetting to make a deep copy of the `curr` subset before adding it to `ans` (e.g., `ans.append(curr)` in Python instead of `ans.append(curr[:])`)."],
+      "edgeCases": ["Empty array input"],
+      "tips": ["The order of Include vs Exclude recursive calls doesn't change correctness, but it changes the order the subsets appear in the final array."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "generate-subsequences": {
+    "id": "generate-subsequences",
+    "introduction": "A subsequence is derived by deleting some or no elements of an array without changing the order of the remaining elements. Given a string, generate all its subsequences.",
+    "intuition": "This problem is functionally identical to Generating Subsets. For each character in the string, we decide whether to pick it or not pick it.",
+    "walkthrough": [
+      { "phase": "Recursive State", "description": "Track the current string index and the string built so far." },
+      { "phase": "Pick Choice", "description": "Add the current character to our built string and recurse to the next index." },
+      { "phase": "Don't Pick Choice", "description": "Keep the built string as it is and recurse to the next index." }
+    ],
+    "dryRun": {
+      "input": "String: 'ab'",
+      "output": "['', 'b', 'a', 'ab']",
+      "steps": [
+        "Index 0 ('a'): Choice to exclude '' or include 'a'.",
+        "Exclude 'a' -> index 1 ('b'): Choice to exclude '' or include 'b'.",
+        "Include 'a' -> index 1 ('b'): Choice to exclude 'a' or include 'ab'."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(2^N)", "average": "O(N * 2^N)", "worst": "O(N * 2^N)" },
+      "space": "O(N)",
+      "analysis": "2^N recursive calls. Depending on string concatenation overhead, time can be O(N * 2^N). Recursion stack takes O(N) space."
+    },
+    "code": {
+      "cpp": "void solve(int idx, string s, string curr, vector<string>& ans) {\n    if(idx == s.length()) {\n        ans.push_back(curr);\n        return;\n    }\n    solve(idx + 1, s, curr, ans);\n    solve(idx + 1, s, curr + s[idx], ans);\n}",
+      "java": "public void solve(int idx, String s, String curr, List<String> ans) {\n    if(idx == s.length()) {\n        ans.add(curr);\n        return;\n    }\n    solve(idx + 1, s, curr, ans);\n    solve(idx + 1, s, curr + s.charAt(idx), ans);\n}",
+      "python": "def getSubsequences(s):\n    ans = []\n    def solve(idx, curr):\n        if idx == len(s):\n            ans.append(curr)\n            return\n        solve(idx + 1, curr)\n        solve(idx + 1, curr + s[idx])\n    solve(0, \"\")\n    return ans",
+      "javascript": "function getSubsequences(s) {\n    const ans = [];\n    function solve(idx, curr) {\n        if (idx === s.length) {\n            ans.push(curr);\n            return;\n        }\n        solve(idx + 1, curr);\n        solve(idx + 1, curr + s[idx]);\n    }\n    solve(0, '');\n    return ans;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Confusing Subsequences with Subarrays (Subarrays must be contiguous; Subsequences don't have to be)."],
+      "edgeCases": ["String with duplicate characters (if unique subsequences are required, use a Set)."],
+      "tips": ["Because strings are immutable in Python/Java/JS, we don't explicitly 'backtrack' (pop) like we do with arrays. The recursive call creates a new string state automatically."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "generate-permutations": {
+    "id": "generate-permutations",
+    "introduction": "Given an array of distinct integers, return all the possible permutations. A permutation is an arrangement of all elements in a specific order.",
+    "intuition": "To generate permutations, we need every element at every position. We can use a `visited` array to track which elements are already in our current sequence, and loop through all elements at each recursive step to pick the next one.",
+    "walkthrough": [
+      { "phase": "Loop Candidates", "description": "At each recursive level, loop through all elements in the input array." },
+      { "phase": "Constraint Check", "description": "If the element is already in the `visited` array, skip it." },
+      { "phase": "Backtrack", "description": "Mark the element visited, add it to current sequence, recurse. After returning, mark unvisited and remove from sequence." }
+    ],
+    "dryRun": {
+      "input": "[1, 2]",
+      "output": "[[1, 2], [2, 1]]",
+      "steps": [
+        "Pick 1 (visited: [T,F]). Recurse.",
+        "Pick 2 (visited: [T,T]). Sequence [1,2]. Add to ans. Backtrack 2.",
+        "Backtrack 1.",
+        "Pick 2 (visited: [F,T]). Recurse.",
+        "Pick 1 (visited: [T,T]). Sequence [2,1]. Add to ans."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N * N!)", "average": "O(N * N!)", "worst": "O(N * N!)" },
+      "space": "O(N)",
+      "analysis": "There are N! permutations. For each, we take O(N) time to copy the sequence to the result array."
+    },
+    "code": {
+      "cpp": "void solve(vector<int>& nums, vector<int>& curr, vector<bool>& visited, vector<vector<int>>& ans) {\n    if (curr.size() == nums.size()) {\n        ans.push_back(curr);\n        return;\n    }\n    for (int i = 0; i < nums.size(); i++) {\n        if (!visited[i]) {\n            visited[i] = true;\n            curr.push_back(nums[i]);\n            solve(nums, curr, visited, ans);\n            curr.pop_back();\n            visited[i] = false;\n        }\n    }\n}",
+      "java": "public void solve(int[] nums, List<Integer> curr, boolean[] visited, List<List<Integer>> ans) {\n    if(curr.size() == nums.length) {\n        ans.add(new ArrayList<>(curr));\n        return;\n    }\n    for(int i = 0; i < nums.length; i++) {\n        if(!visited[i]) {\n            visited[i] = true;\n            curr.add(nums[i]);\n            solve(nums, curr, visited, ans);\n            curr.remove(curr.size() - 1);\n            visited[i] = false;\n        }\n    }\n}",
+      "python": "def permute(nums):\n    ans = []\n    visited = [False] * len(nums)\n    def solve(curr):\n        if len(curr) == len(nums):\n            ans.append(curr[:])\n            return\n        for i in range(len(nums)):\n            if not visited[i]:\n                visited[i] = True\n                curr.append(nums[i])\n                solve(curr)\n                curr.pop()\n                visited[i] = False\n    solve([])\n    return ans",
+      "javascript": "function permute(nums) {\n    const ans = [];\n    const visited = new Array(nums.length).fill(false);\n    function solve(curr) {\n        if(curr.length === nums.length) {\n            ans.push([...curr]);\n            return;\n        }\n        for(let i=0; i<nums.length; i++) {\n            if(!visited[i]) {\n                visited[i] = true;\n                curr.push(nums[i]);\n                solve(curr);\n                curr.pop();\n                visited[i] = false;\n            }\n        }\n    }\n    solve([]);\n    return ans;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using `.includes()` or `in` to check if an element is in the sequence instead of a `visited` boolean array. This increases time complexity from O(1) to O(N) per check."],
+      "edgeCases": ["Arrays with duplicates (Requires Permutations II logic: sort first, and skip `if i > 0 && nums[i] == nums[i-1] && !visited[i-1]`)."],
+      "tips": ["There is an alternative approach using Swapping (swap current index with `i` from `idx` to `n`), which avoids the O(N) space of the `visited` array."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "combination-sum": {
+    "id": "combination-sum",
+    "introduction": "Given an array of distinct integers and a target integer, return a list of all unique combinations where the chosen numbers sum to target. The same number may be chosen an unlimited number of times.",
+    "intuition": "Since we can reuse numbers, at each recursive step we have a choice: either use the current number and stay at the SAME index (to potentially use it again), or skip it and move to the next index.",
+    "walkthrough": [
+      { "phase": "Base Case", "description": "If target becomes 0, valid combination found. If index is out of bounds or target < 0, return." },
+      { "phase": "Pick Choice", "description": "If `nums[idx] <= target`, pick the number and recurse with `target - nums[idx]` while keeping the same `idx`." },
+      { "phase": "Skip Choice", "description": "Recurse with the same `target` but moving to `idx + 1`." }
+    ],
+    "dryRun": {
+      "input": "Candidates: [2, 3], Target: 7",
+      "output": "[[2,2,3]]",
+      "steps": [
+        "Pick 2 -> Target 5. Pick 2 -> Target 3.",
+        "Pick 2 -> Target 1. Pick 2 -> Target -1 (Invalid, return).",
+        "From Target 3, Skip 2 -> Index 1 (val 3). Target 3.",
+        "Pick 3 -> Target 0 (Valid! Add [2,2,3])."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(2^Target)", "average": "O(2^Target)", "worst": "O(2^Target)" },
+      "space": "O(Target)",
+      "analysis": "The time complexity is loosely bounded by O(2^T) where T is target / min(candidate), as the recursion tree can go very deep."
+    },
+    "code": {
+      "cpp": "void solve(int idx, int target, vector<int>& arr, vector<int>& curr, vector<vector<int>>& ans) {\n    if(idx == arr.size()) {\n        if(target == 0) ans.push_back(curr);\n        return;\n    }\n    if(arr[idx] <= target) {\n        curr.push_back(arr[idx]);\n        solve(idx, target - arr[idx], arr, curr, ans);\n        curr.pop_back();\n    }\n    solve(idx + 1, target, arr, curr, ans);\n}",
+      "java": "// Code omitted due to length. Same structure as CPP.",
+      "python": "def combinationSum(candidates, target):\n    ans = []\n    def solve(idx, target, curr):\n        if idx == len(candidates):\n            if target == 0:\n                ans.append(curr[:])\n            return\n        if candidates[idx] <= target:\n            curr.append(candidates[idx])\n            solve(idx, target - candidates[idx], curr)\n            curr.pop()\n        solve(idx + 1, target, curr)\n    solve(0, target, [])\n    return ans",
+      "javascript": "// Code omitted due to length. Same structure as Python."
+    },
+    "interviewNotes": {
+      "mistakes": ["Moving to `idx + 1` after picking the number. Because we are allowed to reuse numbers, we must stay at `idx` upon picking."],
+      "edgeCases": ["Target is smaller than all candidates"],
+      "tips": ["This problem perfectly demonstrates the transition from purely Combinatorial backtracking to Constrained (Pruned) backtracking (stopping when target < 0)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "combination-sum-ii": {
+    "id": "combination-sum-ii",
+    "introduction": "Given a collection of candidate numbers (which may contain duplicates) and a target, find all unique combinations that sum to target. Each number may only be used ONCE in the combination.",
+    "intuition": "To avoid duplicates without using a slow Set, we MUST sort the array first. At any recursive level, if we skip a number, we must skip all subsequent occurrences of that same number at that specific level.",
+    "walkthrough": [
+      { "phase": "Sort", "description": "Sort the input array to group duplicate numbers together." },
+      { "phase": "Loop Candidates", "description": "Instead of Pick/Don't Pick, use a `for` loop from `idx` to the end of the array." },
+      { "phase": "Duplicate Skip", "description": "If `i > idx` and `nums[i] == nums[i-1]`, `continue` (skip duplicate)." },
+      { "phase": "Prune", "description": "If `nums[i] > target`, `break` the loop (since array is sorted, all next numbers will be even larger)." }
+    ],
+    "dryRun": {
+      "input": "Candidates: [10,1,2,7,6,1,5], Target: 8",
+      "output": "[[1,1,6], [1,2,5], [1,7], [2,6]]",
+      "steps": [
+        "Sort: [1,1,2,5,6,7,10]",
+        "Start loop. Pick first 1. Target=7.",
+        "Next level loop. Pick second 1. Target=6.",
+        "Eventually backtrack to first level. Skip second 1 because it's a duplicate at this tree depth."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(2^N)", "average": "O(2^N)", "worst": "O(2^N)" },
+      "space": "O(N)",
+      "analysis": "Sorting takes O(N log N). Recursion tree has max 2^N leaves."
+    },
+    "code": {
+      "cpp": "void solve(int idx, int target, vector<int>& arr, vector<int>& curr, vector<vector<int>>& ans) {\n    if (target == 0) {\n        ans.push_back(curr);\n        return;\n    }\n    for (int i = idx; i < arr.size(); i++) {\n        if (i > idx && arr[i] == arr[i-1]) continue;\n        if (arr[i] > target) break;\n        curr.push_back(arr[i]);\n        solve(i + 1, target - arr[i], arr, curr, ans);\n        curr.pop_back();\n    }\n}",
+      "java": "// Java omitted. Same logic.",
+      "python": "def combinationSum2(candidates, target):\n    candidates.sort()\n    ans = []\n    def solve(idx, target, curr):\n        if target == 0:\n            ans.append(curr[:])\n            return\n        for i in range(idx, len(candidates)):\n            if i > idx and candidates[i] == candidates[i-1]:\n                continue\n            if candidates[i] > target:\n                break\n            curr.append(candidates[i])\n            solve(i + 1, target - candidates[i], curr)\n            curr.pop()\n    solve(0, target, [])\n    return ans",
+      "javascript": "// JS omitted. Same logic."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using a `Set` to filter final results. This causes Time Limit Exceeded because you are generating millions of redundant paths before filtering them."],
+      "edgeCases": ["Target cannot be formed"],
+      "tips": ["The line `if (i > idx && arr[i] == arr[i-1]) continue;` is the golden rule for ALL 'Unique' backtracking problems (Subsets II, Permutations II)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "letter-combinations": {
+    "id": "letter-combinations",
+    "introduction": "Given a string containing digits from 2-9 inclusive, return all possible letter combinations that the number could represent (like an old T9 phone keypad).",
+    "intuition": "This is a mapping problem. Digit '2' maps to 'a,b,c'. We need to recursively pair every letter of the first digit with every letter of the second digit.",
+    "walkthrough": [
+      { "phase": "Mapping", "description": "Create a dictionary/array mapping digits to strings (e.g., `2 -> 'abc'`)." },
+      { "phase": "Recurse", "description": "At index `i` of the digits string, get the corresponding letters." },
+      { "phase": "Loop", "description": "Loop through those letters, append one to the current string, and recurse to `i+1`." }
+    ],
+    "dryRun": {
+      "input": "Digits: '23'",
+      "output": "['ad','ae','af','bd','be','bf','cd','ce','cf']",
+      "steps": [
+        "Index 0 ('2') maps to 'abc'. Pick 'a'.",
+        "Index 1 ('3') maps to 'def'. Pick 'd'. Add 'ad'.",
+        "Backtrack. Pick 'e'. Add 'ae'.",
+        "Backtrack. Pick 'f'. Add 'af'."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(4^N * N)", "average": "O(4^N * N)", "worst": "O(4^N * N)" },
+      "space": "O(N)",
+      "analysis": "There are at most 4 letters per digit (e.g., 7 and 9). Time is O(4^N) for combinations. O(N) space for recursion depth."
+    },
+    "code": {
+      "cpp": "vector<string> mappings = {\"\", \"\", \"abc\", \"def\", \"ghi\", \"jkl\", \"mno\", \"pqrs\", \"tuv\", \"wxyz\"};\nvoid solve(int idx, string digits, string curr, vector<string>& ans) {\n    if (idx == digits.length()) { ans.push_back(curr); return; }\n    string letters = mappings[digits[idx] - '0'];\n    for (char c : letters) {\n        solve(idx + 1, digits, curr + c, ans);\n    }\n}",
+      "java": "// Java omitted.",
+      "python": "mappings = {'2':'abc','3':'def','4':'ghi','5':'jkl','6':'mno','7':'pqrs','8':'tuv','9':'wxyz'}\ndef letterCombinations(digits):\n    if not digits: return []\n    ans = []\n    def solve(idx, curr):\n        if idx == len(digits):\n            ans.append(curr)\n            return\n        for c in mappings[digits[idx]]:\n            solve(idx + 1, curr + c)\n    solve(0, \"\")\n    return ans",
+      "javascript": "// JS omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Not handling the empty input string edge case `\"\"`, returning `[\"\"]` instead of `[]`."],
+      "edgeCases": ["Input string is empty"],
+      "tips": ["This is one of the easiest Backtracking problems to practice the 'Loop over choices -> Recurse' pattern."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "palindrome-partitioning": {
+    "id": "palindrome-partitioning",
+    "introduction": "Given a string `s`, partition `s` such that every substring of the partition is a palindrome. Return all possible palindrome partitioning of `s`.",
+    "intuition": "We can try putting a 'cut' after every character. If the prefix string before the cut is a palindrome, it's a valid cut, and we recursively partition the rest of the string.",
+    "walkthrough": [
+      { "phase": "Loop Cuts", "description": "Loop index `i` from `idx` to the end of the string." },
+      { "phase": "Palindrome Check", "description": "Check if `substring(idx, i)` is a palindrome." },
+      { "phase": "Recurse", "description": "If it is a palindrome, add it to current list, and recurse from `i+1`. Backtrack afterwards." }
+    ],
+    "dryRun": {
+      "input": "String: 'aab'",
+      "output": "[['a','a','b'], ['aa','b']]",
+      "steps": [
+        "Cut at 1 ('a'). Palindrome. Rest: 'ab'.",
+        "Cut at 2 ('a'). Palindrome. Rest: 'b'.",
+        "Cut at 3 ('b'). Palindrome. Rest: ''. Valid partition: ['a','a','b'].",
+        "Backtrack. Cut at 2 ('aa'). Palindrome. Rest: 'b'."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N * 2^N)", "average": "O(N * 2^N)", "worst": "O(N * 2^N)" },
+      "space": "O(N)",
+      "analysis": "2^N possible partitions. O(N) to check if palindrome at each step."
+    },
+    "code": {
+      "cpp": "bool isPal(string& s, int l, int r) {\n    while(l < r) if(s[l++] != s[r--]) return false;\n    return true;\n}\nvoid solve(int idx, string& s, vector<string>& curr, vector<vector<string>>& ans) {\n    if (idx == s.length()) { ans.push_back(curr); return; }\n    for (int i = idx; i < s.length(); i++) {\n        if (isPal(s, idx, i)) {\n            curr.push_back(s.substr(idx, i - idx + 1));\n            solve(i + 1, s, curr, ans);\n            curr.pop_back();\n        }\n    }\n}",
+      "java": "// Java omitted.",
+      "python": "def partition(s):\n    def isPal(s):\n        return s == s[::-1]\n    ans = []\n    def solve(idx, curr):\n        if idx == len(s):\n            ans.append(curr[:])\n            return\n        for i in range(idx, len(s)):\n            sub = s[idx:i+1]\n            if isPal(sub):\n                curr.append(sub)\n                solve(i+1, curr)\n                curr.pop()\n    solve(0, [])\n    return ans",
+      "javascript": "// JS omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Checking if the entire string is a palindrome instead of just the newly cut substring."],
+      "edgeCases": ["Single character string"],
+      "tips": ["You can optimize the palindrome check to O(1) by pre-computing a 2D boolean DP array where `dp[i][j]` is true if substring `i` to `j` is a palindrome."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "word-search": {
+    "id": "word-search",
+    "introduction": "Given an m x n grid of characters and a word, return true if the word exists in the grid. You can move horizontally or vertically, but cannot use the same cell twice in a word.",
+    "intuition": "This is a classic Graph Backtracking problem. We treat the 2D grid as a graph and perform a DFS from every cell to see if it can form the target word.",
+    "walkthrough": [
+      { "phase": "Loop Grid", "description": "Iterate through every cell (r, c) looking for the first letter of the word." },
+      { "phase": "DFS & Mark", "description": "If the letter matches, mark the cell as visited (e.g. change it to '#') to prevent self-loops." },
+      { "phase": "Explore 4-way", "description": "Recursively check Up, Down, Left, Right for the next letter." },
+      { "phase": "Backtrack", "description": "If none of the 4 paths work, restore the cell's original letter and return false." }
+    ],
+    "dryRun": {
+      "input": "Board: [['A','B'],['C','D']], Word: 'ABD'",
+      "output": "True",
+      "steps": [
+        "Start at (0,0) 'A'. Match index 0. Mark 'A' as '#'.",
+        "Move Right (0,1) 'B'. Match index 1. Mark 'B' as '#'.",
+        "Move Down (1,1) 'D'. Match index 2. Word complete! Return True."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(M * N)", "average": "O(M * N * 3^L)", "worst": "O(M * N * 3^L)" },
+      "space": "O(L)",
+      "analysis": "L is word length. From the 2nd character onward, there are 3 possible directions to explore (not 4, as we don't go back). Space is O(L) for recursion depth."
+    },
+    "code": {
+      "cpp": "bool dfs(int r, int c, int idx, vector<vector<char>>& board, string& word) {\n    if (idx == word.length()) return true;\n    if (r < 0 || r >= board.size() || c < 0 || c >= board[0].size() || board[r][c] != word[idx]) return false;\n    char temp = board[r][c];\n    board[r][c] = '#';\n    bool found = dfs(r+1, c, idx+1, board, word) || dfs(r-1, c, idx+1, board, word) || \n                 dfs(r, c+1, idx+1, board, word) || dfs(r, c-1, idx+1, board, word);\n    board[r][c] = temp;\n    return found;\n}\n// Wrapper loops over r and c and calls dfs",
+      "java": "// Java omitted.",
+      "python": "def exist(board, word):\n    ROWS, COLS = len(board), len(board[0])\n    def dfs(r, c, i):\n        if i == len(word): return True\n        if r < 0 or c < 0 or r >= ROWS or c >= COLS or board[r][c] != word[i]: return False\n        temp = board[r][c]\n        board[r][c] = '#'\n        res = dfs(r+1,c,i+1) or dfs(r-1,c,i+1) or dfs(r,c+1,i+1) or dfs(r,c-1,i+1)\n        board[r][c] = temp\n        return res\n    for r in range(ROWS):\n        for c in range(COLS):\n            if dfs(r, c, 0): return True\n    return False",
+      "javascript": "// JS omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using an external `visited` matrix which takes O(M*N) space instead of modifying the board in-place for O(1) space."],
+      "edgeCases": ["Word is longer than the number of cells in the grid (immediate False)."],
+      "tips": ["If you need to search multiple words, upgrade to Word Search II which uses a Trie!"]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "m-coloring": {
+    "id": "m-coloring",
+    "introduction": "Given an undirected graph and a number `m`, determine if the graph can be colored with at most `m` colors such that no two adjacent vertices have the same color.",
+    "intuition": "Try coloring the first node with Color 1. Then recursively try coloring the next node. If a node cannot take any of the `m` colors without violating the adjacent-color rule, backtrack and change the color of the previous node.",
+    "walkthrough": [
+      { "phase": "Valid Check", "description": "Write a helper function `isSafe(node, color)` that checks if any adjacent node has the same color." },
+      { "phase": "Loop Colors", "description": "For current node, loop colors from 1 to `m`." },
+      { "phase": "Backtrack", "description": "If `isSafe`, assign color, recurse to `node+1`. If recurse fails, wipe the color and try the next one." }
+    ],
+    "dryRun": {
+      "input": "Graph: 0-1, 1-2, 2-0. m = 3",
+      "output": "True",
+      "steps": [
+        "Node 0: Color 1. Safe.",
+        "Node 1: Color 1 (Fail). Color 2 (Safe).",
+        "Node 2: Color 1 (Fail). Color 2 (Fail). Color 3 (Safe).",
+        "All colored. Return True."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(V)", "average": "O(M^V)", "worst": "O(M^V)" },
+      "space": "O(V)",
+      "analysis": "There are V vertices, each can take M colors. In the absolute worst case, we check M^V combinations."
+    },
+    "code": {
+      "cpp": "bool isSafe(int node, vector<int> adj[], vector<int>& color, int n, int col) {\n    for (int neighbor : adj[node]) {\n        if (color[neighbor] == col) return false;\n    }\n    return true;\n}\nbool solve(int node, vector<int> adj[], vector<int>& color, int n, int m) {\n    if (node == n) return true;\n    for (int i = 1; i <= m; i++) {\n        if (isSafe(node, adj, color, n, i)) {\n            color[node] = i;\n            if (solve(node + 1, adj, color, n, m)) return true;\n            color[node] = 0;\n        }\n    }\n    return false;\n}",
+      "java": "// Java omitted.",
+      "python": "# Python omitted.",
+      "javascript": "// JS omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Not checking all adjacent nodes. Make sure your adjacency list correctly maps all undirected edges."],
+      "edgeCases": ["Disconnected graph", "m=1 but edges exist"],
+      "tips": ["This is the exact algorithm used to solve Sudoku, just generalized for graphs instead of a grid."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "restore-ip-addresses": {
+    "id": "restore-ip-addresses",
+    "introduction": "A valid IP address consists of exactly four integers separated by single dots. Each integer is between 0 and 255 and cannot have leading zeros. Given a string of digits, return all possible valid IP addresses.",
+    "intuition": "We need to place exactly 3 dots in the string to partition it into 4 parts. We can systematically try placing a dot after 1, 2, or 3 characters, validating the integer created each time.",
+    "walkthrough": [
+      { "phase": "Base Case", "description": "If we have placed 4 parts and consumed the entire string, add to results." },
+      { "phase": "Loop Lengths", "description": "Loop `len` from 1 to 3 to extract a substring of length `len`." },
+      { "phase": "Validate", "description": "Check if substring has leading zero (if length > 1) and if integer <= 255. If valid, recurse." }
+    ],
+    "dryRun": {
+      "input": "'25525511135'",
+      "output": "['255.255.11.135', '255.255.111.35']",
+      "steps": [
+        "Part 1: Try '2', '25', '255'.",
+        "Path '255': Part 2 try '2', '25', '255'.",
+        "Path '255.255': Part 3 try '1', '11', '111'.",
+        "And so on."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(1)", "average": "O(1)", "worst": "O(1)" },
+      "space": "O(1)",
+      "analysis": "The maximum string length is 12 (3 digits * 4 parts). The tree depth is strictly bounded to 4. Therefore, time and space complexity are O(1) constant."
+    },
+    "code": {
+      "cpp": "// Code omitted.",
+      "java": "// Code omitted.",
+      "python": "def restoreIpAddresses(s):\n    ans = []\n    def solve(idx, path):\n        if len(path) == 4:\n            if idx == len(s):\n                ans.append('.'.join(path))\n            return\n        for length in range(1, 4):\n            if idx + length <= len(s):\n                sub = s[idx:idx+length]\n                if (sub[0] == '0' and len(sub) > 1) or int(sub) > 255:\n                    continue\n                path.append(sub)\n                solve(idx + length, path)\n                path.pop()\n    solve(0, [])\n    return ans",
+      "javascript": "// Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Forgetting the leading zero rule: '0' is valid, but '01' and '00' are invalid."],
+      "edgeCases": ["String longer than 12 characters (immediately return [])", "String shorter than 4 characters"],
+      "tips": ["Bounding your recursion depth to 4 drastically simplifies time complexity calculations in interviews."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "beautiful-arrangement": {
+    "id": "beautiful-arrangement",
+    "introduction": "Suppose you have n integers from 1 to n. A permutation is beautiful if for every index i, either nums[i] is divisible by i, or i is divisible by nums[i]. Count the number of beautiful arrangements.",
+    "intuition": "Instead of generating all N! permutations and checking them at the end, we check the divisibility condition dynamically as we place each number. If it fails, we prune the branch immediately.",
+    "walkthrough": [
+      { "phase": "Visited Array", "description": "Track which numbers from 1 to n have been used." },
+      { "phase": "Place at Index", "description": "For current `idx`, loop through all unused numbers `num`." },
+      { "phase": "Prune & Recurse", "description": "If `num % idx == 0` or `idx % num == 0`, mark used, recurse to `idx+1`, then backtrack." }
+    ],
+    "dryRun": {
+      "input": "n = 2",
+      "output": "2",
+      "steps": [
+        "Index 1: Place 1. (1%1==0). Recurse. Index 2: Place 2 (2%2==0). Valid. Total=1.",
+        "Index 1: Place 2. (2%1==0). Recurse. Index 2: Place 1 (2%1==0). Valid. Total=2."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(K)", "average": "O(K)", "worst": "O(K)" },
+      "space": "O(N)",
+      "analysis": "K refers to the number of valid permutations. Pruning makes it vastly faster than O(N!). Space is O(N) for recursion."
+    },
+    "code": {
+      "cpp": "int count = 0;\nvoid solve(int idx, int n, vector<bool>& visited) {\n    if (idx > n) { count++; return; }\n    for (int i = 1; i <= n; i++) {\n        if (!visited[i] && (i % idx == 0 || idx % i == 0)) {\n            visited[i] = true;\n            solve(idx + 1, n, visited);\n            visited[i] = false;\n        }\n    }\n}",
+      "java": "// Java omitted.",
+      "python": "def countArrangement(n):\n    visited = [False] * (n + 1)\n    res = [0]\n    def solve(idx):\n        if idx > n:\n            res[0] += 1\n            return\n        for i in range(1, n + 1):\n            if not visited[i] and (i % idx == 0 or idx % i == 0):\n                visited[i] = True\n                solve(idx + 1)\n                visited[i] = False\n    solve(1)\n    return res[0]",
+      "javascript": "// JS omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Generating all permutations first and validating later causes Time Limit Exceeded for n > 10."],
+      "edgeCases": ["n = 1"],
+      "tips": ["A common optimization is to populate the array backwards (starting `idx` at `n` down to 1) because larger numbers have fewer divisors, creating early pruning opportunities."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}

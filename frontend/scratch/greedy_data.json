@@ -1,0 +1,157 @@
+{
+  "activity-selection": {
+    "id": "activity-selection",
+    "introduction": "Given N activities with their start and finish times, select the maximum number of activities that can be performed by a single person (meaning no two activities overlap).",
+    "intuition": "The greedy choice is to always pick the activity that finishes first. This leaves the maximum possible free time for subsequent activities.",
+    "walkthrough": [
+      { "phase": "Sort", "description": "Sort the activities based on their finish times in ascending order." },
+      { "phase": "First Choice", "description": "Always select the first activity from the sorted list." },
+      { "phase": "Iterate", "description": "For remaining activities, if the start time is >= the finish time of the previously selected activity, select it." }
+    ],
+    "dryRun": {
+      "input": "Start: [1, 3, 0, 5, 8, 5], Finish: [2, 4, 6, 7, 9, 9]",
+      "output": "4 activities (indices 0, 1, 3, 4)",
+      "steps": [
+        "Pairs sorted by finish: (1,2), (3,4), (0,6), (5,7), (8,9), (5,9)",
+        "Pick (1,2). Free after 2.",
+        "Pick (3,4) since 3 >= 2. Free after 4.",
+        "(0,6) overlaps (0 < 4). Skip.",
+        "Pick (5,7) since 5 >= 4. Free after 7.",
+        "Pick (8,9) since 8 >= 7. Done."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N log N)", "average": "O(N log N)", "worst": "O(N log N)" },
+      "space": "O(1)",
+      "analysis": "Sorting takes O(N log N). The linear scan takes O(N)."
+    },
+    "code": {
+      "cpp": "int maxActivities(vector<int> start, vector<int> finish, int n) {\n    vector<pair<int,int>> arr(n);\n    for(int i=0; i<n; i++) arr[i] = {finish[i], start[i]};\n    sort(arr.begin(), arr.end());\n    int count = 1;\n    int limit = arr[0].first;\n    for(int i=1; i<n; i++) {\n        if(arr[i].second >= limit) {\n            count++;\n            limit = arr[i].first;\n        }\n    }\n    return count;\n}",
+      "java": "public int maxActivities(int start[], int finish[], int n) {\n    int[][] arr = new int[n][2];\n    for(int i=0; i<n; i++) { arr[i][0] = finish[i]; arr[i][1] = start[i]; }\n    Arrays.sort(arr, (a, b) -> a[0] - b[0]);\n    int count = 1, limit = arr[0][0];\n    for(int i=1; i<n; i++) {\n        if(arr[i][1] >= limit) {\n            count++;\n            limit = arr[i][0];\n        }\n    }\n    return count;\n}",
+      "python": "def maxActivities(start, finish, n):\n    arr = sorted(zip(finish, start))\n    count = 1\n    limit = arr[0][0]\n    for i in range(1, n):\n        if arr[i][1] >= limit:\n            count += 1\n            limit = arr[i][0]\n    return count",
+      "javascript": "function maxActivities(start, finish, n) {\n    let arr = [];\n    for(let i=0; i<n; i++) arr.push({f: finish[i], s: start[i]});\n    arr.sort((a, b) => a.f - b.f);\n    let count = 1, limit = arr[0].f;\n    for(let i=1; i<n; i++) {\n        if(arr[i].s >= limit) {\n            count++;\n            limit = arr[i].f;\n        }\n    }\n    return count;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Sorting by start time instead of finish time. Sorting by start time can trap you in a very long activity that blocks everything else."],
+      "edgeCases": ["Only 1 activity"],
+      "tips": ["This is conceptually identical to finding the maximum number of non-overlapping intervals (LeetCode 435: Non-overlapping Intervals)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "fractional-knapsack": {
+    "id": "fractional-knapsack",
+    "introduction": "Given weights and values of N items, put these items in a knapsack of capacity W to get the maximum total value. Unlike 0/1 Knapsack, you can break items into fractions.",
+    "intuition": "Since we can take fractions, we should always greedily take the item that gives the most 'bang for buck', which is the highest Value-to-Weight ratio.",
+    "walkthrough": [
+      { "phase": "Calculate Ratio", "description": "For each item, calculate ratio = value / weight." },
+      { "phase": "Sort", "description": "Sort the items in descending order of this ratio." },
+      { "phase": "Pick", "description": "Take full items as long as they fit. If an item doesn't fit completely, take the fraction that fills the remaining capacity." }
+    ],
+    "dryRun": {
+      "input": "W = 50. Items: (val:60, wt:10), (100, 20), (120, 30)",
+      "output": "240.0",
+      "steps": [
+        "Ratios: 6, 5, 4.",
+        "Take Item 1 completely. Capacity left = 40. Value = 60.",
+        "Take Item 2 completely. Capacity left = 20. Value = 160.",
+        "Item 3 weight is 30, but capacity is 20. Take 2/3 of Item 3. Value = 160 + (120 * 2/3) = 240."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N log N)", "average": "O(N log N)", "worst": "O(N log N)" },
+      "space": "O(1)",
+      "analysis": "Time complexity is dominated by the sorting step."
+    },
+    "code": {
+      "cpp": "double fractionalKnapsack(int W, Item arr[], int n) {\n    sort(arr, arr + n, [](Item a, Item b){\n        return (double)a.value / a.weight > (double)b.value / b.weight;\n    });\n    double ans = 0.0;\n    for(int i = 0; i < n; i++) {\n        if(arr[i].weight <= W) {\n            ans += arr[i].value;\n            W -= arr[i].weight;\n        } else {\n            ans += arr[i].value * ((double)W / arr[i].weight);\n            break;\n        }\n    }\n    return ans;\n}",
+      "java": "// Fractional Knapsack. Code omitted.",
+      "python": "# Fractional Knapsack. Code omitted.",
+      "javascript": "// Fractional Knapsack. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using integer division when calculating the ratio, losing precision."],
+      "edgeCases": ["W is 0", "All items fit perfectly"],
+      "tips": ["Always clarify with the interviewer if you are allowed to break items. If not, it's the 0/1 Knapsack DP problem."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "job-sequencing": {
+    "id": "job-sequencing",
+    "introduction": "Given an array of jobs where every job has a deadline and associated profit if the job is finished before the deadline. It takes 1 unit of time to complete a job. Find max profit.",
+    "intuition": "To maximize profit, always try to do the jobs with the highest profit first. To leave space for other jobs, schedule a job as late as possible (as close to its deadline as possible).",
+    "walkthrough": [
+      { "phase": "Sort", "description": "Sort the jobs in descending order of profit." },
+      { "phase": "Schedule Array", "description": "Find the maximum deadline among all jobs. Create an array of this size to track free time slots." },
+      { "phase": "Assign", "description": "For each job, iterate backwards from its deadline to 1. Assign it to the first free slot." }
+    ],
+    "dryRun": {
+      "input": "Jobs (Id, Deadline, Profit): (a,4,20), (b,1,10), (c,1,40), (d,1,30)",
+      "output": "Profit 60",
+      "steps": [
+        "Sort by profit: c(40, d1), d(30, d1), a(20, d4), b(10, d1)",
+        "Schedule 'c' at slot 1. Slots: [1:c, 2:_, 3:_, 4:_]",
+        "Try 'd' at slot 1. Occupied. Discard 'd'.",
+        "Schedule 'a' at slot 4. Slots: [1:c, 2:_, 3:_, 4:a]",
+        "Try 'b' at slot 1. Occupied. Discard 'b'."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N log N)", "average": "O(N^2)", "worst": "O(N^2)" },
+      "space": "O(N)",
+      "analysis": "Sorting takes O(N log N). Finding an empty slot takes O(max_deadline) in the worst case."
+    },
+    "code": {
+      "cpp": "vector<int> JobScheduling(Job arr[], int n) {\n    sort(arr, arr + n, [](Job a, Job b){ return a.profit > b.profit; });\n    int maxi = arr[0].dead;\n    for(int i = 1; i < n; i++) maxi = max(maxi, arr[i].dead);\n    vector<int> slot(maxi + 1, -1);\n    int countJobs = 0, jobProfit = 0;\n    for(int i = 0; i < n; i++) {\n        for(int j = arr[i].dead; j > 0; j--) {\n            if(slot[j] == -1) {\n                slot[j] = i;\n                countJobs++;\n                jobProfit += arr[i].profit;\n                break;\n            }\n        }\n    }\n    return {countJobs, jobProfit};\n}",
+      "java": "// Job Sequencing. Code omitted.",
+      "python": "# Job Sequencing. Code omitted.",
+      "javascript": "// Job Sequencing. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Scheduling jobs from 1 to deadline instead of deadline down to 1. This leaves later slots empty and prevents earlier jobs from being scheduled."],
+      "edgeCases": ["Multiple jobs with same deadline and same profit"],
+      "tips": ["The inner loop can be optimized from O(N) to O(alpha(N)) using a Disjoint Set to quickly find the next available left slot."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "huffman-coding": {
+    "id": "huffman-coding",
+    "introduction": "Huffman Coding is a lossless data compression algorithm. It assigns variable-length codes to characters, with shorter codes assigned to more frequent characters.",
+    "intuition": "Build a binary tree from the bottom up. The two least frequent characters are merged into a new node. Repeat this greedily until one root remains.",
+    "walkthrough": [
+      { "phase": "Frequency Queue", "description": "Push all characters into a Min-Heap based on their frequencies." },
+      { "phase": "Build Tree", "description": "Extract two nodes with the lowest frequencies. Create a new internal node with their sum. Push it back to the heap." },
+      { "phase": "Assign Codes", "description": "Traverse the tree from root to leaves. Append '0' for left edge, '1' for right edge." }
+    ],
+    "dryRun": {
+      "input": "Chars: a(5), b(9), c(12), d(13), e(16), f(45)",
+      "output": "Prefix tree built",
+      "steps": [
+        "Min two are a(5), b(9). Merge into N1(14).",
+        "Heap: c(12), d(13), N1(14), e(16), f(45)",
+        "Min two are c(12), d(13). Merge into N2(25).",
+        "Repeat until 1 node of weight 100 remains."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N log N)", "average": "O(N log N)", "worst": "O(N log N)" },
+      "space": "O(N)",
+      "analysis": "Extracting min and inserting into the heap takes O(log N). Done N times."
+    },
+    "code": {
+      "cpp": "// Huffman Coding tree building. Code omitted for brevity.",
+      "java": "// Huffman Coding. Code omitted.",
+      "python": "# Huffman Coding. Code omitted.",
+      "javascript": "// Huffman Coding. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Assuming the Huffman tree is unique. Ties in frequency can lead to different tree structures, though the total compressed size will be identical."],
+      "edgeCases": ["Only 1 unique character"],
+      "tips": ["This is rarely asked as a coding question, but often asked as a systems design or CS fundamentals question regarding compression."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}

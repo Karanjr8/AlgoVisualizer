@@ -1,0 +1,483 @@
+{
+  "graph-representation": {
+    "id": "graph-representation",
+    "introduction": "A graph is a non-linear data structure consisting of vertices (nodes) and edges (lines connecting the nodes). Graphs can be represented primarily using an Adjacency Matrix or an Adjacency List.",
+    "intuition": "Think of a map where cities are vertices and the roads connecting them are edges. A matrix is a grid showing all possible connections, while a list only stores the actual connections.",
+    "walkthrough": [
+      { "phase": "Adjacency Matrix", "description": "A 2D array of size V x V where matrix[i][j] is 1 if there is an edge between vertex i and vertex j." },
+      { "phase": "Adjacency List", "description": "An array of lists where array[i] contains a list of all vertices connected to vertex i." }
+    ],
+    "dryRun": {
+      "input": "Edges: (0,1), (0,2), (1,2)",
+      "output": "Adj List: 0->[1,2], 1->[0,2], 2->[0,1]",
+      "steps": [
+        "Add 1 to list of 0, and 0 to list of 1.",
+        "Add 2 to list of 0, and 0 to list of 2.",
+        "Add 2 to list of 1, and 1 to list of 2."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(1)", "average": "O(1)", "worst": "O(V)" },
+      "space": "O(V + E)",
+      "analysis": "Adjacency List takes O(V+E) space which is optimal for sparse graphs. Adjacency Matrix takes O(V^2) space."
+    },
+    "code": {
+      "cpp": "vector<vector<int>> adj(V);\nfor (auto edge : edges) {\n    adj[edge[0]].push_back(edge[1]);\n    adj[edge[1]].push_back(edge[0]);\n}",
+      "java": "List<List<Integer>> adj = new ArrayList<>();\nfor(int i=0; i<V; i++) adj.add(new ArrayList<>());\nfor(int[] edge : edges) {\n    adj.get(edge[0]).add(edge[1]);\n    adj.get(edge[1]).add(edge[0]);\n}",
+      "python": "adj = collections.defaultdict(list)\nfor u, v in edges:\n    adj[u].append(v)\n    adj[v].append(u)",
+      "javascript": "const adj = Array.from({length: V}, () => []);\nfor(let [u, v] of edges) {\n    adj[u].push(v);\n    adj[v].push(u);\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Forgetting to add the reverse edge for undirected graphs.", "Using an adjacency matrix when V is large (causes Memory Limit Exceeded)."],
+      "edgeCases": ["Disconnected graph", "Graph with self-loops"],
+      "tips": ["99% of graph interview problems are best solved using an Adjacency List."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "bfs": {
+    "id": "bfs",
+    "introduction": "Breadth-First Search (BFS) explores a graph level by level, visiting all direct neighbors of a node before moving deeper.",
+    "intuition": "Like dropping a pebble in water, the ripples expand outward uniformly. It's the standard way to find the shortest path in an unweighted graph.",
+    "walkthrough": [
+      { "phase": "Queue Setup", "description": "Initialize a queue and push the starting node. Mark it as visited." },
+      { "phase": "Level Traversal", "description": "While queue is not empty, pop a node and process it." },
+      { "phase": "Expansion", "description": "For every unvisited neighbor of the popped node, mark as visited and push to the queue." }
+    ],
+    "dryRun": {
+      "input": "Graph: 0-(1,2), 1-3. Start: 0",
+      "output": "0, 1, 2, 3",
+      "steps": [
+        "Queue: [0]. Pop 0. Visit 1, 2.",
+        "Queue: [1, 2]. Pop 1. Visit 3.",
+        "Queue: [2, 3]. Pop 2. No unvisited neighbors.",
+        "Queue: [3]. Pop 3."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)" },
+      "space": "O(V)",
+      "analysis": "Every node is enqueued once, and every edge is checked once."
+    },
+    "code": {
+      "cpp": "void bfs(int start, vector<vector<int>>& adj, int V) {\n    vector<bool> vis(V, false);\n    queue<int> q;\n    q.push(start); vis[start] = true;\n    while (!q.empty()) {\n        int node = q.front(); q.pop();\n        for (int neighbor : adj[node]) {\n            if (!vis[neighbor]) {\n                vis[neighbor] = true;\n                q.push(neighbor);\n            }\n        }\n    }\n}",
+      "java": "public void bfs(int start, List<List<Integer>> adj, int V) {\n    boolean[] vis = new boolean[V];\n    Queue<Integer> q = new LinkedList<>();\n    q.offer(start); vis[start] = true;\n    while (!q.isEmpty()) {\n        int node = q.poll();\n        for (int neighbor : adj.get(node)) {\n            if (!vis[neighbor]) {\n                vis[neighbor] = true;\n                q.offer(neighbor);\n            }\n        }\n    }\n}",
+      "python": "def bfs(start, adj, V):\n    vis = [False] * V\n    q = collections.deque([start])\n    vis[start] = True\n    while q:\n        node = q.popleft()\n        for neighbor in adj[node]:\n            if not vis[neighbor]:\n                vis[neighbor] = True\n                q.append(neighbor)",
+      "javascript": "function bfs(start, adj, V) {\n    let vis = new Array(V).fill(false);\n    let q = [start];\n    vis[start] = true;\n    while (q.length > 0) {\n        let node = q.shift();\n        for (let neighbor of adj[node]) {\n            if (!vis[neighbor]) {\n                vis[neighbor] = true;\n                q.push(neighbor);\n            }\n        }\n    }\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Marking a node visited when Popping instead of Pushing (causes redundant queue pushes and TLE)."],
+      "edgeCases": ["Disconnected components"],
+      "tips": ["Always track levels (distance) if solving a shortest path problem by keeping track of queue size at the start of the while loop."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "dfs": {
+    "id": "dfs",
+    "introduction": "Depth-First Search (DFS) explores a graph by going as deep as possible along each branch before backtracking.",
+    "intuition": "Like solving a maze by keeping your hand on the right wall. You walk down a path until you hit a dead end, then retrace your steps.",
+    "walkthrough": [
+      { "phase": "Base Case", "description": "Mark the current node as visited." },
+      { "phase": "Recursion", "description": "Iterate through all neighbors of the current node." },
+      { "phase": "Deep Dive", "description": "If a neighbor is unvisited, recursively call DFS on it." }
+    ],
+    "dryRun": {
+      "input": "Graph: 0-(1,2), 1-3. Start: 0",
+      "output": "0, 1, 3, 2",
+      "steps": [
+        "Visit 0. Neighbors: 1, 2.",
+        "Go to 1. Neighbors: 3.",
+        "Go to 3. Dead end. Backtrack to 1.",
+        "Backtrack to 0. Go to 2."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)" },
+      "space": "O(V)",
+      "analysis": "Time complexity is O(V+E) as each node and edge is explored exactly once. Space is O(V) for the recursion stack."
+    },
+    "code": {
+      "cpp": "void dfs(int node, vector<vector<int>>& adj, vector<bool>& vis) {\n    vis[node] = true;\n    for (int neighbor : adj[node]) {\n        if (!vis[neighbor]) {\n            dfs(neighbor, adj, vis);\n        }\n    }\n}",
+      "java": "public void dfs(int node, List<List<Integer>> adj, boolean[] vis) {\n    vis[node] = true;\n    for (int neighbor : adj.get(node)) {\n        if (!vis[neighbor]) {\n            dfs(neighbor, adj, vis);\n        }\n    }\n}",
+      "python": "def dfs(node, adj, vis):\n    vis[node] = True\n    for neighbor in adj[node]:\n        if not vis[neighbor]:\n            dfs(neighbor, adj, vis)",
+      "javascript": "function dfs(node, adj, vis) {\n    vis[node] = true;\n    for (let neighbor of adj[node]) {\n        if (!vis[neighbor]) {\n            dfs(neighbor, adj, vis);\n        }\n    }\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Infinite recursion in cyclic graphs by forgetting the `visited` array.", "Stack Overflow for very deep graphs (use iterative DFS with a Stack instead)."],
+      "edgeCases": ["Graph with disjoint components (loop over all vertices and call DFS if not visited)."],
+      "tips": ["DFS is the go-to for checking connectivity, finding cycles, and topological sorting."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "topological-sort": {
+    "id": "topological-sort",
+    "introduction": "Topological Sort is a linear ordering of vertices in a Directed Acyclic Graph (DAG) such that for every directed edge u -> v, vertex u comes before v.",
+    "intuition": "Think of university prerequisites. You must take course A before course B. Topological sort gives you a valid order to take all courses.",
+    "walkthrough": [
+      { "phase": "Indegree Count", "description": "Calculate the indegree (number of incoming edges) for all vertices." },
+      { "phase": "Queue 0-Indegree", "description": "Add all vertices with 0 indegree (no prerequisites) to a queue." },
+      { "phase": "Process (Kahn's)", "description": "Pop a vertex, append to result. Reduce indegree of its neighbors by 1. If a neighbor reaches 0 indegree, push to queue." }
+    ],
+    "dryRun": {
+      "input": "Edges: 0->1, 0->2, 1->3, 2->3",
+      "output": "0, 1, 2, 3",
+      "steps": [
+        "Indegrees: 0:0, 1:1, 2:1, 3:2. Queue: [0]",
+        "Pop 0. Neighbors 1, 2. Indegrees become 1:0, 2:0. Queue: [1, 2]",
+        "Pop 1. Neighbor 3 (indegree 1). Queue: [2]",
+        "Pop 2. Neighbor 3 (indegree 0). Queue: [3]. Pop 3."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)" },
+      "space": "O(V)",
+      "analysis": "Every node is enqueued once, and every edge is visited once when updating indegrees."
+    },
+    "code": {
+      "cpp": "vector<int> topoSort(int V, vector<vector<int>>& adj) {\n    vector<int> indegree(V, 0);\n    for(int i=0; i<V; i++) for(int it : adj[i]) indegree[it]++;\n    queue<int> q;\n    for(int i=0; i<V; i++) if(indegree[i] == 0) q.push(i);\n    vector<int> topo;\n    while(!q.empty()) {\n        int node = q.front(); q.pop();\n        topo.push_back(node);\n        for(int it : adj[node]) if(--indegree[it] == 0) q.push(it);\n    }\n    return topo;\n}",
+      "java": "// Kahn's Algorithm (BFS based). Java syntax omitted for brevity.",
+      "python": "# Kahn's Algorithm (BFS based). Python syntax omitted for brevity.",
+      "javascript": "// Kahn's Algorithm (BFS based). JS syntax omitted for brevity."
+    },
+    "interviewNotes": {
+      "mistakes": ["Attempting topological sort on a graph with cycles (it will fail to include all nodes)."],
+      "edgeCases": ["Disconnected DAG", "Multiple valid topological sorts"],
+      "tips": ["If the resulting topological sort array has length < V, the graph has a cycle! This is the most common way to detect cycles in a DAG."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "cycle-detection": {
+    "id": "cycle-detection",
+    "introduction": "Cycle detection determines if there is a back-edge in a graph (a path that leads back to an already visited node in the current path).",
+    "intuition": "In an undirected graph, if you visit a node that is already visited and it's NOT the parent you just came from, you've found a loop.",
+    "walkthrough": [
+      { "phase": "DFS Traversal", "description": "Start DFS and pass the 'parent' node along with the current node." },
+      { "phase": "Neighbor Check", "description": "For each neighbor, if it is visited AND it is not the parent, a cycle exists." }
+    ],
+    "dryRun": {
+      "input": "Undirected: 1-2, 2-3, 3-1",
+      "output": "True",
+      "steps": [
+        "DFS(1, parent=-1). Visit 2.",
+        "DFS(2, parent=1). Visit 3.",
+        "DFS(3, parent=2). Neighbor 1 is visited and != parent(2). Cycle found!"
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(1)", "average": "O(V + E)", "worst": "O(V + E)" },
+      "space": "O(V)",
+      "analysis": "O(V+E) for traversal."
+    },
+    "code": {
+      "cpp": "bool isCycleUtil(int node, int parent, vector<vector<int>>& adj, vector<bool>& vis) {\n    vis[node] = true;\n    for(int adjNode: adj[node]) {\n        if(!vis[adjNode]) {\n            if(isCycleUtil(adjNode, node, adj, vis)) return true;\n        } else if(adjNode != parent) return true;\n    }\n    return false;\n}",
+      "java": "// DFS with parent pointer. Java omitted.",
+      "python": "# DFS with parent pointer. Python omitted.",
+      "javascript": "// DFS with parent pointer. JS omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using the undirected logic for Directed graphs. Directed graphs require tracking the 'recursion stack' (path), not just visited nodes."],
+      "edgeCases": ["Graph with 2 nodes and 1 edge (not a cycle)"],
+      "tips": ["For directed graphs, prefer Kahn's Algorithm (Topological Sort). If it can't process all nodes, there is a cycle."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "dijkstra": {
+    "id": "dijkstra",
+    "introduction": "Dijkstra's Algorithm finds the shortest path from a starting node to all other nodes in a graph with non-negative edge weights.",
+    "intuition": "It operates greedily. It always picks the unvisited node with the smallest known distance, and relaxes its neighbors.",
+    "walkthrough": [
+      { "phase": "Init", "description": "Distance array filled with Infinity, except dist[start] = 0. Priority Queue (Min-Heap) holds (0, start)." },
+      { "phase": "Extract Min", "description": "Pop the node with the minimum distance from PQ." },
+      { "phase": "Relax Edges", "description": "For each neighbor, if `curr_dist + edge_weight < dist[neighbor]`, update `dist[neighbor]` and push to PQ." }
+    ],
+    "dryRun": {
+      "input": "0->1 (w:4), 0->2 (w:1), 2->1 (w:2). Start: 0",
+      "output": "dist: [0, 3, 1]",
+      "steps": [
+        "PQ: (0,0). Pop 0. Update 1 to 4, 2 to 1. PQ: (1,2), (4,1).",
+        "Pop 2. Update 1 to 1+2=3. PQ: (3,1), (4,1).",
+        "Pop 1 (dist 3). No updates. Pop 1 (dist 4 - stale, ignore)."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O((V+E) log V)", "average": "O((V+E) log V)", "worst": "O((V+E) log V)" },
+      "space": "O(V)",
+      "analysis": "Each node is extracted from PQ (O(log V)) and each edge is processed once."
+    },
+    "code": {
+      "cpp": "vector<int> dijkstra(int V, vector<vector<pair<int, int>>>& adj, int S) {\n    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;\n    vector<int> dist(V, 1e9);\n    dist[S] = 0; pq.push({0, S});\n    while(!pq.empty()) {\n        int dis = pq.top().first, node = pq.top().second;\n        pq.pop();\n        for(auto it : adj[node]) {\n            int adjNode = it.first, edgeWeight = it.second;\n            if(dis + edgeWeight < dist[adjNode]) {\n                dist[adjNode] = dis + edgeWeight;\n                pq.push({dist[adjNode], adjNode});\n            }\n        }\n    }\n    return dist;\n}",
+      "java": "// Standard Dijkstra. Code omitted.",
+      "python": "# heapq based Dijkstra. Code omitted.",
+      "javascript": "// Since JS has no native PQ, an array with manual sort or custom heap is used."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using Dijkstra on graphs with negative edge weights (it will fail and get stuck in infinite loops or yield wrong answers)."],
+      "edgeCases": ["Unreachable nodes (distance remains Infinity)"],
+      "tips": ["Always check if `dis > dist[node]` immediately after popping from PQ to skip stale entries!"]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "bellman-ford": {
+    "id": "bellman-ford",
+    "introduction": "Bellman-Ford finds the shortest paths from a single source to all other vertices, and it handles negative edge weights, unlike Dijkstra.",
+    "intuition": "If a graph has V vertices, a shortest path without cycles can have at most V-1 edges. If we relax all edges V-1 times, we are guaranteed to find the absolute shortest paths.",
+    "walkthrough": [
+      { "phase": "Init", "description": "Set all distances to Infinity, source to 0." },
+      { "phase": "Relax V-1 times", "description": "Iterate V-1 times. In each iteration, relax all edges in the graph." },
+      { "phase": "Negative Cycle Check", "description": "Relax all edges one more time. If any distance decreases, the graph contains a negative weight cycle." }
+    ],
+    "dryRun": {
+      "input": "0->1(w:3), 1->2(w:-2). Start:0",
+      "output": "[0, 3, 1]",
+      "steps": [
+        "Iter 1: 0->1 updates dist[1] to 3. 1->2 updates dist[2] to 1.",
+        "Iter 2: No changes. Distances are finalized."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(V*E)", "average": "O(V*E)", "worst": "O(V*E)" },
+      "space": "O(V)",
+      "analysis": "Iterating E edges, V-1 times."
+    },
+    "code": {
+      "cpp": "vector<int> bellman_ford(int V, vector<vector<int>>& edges, int S) {\n    vector<int> dist(V, 1e8);\n    dist[S] = 0;\n    for(int i = 0; i < V - 1; i++) {\n        for(auto it : edges) {\n            int u = it[0], v = it[1], wt = it[2];\n            if(dist[u] != 1e8 && dist[u] + wt < dist[v]) {\n                dist[v] = dist[u] + wt;\n            }\n        }\n    }\n    for(auto it : edges) {\n        if(dist[it[0]] != 1e8 && dist[it[0]] + it[2] < dist[it[1]]) return {-1}; // Cycle\n    }\n    return dist;\n}",
+      "java": "// Bellman Ford. Code omitted.",
+      "python": "# Bellman Ford. Code omitted.",
+      "javascript": "// Bellman Ford. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Not checking `dist[u] != Infinity` before relaxing an edge."],
+      "edgeCases": ["Negative weight cycles"],
+      "tips": ["Only use Bellman-Ford if you suspect negative weights. Otherwise, Dijkstra is much faster O(E log V) vs O(V*E)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "floyd-warshall": {
+    "id": "floyd-warshall",
+    "introduction": "Floyd-Warshall is an All-Pairs Shortest Path algorithm. It finds the shortest path between every pair of vertices in a weighted graph.",
+    "intuition": "For every pair of nodes (i, j), we check if going through an intermediate node 'k' offers a shorter path than the direct edge.",
+    "walkthrough": [
+      { "phase": "Adjacency Matrix", "description": "Initialize a matrix where dist[i][j] = edge weight. If no edge, Infinity. dist[i][i] = 0." },
+      { "phase": "3 Nested Loops", "description": "Loop `k` from 0 to V-1. Loop `i` from 0 to V-1. Loop `j` from 0 to V-1." },
+      { "phase": "Update", "description": "dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])." }
+    ],
+    "dryRun": {
+      "input": "0->1 (w:5), 1->2 (w:3)",
+      "output": "0->2 is 8",
+      "steps": [
+        "Init: 0->2 is Inf.",
+        "k=1: Check if 0->1 + 1->2 (5+3) < 0->2 (Inf). Yes, update to 8."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(V^3)", "average": "O(V^3)", "worst": "O(V^3)" },
+      "space": "O(V^2)",
+      "analysis": "3 nested loops up to V. Requires adjacency matrix storage."
+    },
+    "code": {
+      "cpp": "void shortest_distance(vector<vector<int>>& matrix) {\n    int n = matrix.size();\n    for(int k=0; k<n; k++) {\n        for(int i=0; i<n; i++) {\n            for(int j=0; j<n; j++) {\n                if(matrix[i][k] == 1e9 || matrix[k][j] == 1e9) continue;\n                matrix[i][j] = min(matrix[i][j], matrix[i][k] + matrix[k][j]);\n            }\n        }\n    }\n}",
+      "java": "// FW Algorithm. Code omitted.",
+      "python": "# FW Algorithm. Code omitted.",
+      "javascript": "// FW Algorithm. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Putting `k` as the inner loop instead of the outer loop. `k` MUST be the outermost loop."],
+      "edgeCases": ["Negative weight cycles (detected if matrix[i][i] < 0 after completion)."],
+      "tips": ["FW is a Dynamic Programming algorithm, not a greedy one."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "prim": {
+    "id": "prim",
+    "introduction": "Prim's Algorithm finds the Minimum Spanning Tree (MST) of an undirected weighted graph.",
+    "intuition": "Start with a single node. Repeatedly add the cheapest edge that connects the growing tree to a new, unvisited node.",
+    "walkthrough": [
+      { "phase": "Priority Queue", "description": "Use a Min-Heap storing (weight, node). Start with (0, 0)." },
+      { "phase": "Grow Tree", "description": "Pop min edge. If node is visited, ignore. Otherwise, mark visited." },
+      { "phase": "Add Edges", "description": "Push all edges of the newly added node to the PQ." }
+    ],
+    "dryRun": {
+      "input": "0-1(w:2), 1-2(w:3), 0-2(w:1)",
+      "output": "Edges: 0-2, 0-1. Cost: 3",
+      "steps": [
+        "PQ: (0,0). Pop 0. Visit 0. Add 0-1(2), 0-2(1) to PQ.",
+        "Pop (1, 2). Visit 2. Add 2-1(3) to PQ.",
+        "Pop (2, 1). Visit 1. MST complete."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(E log V)", "average": "O(E log V)", "worst": "O(E log V)" },
+      "space": "O(V + E)",
+      "analysis": "Similar to Dijkstra. E edges pushed to PQ."
+    },
+    "code": {
+      "cpp": "int spanningTree(int V, vector<vector<int>> adj[]) {\n    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;\n    vector<int> vis(V, 0);\n    pq.push({0, 0});\n    int sum = 0;\n    while(!pq.empty()) {\n        auto it = pq.top(); pq.pop();\n        int node = it.second, wt = it.first;\n        if(vis[node]) continue;\n        vis[node] = 1;\n        sum += wt;\n        for(auto it : adj[node]) {\n            int adjNode = it[0], edW = it[1];\n            if(!vis[adjNode]) pq.push({edW, adjNode});\n        }\n    }\n    return sum;\n}",
+      "java": "// Prim's Algorithm. Code omitted.",
+      "python": "# Prim's Algorithm. Code omitted.",
+      "javascript": "// Prim's Algorithm. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Marking nodes as visited when pushing to PQ instead of when popping from PQ."],
+      "edgeCases": ["Disconnected graph (MST doesn't exist)"],
+      "tips": ["Dijkstra is for shortest path from source to target. Prim is for connecting ALL nodes with minimum total edge weight."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "kruskal": {
+    "id": "kruskal",
+    "introduction": "Kruskal's Algorithm finds the Minimum Spanning Tree by sorting all edges and adding them one by one, provided they don't form a cycle.",
+    "intuition": "Greedily pick the absolute smallest edge in the entire graph. If connecting its two endpoints doesn't create a loop, keep it.",
+    "walkthrough": [
+      { "phase": "Sort", "description": "Sort all edges by weight in ascending order." },
+      { "phase": "Disjoint Set", "description": "Initialize a Disjoint Set (Union-Find) for all vertices." },
+      { "phase": "Union", "description": "For each edge, if `find(u) != find(v)`, add weight to total and `union(u, v)`." }
+    ],
+    "dryRun": {
+      "input": "Edges: (0,1,w:2), (1,2,w:3), (0,2,w:1)",
+      "output": "Cost: 3",
+      "steps": [
+        "Sorted: (0,2,1), (0,1,2), (1,2,3).",
+        "Edge (0,2): union(0,2). Valid.",
+        "Edge (0,1): union(0,1). Valid.",
+        "Edge (1,2): Both 1 and 2 are in the same set. Skip (creates cycle)."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(E log E)", "average": "O(E log E)", "worst": "O(E log E)" },
+      "space": "O(V + E)",
+      "analysis": "Sorting E edges takes O(E log E). DSU operations take O(alpha(V)) ~ O(1)."
+    },
+    "code": {
+      "cpp": "// Requires DisjointSet class implementation.\nint spanningTree(int V, vector<vector<int>>& edges) {\n    sort(edges.begin(), edges.end(), [](auto& a, auto& b) { return a[2] < b[2]; });\n    DisjointSet ds(V);\n    int mstWt = 0;\n    for(auto it : edges) {\n        if(ds.findUPar(it[0]) != ds.findUPar(it[1])) {\n            mstWt += it[2];\n            ds.unionBySize(it[0], it[1]);\n        }\n    }\n    return mstWt;\n}",
+      "java": "// Kruskal Algorithm. Code omitted.",
+      "python": "# Kruskal Algorithm. Code omitted.",
+      "javascript": "// Kruskal Algorithm. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Implementing Union-Find without Path Compression, causing time limit exceeded."],
+      "edgeCases": ["Graph with duplicate edge weights (sorting handles this seamlessly)"],
+      "tips": ["Kruskal's is much easier to implement than Prim's if you already have an Edge List and a pre-written Disjoint Set class."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "disjoint-set": {
+    "id": "disjoint-set",
+    "introduction": "Disjoint Set (or Union-Find) is a data structure that tracks elements partitioned into disjoint (non-overlapping) sets. Highly efficient for finding if two elements belong to the same set.",
+    "intuition": "Every person belongs to a club, and each club has exactly one 'boss'. If two people have the same boss, they are in the same club. Union means one boss becomes a subordinate to the other.",
+    "walkthrough": [
+      { "phase": "Initialization", "description": "Every node is its own parent (its own boss)." },
+      { "phase": "Find (Path Compression)", "description": "Recursively find the ultimate boss. Connect all nodes along the path directly to the boss." },
+      { "phase": "Union by Size/Rank", "description": "Attach the smaller tree under the root of the larger tree to keep the tree flat." }
+    ],
+    "dryRun": {
+      "input": "Union(1,2), Union(2,3), Find(1) == Find(3)?",
+      "output": "True",
+      "steps": [
+        "1 and 2 merged. 1 is boss.",
+        "2 and 3 merged. 3's boss becomes 1 (via 2).",
+        "Find(1) -> 1. Find(3) -> 1. They match."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(1)", "average": "O(alpha(N))", "worst": "O(log N)" },
+      "space": "O(N)",
+      "analysis": "With both Path Compression and Union by Rank, operations take Inverse Ackermann time (nearly O(1))."
+    },
+    "code": {
+      "cpp": "class DisjointSet {\n    vector<int> parent, size;\npublic:\n    DisjointSet(int n) {\n        parent.resize(n + 1); size.resize(n + 1, 1);\n        for(int i = 0; i <= n; i++) parent[i] = i;\n    }\n    int find(int node) {\n        if(node == parent[node]) return node;\n        return parent[node] = find(parent[node]); // Path compression\n    }\n    void unionBySize(int u, int v) {\n        int rootU = find(u), rootV = find(v);\n        if(rootU == rootV) return;\n        if(size[rootU] < size[rootV]) {\n            parent[rootU] = rootV;\n            size[rootV] += size[rootU];\n        } else {\n            parent[rootV] = rootU;\n            size[rootU] += size[rootV];\n        }\n    }\n};",
+      "java": "// Disjoint Set. Code omitted.",
+      "python": "# Disjoint Set. Code omitted.",
+      "javascript": "// Disjoint Set. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Forgetting path compression: `parent[node] = find(parent[node])`."],
+      "edgeCases": ["1-based vs 0-based node indexing"],
+      "tips": ["Always use Union-Find for 'Dynamic Connectivity' problems (e.g., Number of Islands II)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "bridges-articulation": {
+    "id": "bridges-articulation",
+    "introduction": "Tarjan's Algorithm is used to find Bridges (edges whose removal increases the number of disconnected components) and Articulation Points (vertices with the same property).",
+    "intuition": "During DFS, keep track of 'time of insertion' and the 'lowest time reachable' for each node. If a neighbor can't reach a node inserted before the current node, the edge connecting them is a Bridge.",
+    "walkthrough": [
+      { "phase": "DFS Traversal", "description": "Assign an insertion time `tin` and low value `low` to every node." },
+      { "phase": "Update Low", "description": "When backtracking, update `low[node] = min(low[node], low[neighbor])`." },
+      { "phase": "Bridge Condition", "description": "If `low[neighbor] > tin[node]`, the edge (node-neighbor) is a bridge." }
+    ],
+    "dryRun": {
+      "input": "0-1, 1-2, 2-0, 0-3",
+      "output": "Bridge: 0-3",
+      "steps": [
+        "0,1,2 form a cycle. Their lowest reachable time will be the time of 0.",
+        "3 has no back-edge. low[3] > tin[0]. So 0-3 is a bridge."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)" },
+      "space": "O(V)",
+      "analysis": "A single DFS traversal."
+    },
+    "code": {
+      "cpp": "// Tarjan's Bridge finding algorithm. Code omitted for brevity due to length.",
+      "java": "// Tarjan's. Code omitted.",
+      "python": "# Tarjan's. Code omitted.",
+      "javascript": "// Tarjan's. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Confusing Articulation Point conditions with Bridge conditions (AP uses `>=` and root node checks, Bridge uses strictly `>`)."],
+      "edgeCases": ["Graph is a tree (every edge is a bridge)."],
+      "tips": ["This is a hard topic. Memorize the condition: `low[neighbor] > tin[node]` implies a bridge."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "kosaraju": {
+    "id": "kosaraju",
+    "introduction": "Kosaraju's algorithm finds Strongly Connected Components (SCCs) in a Directed Graph. An SCC is a maximal subgraph where every vertex is reachable from every other vertex.",
+    "intuition": "If we do a DFS and record the finishing times, the node that finishes last is part of the 'source' SCC. Reversing the graph flips sources to sinks. Doing DFS on the reversed graph in order of finishing times traps the DFS within each SCC.",
+    "walkthrough": [
+      { "phase": "Sort by finish time", "description": "Perform DFS. On returning from recursive calls, push node to a stack." },
+      { "phase": "Reverse Graph", "description": "Reverse the direction of all edges." },
+      { "phase": "DFS on Reversed", "description": "Pop from stack. If unvisited, start a DFS. All nodes visited form one SCC." }
+    ],
+    "dryRun": {
+      "input": "0->1->2->0 (Triangle SCC), 2->3 (connector)",
+      "output": "SCCs: [0,1,2], [3]",
+      "steps": [
+        "Stack after DFS: [3, 2, 1, 0] (0 is on top).",
+        "Reverse graph: 0<-1<-2<-0, 2<-3",
+        "Pop 0. DFS finds 0,2,1. One SCC.",
+        "Pop 3. DFS finds 3. Second SCC."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(V + E)", "average": "O(V + E)", "worst": "O(V + E)" },
+      "space": "O(V + E)",
+      "analysis": "Two DFS traversals and creating a reversed graph."
+    },
+    "code": {
+      "cpp": "// Kosaraju's Algorithm. Code omitted.",
+      "java": "// Kosaraju's Algorithm. Code omitted.",
+      "python": "# Kosaraju's Algorithm. Code omitted.",
+      "javascript": "// Kosaraju's Algorithm. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Forgetting to clear the visited array before the second DFS phase."],
+      "edgeCases": ["Graph is a single DAG (every node is its own SCC)."],
+      "tips": ["Very common follow-up: Condense the graph (treat every SCC as a single node) to form a DAG."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}

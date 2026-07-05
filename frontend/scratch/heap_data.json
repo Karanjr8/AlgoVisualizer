@@ -1,0 +1,155 @@
+{
+  "heap-intro": {
+    "id": "heap-intro",
+    "introduction": "A Heap is a complete binary tree satisfying the heap property: for every node, its value is greater than or equal to (Max Heap) or less than or equal to (Min Heap) its children's values.",
+    "intuition": "It's like a corporate ladder where the CEO (highest value) is always at the top, and managers are always 'greater' than their direct subordinates.",
+    "walkthrough": [
+      { "phase": "Array Representation", "description": "Since it's a complete tree, we use an array. Parent is at `i`. Left child is at `2i + 1`, right at `2i + 2`." },
+      { "phase": "Insert (Heapify Up)", "description": "Insert at the end of the array. Swap the element up with its parent until the heap property is restored." },
+      { "phase": "Delete (Heapify Down)", "description": "Remove the root. Move the last element to the root. Swap it down with its largest/smallest child until restored." }
+    ],
+    "dryRun": {
+      "input": "Insert 5 into Max Heap [10, 8, 4]",
+      "output": "Heap [10, 8, 4, 5]",
+      "steps": [
+        "Add 5 to end. Array: [10, 8, 4, 5]",
+        "5 is at index 3. Parent is (3-1)/2 = index 1 (value 8).",
+        "5 < 8, heap property is satisfied. No swap needed."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(1)", "average": "O(log N)", "worst": "O(log N)" },
+      "space": "O(N)",
+      "analysis": "Insertion and Deletion take O(log N) as the height of the tree is log N. Peeking at the root takes O(1)."
+    },
+    "code": {
+      "cpp": "priority_queue<int> maxHeap;\npriority_queue<int, vector<int>, greater<int>> minHeap;\nmaxHeap.push(10);\nint top = maxHeap.top(); // 10\nmaxHeap.pop();",
+      "java": "PriorityQueue<Integer> minHeap = new PriorityQueue<>();\nPriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());",
+      "python": "import heapq\nmin_heap = []\nheapq.heappush(min_heap, 10)\ntop = min_heap[0]\nheapq.heappop(min_heap)\n# For max heap, multiply values by -1",
+      "javascript": "// JS has no native Heap. Implementation required or use external libraries."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using a BST instead of a Heap for finding the minimum. BSTs can degenerate to O(N), whereas Heaps are strictly O(log N) for operations."],
+      "edgeCases": ["Popping from an empty heap"],
+      "tips": ["Always remember: Priority Queues in C++ and Java are Heaps under the hood. Python's `heapq` is a Min-Heap."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "kth-largest": {
+    "id": "kth-largest",
+    "introduction": "Given an integer array `nums` and an integer `k`, return the `k`th largest element in the array.",
+    "intuition": "Instead of sorting the whole array (O(N log N)), we can maintain a Min-Heap of size K. As we stream through the array, if a number is larger than the smallest in our heap, we replace it.",
+    "walkthrough": [
+      { "phase": "Init Min Heap", "description": "Create an empty Min-Heap." },
+      { "phase": "Process Stream", "description": "Push each element into the heap." },
+      { "phase": "Maintain Size", "description": "If heap size exceeds K, pop the minimum element." }
+    ],
+    "dryRun": {
+      "input": "nums = [3,2,1,5,6,4], k = 2",
+      "output": "5",
+      "steps": [
+        "Push 3. Heap: [3]",
+        "Push 2. Heap: [2, 3]",
+        "Push 1. Heap: [1, 2, 3]. Size > 2, pop 1. Heap: [2, 3]",
+        "Push 5. Heap: [2, 3, 5]. Pop 2. Heap: [3, 5]",
+        "Push 6. Heap: [3, 5, 6]. Pop 3. Heap: [5, 6]",
+        "Push 4. Heap: [4, 5, 6]. Pop 4. Heap: [5, 6]",
+        "Return top of heap: 5"
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N log K)", "average": "O(N log K)", "worst": "O(N log K)" },
+      "space": "O(K)",
+      "analysis": "We process N elements, each taking O(log K) time to push/pop from the heap."
+    },
+    "code": {
+      "cpp": "int findKthLargest(vector<int>& nums, int k) {\n    priority_queue<int, vector<int>, greater<int>> minHeap;\n    for(int num : nums) {\n        minHeap.push(num);\n        if(minHeap.size() > k) minHeap.pop();\n    }\n    return minHeap.top();\n}",
+      "java": "public int findKthLargest(int[] nums, int k) {\n    PriorityQueue<Integer> minHeap = new PriorityQueue<>();\n    for(int num : nums) {\n        minHeap.offer(num);\n        if(minHeap.size() > k) minHeap.poll();\n    }\n    return minHeap.peek();\n}",
+      "python": "def findKthLargest(nums, k):\n    min_heap = []\n    for num in nums:\n        heapq.heappush(min_heap, num)\n        if len(min_heap) > k:\n            heapq.heappop(min_heap)\n    return min_heap[0]",
+      "javascript": "// JS syntax using an assumed MinPriorityQueue class\nfunction findKthLargest(nums, k) {\n    let minHeap = new MinPriorityQueue();\n    for(let num of nums) {\n        minHeap.enqueue(num);\n        if(minHeap.size() > k) minHeap.dequeue();\n    }\n    return minHeap.front().element;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using a Max-Heap of size N and popping K times. This takes O(N + K log N) space and time, which is worse space complexity than O(K)."],
+      "edgeCases": ["K is equal to length of array (returns min element)"],
+      "tips": ["QuickSelect is an alternative O(N) average time approach, but Heap is highly preferred if the input is a continuous data stream."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "merge-k-sorted": {
+    "id": "merge-k-sorted",
+    "introduction": "You are given an array of `k` linked-lists, each linked-list is sorted in ascending order. Merge all the linked-lists into one sorted linked-list and return it.",
+    "intuition": "To merge k lists, we need to constantly find the minimum among the k heads of the lists. A Min-Heap perfectly retrieves the minimum in O(log K) time.",
+    "walkthrough": [
+      { "phase": "Init Heap", "description": "Push the head node of every non-empty list into a Min-Heap (sorted by node value)." },
+      { "phase": "Extract Min", "description": "Pop the smallest node from the heap and append it to our result list." },
+      { "phase": "Advance", "description": "If the popped node has a `next` node, push that `next` node into the heap." }
+    ],
+    "dryRun": {
+      "input": "L1:[1,4,5], L2:[1,3,4], L3:[2,6]",
+      "output": "1->1->2->3->4->4->5->6",
+      "steps": [
+        "Push heads: (1, L1), (1, L2), (2, L3).",
+        "Pop (1, L1). Result: 1. Push next: (4, L1).",
+        "Pop (1, L2). Result: 1->1. Push next: (3, L2).",
+        "Pop (2, L3). Result: 1->1->2. Push next: (6, L3)."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N log K)", "average": "O(N log K)", "worst": "O(N log K)" },
+      "space": "O(K)",
+      "analysis": "N is the total number of nodes. The heap never holds more than K elements at a time."
+    },
+    "code": {
+      "cpp": "ListNode* mergeKLists(vector<ListNode*>& lists) {\n    auto comp = [](ListNode* a, ListNode* b) { return a->val > b->val; };\n    priority_queue<ListNode*, vector<ListNode*>, decltype(comp)> pq(comp);\n    for (ListNode* list : lists) if (list) pq.push(list);\n    ListNode dummy(0);\n    ListNode* tail = &dummy;\n    while (!pq.empty()) {\n        ListNode* node = pq.top(); pq.pop();\n        tail->next = node;\n        tail = tail->next;\n        if (node->next) pq.push(node->next);\n    }\n    return dummy.next;\n}",
+      "java": "// Code omitted.",
+      "python": "# Code omitted.",
+      "javascript": "// Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Pushing all N nodes into a heap at once. That takes O(N) space and O(N log N) time, completely missing the optimization point of K sorted lists."],
+      "edgeCases": ["k=0", "lists are empty"],
+      "tips": ["Divide and Conquer (merging pairs of lists) is another valid approach that achieves O(N log K) time with O(1) auxiliary space."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "median-data-stream": {
+    "id": "median-data-stream",
+    "introduction": "The median is the middle value in an ordered integer list. Design a data structure that supports adding numbers from a data stream and finding the median at any time.",
+    "intuition": "Maintain the lower half of numbers in a Max-Heap, and the upper half in a Min-Heap. The median is either the top of the larger heap, or the average of the two tops.",
+    "walkthrough": [
+      { "phase": "Add Number", "description": "Always push to the Max-Heap (lower half) first. Then, pop its max and push it to the Min-Heap (upper half)." },
+      { "phase": "Balance", "description": "If the Min-Heap becomes larger than the Max-Heap, pop its min and push it back to the Max-Heap." },
+      { "phase": "Find Median", "description": "If sizes are equal, average the tops. Otherwise, return the top of the Max-Heap." }
+    ],
+    "dryRun": {
+      "input": "Add 1, Add 2, Find, Add 3, Find",
+      "output": "1.5, 2",
+      "steps": [
+        "Add 1: MaxH:[1], MinH:[]. Median = 1",
+        "Add 2: Push 2 to MaxH:[1,2]. Move max to MinH:[2]. MaxH:[1]. Median = (1+2)/2 = 1.5",
+        "Add 3: Push 3 to MaxH:[1,3]. Move max to MinH:[2,3]. MinH is larger, move min to MaxH. MaxH:[1,2], MinH:[3]. Median = 2."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(log N)", "average": "O(log N)", "worst": "O(log N)" },
+      "space": "O(N)",
+      "analysis": "Adding a number requires 2 or 3 heap operations (O(log N)). Finding the median is O(1)."
+    },
+    "code": {
+      "cpp": "class MedianFinder {\n    priority_queue<int> lo;                              // max heap\n    priority_queue<int, vector<int>, greater<int>> hi;   // min heap\npublic:\n    void addNum(int num) {\n        lo.push(num);\n        hi.push(lo.top());\n        lo.pop();\n        if (lo.size() < hi.size()) {\n            lo.push(hi.top());\n            hi.pop();\n        }\n    }\n    double findMedian() {\n        return lo.size() > hi.size() ? lo.top() : ((double)lo.top() + hi.top()) * 0.5;\n    }\n};",
+      "java": "// Code omitted.",
+      "python": "# Code omitted.",
+      "javascript": "// Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Trying to maintain a sorted array. Insertion into a sorted array is O(N)."],
+      "edgeCases": ["Negative numbers (if using arrays as proxy heaps in Python, remember to negate values properly for max heap)."],
+      "tips": ["This is one of the most frequently asked Hard problems. Memorize the balancing logic."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}

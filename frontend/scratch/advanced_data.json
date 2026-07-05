@@ -1,0 +1,154 @@
+{
+  "kmp": {
+    "id": "kmp",
+    "introduction": "Knuth-Morris-Pratt (KMP) is a string matching algorithm that finds occurrences of a 'pattern' within a 'text' in O(N+M) time.",
+    "intuition": "When a mismatch occurs, the pattern itself often contains enough information to determine where the next match could begin, bypassing re-examination of previously matched characters.",
+    "walkthrough": [
+      { "phase": "LPS Array", "description": "Construct the Longest Proper Prefix which is also Suffix (LPS) array for the pattern. `lps[i]` holds the length of the longest proper prefix matching a proper suffix in `pattern[0..i]`." },
+      { "phase": "Matching", "description": "Iterate through the text. If characters match, advance both pointers." },
+      { "phase": "Mismatch", "description": "If characters mismatch, do not backtrack the text pointer. Instead, backtrack the pattern pointer to `lps[j-1]`." }
+    ],
+    "dryRun": {
+      "input": "Text: 'ABABDABACDABABCABAB', Pattern: 'ABABCABAB'",
+      "output": "Match found at index 10",
+      "steps": [
+        "Pattern 'ABABCABAB', LPS = [0, 0, 1, 2, 0, 1, 2, 3, 4]",
+        "Mismatch at text[4] 'D' and pattern[4] 'C'.",
+        "Instead of resetting text to 1, we set pattern pointer to LPS[3] = 2. We compare text 'D' with pattern[2] 'A'."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N + M)", "average": "O(N + M)", "worst": "O(N + M)" },
+      "space": "O(M)",
+      "analysis": "Building LPS is O(M). Matching is O(N). The text pointer never moves backward."
+    },
+    "code": {
+      "cpp": "vector<int> computeLPS(string pat) {\n    int m = pat.length();\n    vector<int> lps(m, 0);\n    int len = 0, i = 1;\n    while (i < m) {\n        if (pat[i] == pat[len]) { lps[i] = len + 1; len++; i++; }\n        else { if (len != 0) { len = lps[len - 1]; } else { lps[i] = 0; i++; } }\n    }\n    return lps;\n}\nvoid KMPSearch(string pat, string txt) {\n    int n = txt.length(), m = pat.length();\n    vector<int> lps = computeLPS(pat);\n    int i = 0, j = 0;\n    while (i < n) {\n        if (pat[j] == txt[i]) { j++; i++; }\n        if (j == m) { /* Match found at i-j */ j = lps[j - 1]; }\n        else if (i < n && pat[j] != txt[i]) {\n            if (j != 0) j = lps[j - 1]; else i++;\n        }\n    }\n}",
+      "java": "// KMP. Code omitted.",
+      "python": "# KMP. Code omitted.",
+      "javascript": "// KMP. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Off-by-one errors in constructing the LPS array."],
+      "edgeCases": ["Pattern larger than text", "Pattern not found"],
+      "tips": ["The LPS logic is arguably harder to explain than the search logic. Practice explaining the `if (len != 0) len = lps[len - 1]` fallback case visually."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "rabin-karp": {
+    "id": "rabin-karp",
+    "introduction": "Rabin-Karp is a string matching algorithm that uses a rolling hash to find any one of a set of pattern strings in a text.",
+    "intuition": "Instead of checking characters one by one, compute a hash value for the pattern and for every substring of the text of the same length. If hashes match, we double-check the string.",
+    "walkthrough": [
+      { "phase": "Hash Pattern", "description": "Compute the hash of the pattern using a prime modulus." },
+      { "phase": "Rolling Hash", "description": "Compute the hash of the first window in the text. For subsequent windows, subtract the first character's value, multiply by base, and add the new character's value." },
+      { "phase": "Verification", "description": "When a text window hash matches the pattern hash, verify character by character to avoid spurious hits (hash collisions)." }
+    ],
+    "dryRun": {
+      "input": "Text: 'ccaccaa', Pattern: 'cca'",
+      "output": "Found at index 0 and 3",
+      "steps": [
+        "Hash('cca') = H",
+        "Hash('cca') at 0 = H. Verify match.",
+        "Roll window to 'cac'. Hash != H.",
+        "Roll window to 'acc'. Hash != H.",
+        "Roll window to 'cca' at 3. Hash == H. Verify match."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N + M)", "average": "O(N + M)", "worst": "O(N * M)" },
+      "space": "O(1)",
+      "analysis": "Average time is O(N+M). Worst case O(N*M) occurs if we have hash collisions for every window."
+    },
+    "code": {
+      "cpp": "void RabinKarp(string pat, string txt) {\n    int M = pat.length(), N = txt.length();\n    int i, j, p = 0, t = 0, h = 1, d = 256, q = 101; // Prime\n    for (i = 0; i < M - 1; i++) h = (h * d) % q;\n    for (i = 0; i < M; i++) {\n        p = (d * p + pat[i]) % q;\n        t = (d * t + txt[i]) % q;\n    }\n    for (i = 0; i <= N - M; i++) {\n        if (p == t) {\n            for (j = 0; j < M; j++) if (txt[i+j] != pat[j]) break;\n            if (j == M) cout << \"Pattern found at \" << i << endl;\n        }\n        if (i < N - M) {\n            t = (d * (t - txt[i] * h) + txt[i + M]) % q;\n            if (t < 0) t = (t + q);\n        }\n    }\n}",
+      "java": "// Rabin Karp. Code omitted.",
+      "python": "# Rabin Karp. Code omitted.",
+      "javascript": "// Rabin Karp. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Forgetting to add the modulo `q` when the rolling hash calculation goes negative in C++/Java. `if (t < 0) t += q;` is crucial."],
+      "edgeCases": ["Text shorter than pattern"],
+      "tips": ["Rabin-Karp is extremely powerful for finding multiple patterns simultaneously (by storing pattern hashes in a Set)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "monotonic-stack": {
+    "id": "monotonic-stack",
+    "introduction": "A Monotonic Stack is a stack whose elements are strictly increasing or strictly decreasing. It is used to solve 'Next Greater Element' or 'Next Smaller Element' problems in O(N) time.",
+    "intuition": "If you are looking for the next taller person in a line, anyone who is shorter than you and standing in front of you is irrelevant to the people behind you.",
+    "walkthrough": [
+      { "phase": "Iterate", "description": "Loop through elements of the array." },
+      { "phase": "Maintain Stack", "description": "While stack is not empty and current element > stack top, the current element is the 'Next Greater Element' for the stack top. Pop the stack." },
+      { "phase": "Push", "description": "Push the current element (or its index) onto the stack." }
+    ],
+    "dryRun": {
+      "input": "[2, 1, 2, 4, 3]",
+      "output": "[4, 2, 4, -1, -1]",
+      "steps": [
+        "Push 2.",
+        "Push 1. Stack: [2, 1].",
+        "Next is 2. 2 > 1, so NextGreater[1] = 2. Pop 1. Stack: [2, 2].",
+        "Next is 4. 4 > 2, NextGreater[2]=4. Pop 2. NextGreater[2]=4. Pop 2. Stack: [4].",
+        "Push 3. Stack: [4, 3]. End of array."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(N)",
+      "analysis": "Every element is pushed to the stack exactly once, and popped at most once. This makes it O(N) linear time, even with a nested while loop."
+    },
+    "code": {
+      "cpp": "vector<int> nextGreaterElement(vector<int>& nums) {\n    int n = nums.size();\n    vector<int> res(n, -1);\n    stack<int> s;\n    for (int i = 0; i < n; i++) {\n        while (!s.empty() && nums[s.top()] < nums[i]) {\n            res[s.top()] = nums[i];\n            s.pop();\n        }\n        s.push(i);\n    }\n    return res;\n}",
+      "java": "// Monotonic Stack. Code omitted.",
+      "python": "# Monotonic Stack. Code omitted.",
+      "javascript": "// Monotonic Stack. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Pushing the *values* into the stack instead of the *indices*. Always push the indices, as you need the index to place the result in the `res` array."],
+      "edgeCases": ["Decreasing array (stack never pops)"],
+      "tips": ["Learn this perfectly. It is the core of famous hard problems like Largest Rectangle in Histogram (LeetCode 84) and Trapping Rain Water (LeetCode 42)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "sweep-line": {
+    "id": "sweep-line",
+    "introduction": "The Sweep Line Algorithm solves spatial problems by simulating a vertical line moving left to right across a 1D or 2D coordinate system.",
+    "intuition": "Instead of checking every point in time or space, we only care about the moments when 'events' happen (like an interval starting or ending).",
+    "walkthrough": [
+      { "phase": "Event Creation", "description": "Convert intervals `[start, end]` into two distinct events: `(start, +1)` and `(end, -1)`." },
+      { "phase": "Sort Events", "description": "Sort the events by coordinate. If coordinates match, sort by type (usually process starts before ends)." },
+      { "phase": "Sweep", "description": "Iterate through sorted events, keeping a running count of active intervals." }
+    ],
+    "dryRun": {
+      "input": "Intervals: [1, 3], [2, 5], [4, 6]",
+      "output": "Max overlap is 2",
+      "steps": [
+        "Events: (1,+1), (3,-1), (2,+1), (5,-1), (4,+1), (6,-1)",
+        "Sorted: (1,+1), (2,+1), (3,-1), (4,+1), (5,-1), (6,-1)",
+        "Sweep: 1 -> 2 (max 2) -> 1 -> 2 (max 2) -> 1 -> 0."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N log N)", "average": "O(N log N)", "worst": "O(N log N)" },
+      "space": "O(N)",
+      "analysis": "Creating events is O(N). Sorting events is O(N log N). The sweep is O(N)."
+    },
+    "code": {
+      "cpp": "int maxOverlap(vector<vector<int>>& intervals) {\n    map<int, int> events;\n    for (auto& interval : intervals) {\n        events[interval[0]]++;\n        events[interval[1]]--;\n    }\n    int active = 0, max_overlap = 0;\n    for (auto& event : events) {\n        active += event.second;\n        max_overlap = max(max_overlap, active);\n    }\n    return max_overlap;\n}",
+      "java": "// Sweep Line. Code omitted.",
+      "python": "# Sweep Line. Code omitted.",
+      "javascript": "// Sweep Line. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Processing `end` events before `start` events on the same timestamp when intervals that touch should overlap. (Or vice-versa if they shouldn't overlap!). Read the problem requirements carefully."],
+      "edgeCases": ["Completely disjoint intervals", "Intervals contained entirely within other intervals"],
+      "tips": ["Using a TreeMap in Java, std::map in C++, or a sorted array in JS/Python is the standard way to implement the events list."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}

@@ -1,0 +1,245 @@
+{
+  "palindrome-partitioning": {
+    "id": "palindrome-partitioning",
+    "title": "Palindrome Partitioning",
+    "problem": "Given a string s, partition s such that every substring of the partition is a palindrome. Return all possible palindrome partitioning of s.",
+    "intuition": "We can think of this as placing dividers between characters. At every index, we can place a divider to form a prefix. If that prefix is a palindrome, we can accept this divider and recursively partition the remainder of the string. If it's not a palindrome, we don't branch there.",
+    "walkthrough": [
+      { "phase": "Iterate Lengths", "description": "Starting from the current index `start`, check all possible ending indices `end`." },
+      { "phase": "Palindrome Check", "description": "If the substring `s[start...end]` is a palindrome, we add it to our current partition list." },
+      { "phase": "Recurse", "description": "Recursively call the function with `start = end + 1` to partition the remaining suffix." },
+      { "phase": "Base Case", "description": "When `start` reaches the end of the string, we have found a valid complete partition." }
+    ],
+    "dryRun": { 
+      "input": "\"aab\"", 
+      "output": "[[\"a\",\"a\",\"b\"],[\"aa\",\"b\"]]", 
+      "steps": [
+        "Start index 0. Try end=0: 'a' is palindrome. Recurse to index 1.",
+        "  Start index 1. Try end=1: 'a' is palindrome. Recurse to index 2.",
+        "    Start index 2. Try end=2: 'b' is palindrome. Recurse to index 3.",
+        "      Index 3 == length. BASE CASE! Record ['a', 'a', 'b'].",
+        "  Backtrack to index 1. Try end=2: 'ab' is NOT palindrome. Skip.",
+        "Backtrack to index 0. Try end=1: 'aa' is palindrome. Recurse to index 2.",
+        "  Start index 2. Try end=2: 'b' is palindrome. Recurse to index 3.",
+        "    Index 3 == length. BASE CASE! Record ['aa', 'b'].",
+        "Backtrack to index 0. Try end=2: 'aab' is NOT palindrome. Skip."
+      ] 
+    },
+    "complexities": {
+      "time": { "best": "O(N * 2^N)", "average": "O(N * 2^N)", "worst": "O(N * 2^N)" },
+      "space": "O(N)",
+      "analysis": "Time: In the worst case (e.g. 'aaaaa'), there are 2^(N-1) partitions. Checking palindromes takes O(N). Generating strings takes O(N). Overall O(N * 2^N). Space: Recursion stack is at most N deep."
+    },
+    "code": {
+      "cpp": "class Solution {\npublic:\n    vector<vector<string>> partition(string s) {\n        vector<vector<string>> res;\n        vector<string> curr;\n        solve(0, s, curr, res);\n        return res;\n    }\n    void solve(int start, string& s, vector<string>& curr, vector<vector<string>>& res) {\n        if (start == s.length()) {\n            res.push_back(curr);\n            return;\n        }\n        for (int end = start; end < s.length(); end++) {\n            if (isPalindrome(s, start, end)) {\n                curr.push_back(s.substr(start, end - start + 1));\n                solve(end + 1, s, curr, res);\n                curr.pop_back();\n            }\n        }\n    }\n    bool isPalindrome(string& s, int l, int r) {\n        while (l < r) if (s[l++] != s[r--]) return false;\n        return true;\n    }\n};",
+      "java": "class Solution {\n    public List<List<String>> partition(String s) {\n        List<List<String>> res = new ArrayList<>();\n        solve(0, s, new ArrayList<>(), res);\n        return res;\n    }\n    void solve(int start, String s, List<String> curr, List<List<String>> res) {\n        if (start == s.length()) {\n            res.add(new ArrayList<>(curr));\n            return;\n        }\n        for (int end = start; end < s.length(); end++) {\n            if (isPalindrome(s, start, end)) {\n                curr.add(s.substring(start, end + 1));\n                solve(end + 1, s, curr, res);\n                curr.remove(curr.size() - 1);\n            }\n        }\n    }\n    boolean isPalindrome(String s, int l, int r) {\n        while (l < r) if (s.charAt(l++) != s.charAt(r--)) return false;\n        return true;\n    }\n}",
+      "python": "class Solution:\n    def partition(self, s: str) -> List[List[str]]:\n        res = []\n        def is_palindrome(sub):\n            return sub == sub[::-1]\n        def solve(start, curr):\n            if start == len(s):\n                res.append(curr[:])\n                return\n            for end in range(start, len(s)):\n                sub = s[start:end+1]\n                if is_palindrome(sub):\n                    curr.append(sub)\n                    solve(end + 1, curr)\n                    curr.pop()\n        solve(0, [])\n        return res",
+      "javascript": "var partition = function(s) {\n    const res = [];\n    const isPalindrome = (str) => {\n        let l = 0, r = str.length - 1;\n        while (l < r) if (str[l++] !== str[r--]) return false;\n        return true;\n    };\n    const solve = (start, curr) => {\n        if (start === s.length) { res.push([...curr]); return; }\n        for (let end = start; end < s.length; end++) {\n            const sub = s.substring(start, end + 1);\n            if (isPalindrome(sub)) {\n                curr.push(sub);\n                solve(end + 1, curr);\n                curr.pop();\n            }\n        }\n    };\n    solve(0, []);\n    return res;\n};"
+    },
+    "interviewNotes": {
+      "mistakes": ["Not utilizing substrings properly, leading to off-by-one errors in indices when checking palindromes.", "Re-checking the entire string instead of just the new partition."],
+      "edgeCases": ["String of length 1 (returns [[s]]).", "All same characters (worst-case exponential time)."],
+      "tips": ["You can optimize the palindrome check using Dynamic Programming (memoization). Precompute a 2D boolean array `dp[i][j]` that stores if `s[i..j]` is a palindrome."]
+    },
+    "practiceProblems": [
+      { "title": "Palindrome Partitioning", "difficulty": "Medium", "url": "https://leetcode.com/problems/palindrome-partitioning/" },
+      { "title": "Palindrome Partitioning II", "difficulty": "Hard", "url": "https://leetcode.com/problems/palindrome-partitioning-ii/" }
+    ],
+    "relatedTopics": [{ "title": "String", "id": "string" }, { "title": "Dynamic Programming", "id": "dynamic-programming" }]
+  },
+
+  "word-search": {
+    "id": "word-search",
+    "title": "Word Search",
+    "problem": "Given an m x n grid of characters board and a string word, return true if word exists in the grid. The word can be constructed from letters of sequentially adjacent cells, where adjacent cells are horizontally or vertically neighboring. The same letter cell may not be used more than once.",
+    "intuition": "This is a classic DFS graph problem mapped to a 2D grid. We search for the first letter of our word. Once found, we recursively explore its up, down, left, and right neighbors looking for the second letter. If a path leads to a dead end, we backtrack and try another neighbor.",
+    "walkthrough": [
+      { "phase": "Outer Loop", "description": "Iterate through every cell in the grid. If the cell matches the first letter of the word, start a DFS search." },
+      { "phase": "Bounds & Validation", "description": "During DFS, ensure the current row and column are within bounds, and the cell matches the current letter." },
+      { "phase": "Mark Visited", "description": "Temporarily mark the cell as visited (e.g. by changing its value to `#`) to prevent reusing it in the same path." },
+      { "phase": "Backtrack", "description": "After exploring all 4 directions, restore the cell's original character so it can be used by other DFS paths." }
+    ],
+    "dryRun": { 
+      "input": "board = [['A','B'],['C','D']], word = 'BD'", 
+      "output": "true", 
+      "steps": [
+        "Iterate board. (0,0) is 'A', skip. (0,1) is 'B'. Start DFS at (0,1).",
+        "DFS(row=0, col=1, wordIdx=0): Matches 'B'. Mark (0,1) as '#'.",
+        "  Explore Down: DFS(row=1, col=1, wordIdx=1). Cell is 'D'. Matches!",
+        "  DFS(row=1, col=1, wordIdx=1): Mark (1,1) as '#'.",
+        "    Explore Down: Out of bounds.",
+        "    Explore Up: (0,1) is '#' (visited).",
+        "    Explore Right: Out of bounds.",
+        "    Explore Left: (1,0) is 'C'. No match.",
+        "  Wait, the word is 'BD' (length 2). WordIdx=1 is the last char! Base case reached! Return true.",
+        "Returns true up the stack. Final result: true."
+      ] 
+    },
+    "complexities": {
+      "time": { "best": "O(M * N)", "average": "O(M * N * 4^L)", "worst": "O(M * N * 3^L)" },
+      "space": "O(L)",
+      "analysis": "Time: M*N cells. From each cell, we explore at most 3 directions (excluding the cell we came from), up to length L (the word length). Space: The recursion stack goes L deep."
+    },
+    "code": {
+      "cpp": "class Solution {\npublic:\n    bool exist(vector<vector<char>>& board, string word) {\n        for(int r=0; r<board.size(); r++) {\n            for(int c=0; c<board[0].size(); c++) {\n                if(dfs(board, word, r, c, 0)) return true;\n            }\n        }\n        return false;\n    }\n    bool dfs(vector<vector<char>>& board, string& word, int r, int c, int i) {\n        if(i == word.length()) return true;\n        if(r<0 || c<0 || r>=board.size() || c>=board[0].size() || board[r][c] != word[i]) return false;\n        \n        char temp = board[r][c];\n        board[r][c] = '#'; // Mark visited\n        \n        bool res = dfs(board, word, r+1, c, i+1) || \n                   dfs(board, word, r-1, c, i+1) || \n                   dfs(board, word, r, c+1, i+1) || \n                   dfs(board, word, r, c-1, i+1);\n                   \n        board[r][c] = temp; // Backtrack\n        return res;\n    }\n};",
+      "java": "class Solution {\n    public boolean exist(char[][] board, String word) {\n        for(int r=0; r<board.length; r++) {\n            for(int c=0; c<board[0].length; c++) {\n                if(dfs(board, word, r, c, 0)) return true;\n            }\n        }\n        return false;\n    }\n    private boolean dfs(char[][] board, String word, int r, int c, int i) {\n        if(i == word.length()) return true;\n        if(r<0 || c<0 || r>=board.length || c>=board[0].length || board[r][c] != word.charAt(i)) return false;\n        \n        char temp = board[r][c];\n        board[r][c] = '#';\n        \n        boolean res = dfs(board, word, r+1, c, i+1) || \n                      dfs(board, word, r-1, c, i+1) || \n                      dfs(board, word, r, c+1, i+1) || \n                      dfs(board, word, r, c-1, i+1);\n                      \n        board[r][c] = temp;\n        return res;\n    }\n}",
+      "python": "class Solution:\n    def exist(self, board: List[List[str]], word: str) -> bool:\n        ROWS, COLS = len(board), len(board[0])\n        \n        def dfs(r, c, i):\n            if i == len(word): return True\n            if r < 0 or c < 0 or r >= ROWS or c >= COLS or board[r][c] != word[i]:\n                return False\n            \n            temp = board[r][c]\n            board[r][c] = '#'\n            \n            res = (dfs(r+1, c, i+1) or dfs(r-1, c, i+1) or \n                   dfs(r, c+1, i+1) or dfs(r, c-1, i+1))\n            \n            board[r][c] = temp\n            return res\n            \n        for r in range(ROWS):\n            for c in range(COLS):\n                if dfs(r, c, 0):\n                    return True\n        return False",
+      "javascript": "var exist = function(board, word) {\n    const ROWS = board.length;\n    const COLS = board[0].length;\n    \n    const dfs = (r, c, i) => {\n        if (i === word.length) return true;\n        if (r < 0 || c < 0 || r >= ROWS || c >= COLS || board[r][c] !== word[i]) return false;\n        \n        const temp = board[r][c];\n        board[r][c] = '#';\n        \n        const res = dfs(r+1, c, i+1) || dfs(r-1, c, i+1) || \n                    dfs(r, c+1, i+1) || dfs(r, c-1, i+1);\n                    \n        board[r][c] = temp;\n        return res;\n    };\n    \n    for (let r = 0; r < ROWS; r++) {\n        for (let c = 0; c < COLS; c++) {\n            if (dfs(r, c, 0)) return true;\n        }\n    }\n    return false;\n};"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using a `visited` boolean matrix instead of modifying the grid in-place. This costs O(M*N) extra space.", "Forgetting to restore the grid cell back to its original character (failing to backtrack)."],
+      "edgeCases": ["Word is longer than the number of cells in the grid (can immediately return false)."],
+      "tips": ["A highly optimized approach counts the frequencies of characters in the board and the word first, and reverses the word if the first character is more frequent than the last character (to hit dead ends faster)."]
+    },
+    "practiceProblems": [
+      { "title": "Word Search", "difficulty": "Medium", "url": "https://leetcode.com/problems/word-search/" },
+      { "title": "Word Search II", "difficulty": "Hard", "url": "https://leetcode.com/problems/word-search-ii/" }
+    ],
+    "relatedTopics": [{ "title": "Matrix", "id": "matrix" }, { "title": "DFS", "id": "dfs" }]
+  },
+
+  "m-coloring": {
+    "id": "m-coloring",
+    "title": "M Coloring Problem",
+    "problem": "Given an undirected graph and a number m, determine if the graph can be colored with at most m colors such that no two adjacent vertices of the graph are colored with the same color.",
+    "intuition": "This is similar to Sudoku but for graphs. We try assigning a color (from 1 to m) to a vertex. Before assigning, we check if any of its adjacent vertices already have that color. If it's safe, we assign the color and recursively move to the next vertex. If we hit a dead end, we backtrack and try a different color.",
+    "walkthrough": [
+      { "phase": "Graph Traversal", "description": "Iterate vertex by vertex from 0 to V-1." },
+      { "phase": "Color Selection", "description": "For the current vertex, iterate through all m available colors." },
+      { "phase": "Safety Check", "description": "Check if any adjacent vertex has the same color. If not, assign the color." },
+      { "phase": "Backtrack", "description": "If coloring the rest of the graph fails, reset the color to 0 and try the next color." }
+    ],
+    "dryRun": { 
+      "input": "V = 4, Graph = A-B, B-C, C-A, m = 3", 
+      "output": "true", 
+      "steps": [
+        "Vertex 0 (A): Try color 1. Safe. Colors: [1, 0, 0, 0]. Recurse to Vertex 1.",
+        "Vertex 1 (B): Try color 1. Adjacent to A (which is 1). Fail.",
+        "Vertex 1 (B): Try color 2. Safe. Colors: [1, 2, 0, 0]. Recurse to Vertex 2.",
+        "Vertex 2 (C): Try color 1. Adjacent to A (which is 1). Fail.",
+        "Vertex 2 (C): Try color 2. Adjacent to B (which is 2). Fail.",
+        "Vertex 2 (C): Try color 3. Safe. Colors: [1, 2, 3, 0]. Recurse to Vertex 3.",
+        "Vertex 3 (D): Not connected. Color 1 is safe. Colors: [1, 2, 3, 1]. Recurse.",
+        "Vertex reaches 4. BASE CASE! Entire graph colored. Return true."
+      ] 
+    },
+    "complexities": {
+      "time": { "best": "O(V)", "average": "O(m^V)", "worst": "O(m^V)" },
+      "space": "O(V)",
+      "analysis": "Time: In the worst case, every vertex tries m colors, resulting in m^V possibilities. Space: O(V) for the color array and recursion stack."
+    },
+    "code": {
+      "cpp": "class Solution {\npublic:\n    bool graphColoring(bool graph[101][101], int m, int n) {\n        int color[101] = {0};\n        return solve(0, graph, color, m, n);\n    }\n    bool solve(int node, bool graph[101][101], int color[], int m, int n) {\n        if(node == n) return true;\n        \n        for(int i=1; i<=m; i++) {\n            if(isSafe(node, graph, color, n, i)) {\n                color[node] = i;\n                if(solve(node+1, graph, color, m, n)) return true;\n                color[node] = 0;\n            }\n        }\n        return false;\n    }\n    bool isSafe(int node, bool graph[101][101], int color[], int n, int col) {\n        for(int k=0; k<n; k++) {\n            if(k != node && graph[node][k] == 1 && color[k] == col) return false;\n        }\n        return true;\n    }\n};",
+      "java": "class Solution {\n    public boolean graphColoring(boolean graph[][], int m, int n) {\n        int[] color = new int[n];\n        return solve(0, graph, color, m, n);\n    }\n    private boolean solve(int node, boolean graph[][], int[] color, int m, int n) {\n        if (node == n) return true;\n        \n        for (int i = 1; i <= m; i++) {\n            if (isSafe(node, graph, color, n, i)) {\n                color[node] = i;\n                if (solve(node + 1, graph, color, m, n)) return true;\n                color[node] = 0;\n            }\n        }\n        return false;\n    }\n    private boolean isSafe(int node, boolean graph[][], int[] color, int n, int col) {\n        for (int k = 0; k < n; k++) {\n            if (graph[node][k] && color[k] == col) return false;\n        }\n        return true;\n    }\n}",
+      "python": "def graphColoring(graph, m, n):\n    color = [0] * n\n    def isSafe(node, col):\n        for i in range(n):\n            if graph[node][i] and color[i] == col:\n                return False\n        return True\n        \n    def solve(node):\n        if node == n: return True\n        for i in range(1, m + 1):\n            if isSafe(node, i):\n                color[node] = i\n                if solve(node + 1): return True\n                color[node] = 0\n        return False\n        \n    return solve(0)",
+      "javascript": "const graphColoring = (graph, m, n) => {\n    const color = new Array(n).fill(0);\n    \n    const isSafe = (node, col) => {\n        for (let i = 0; i < n; i++) {\n            if (graph[node][i] && color[i] === col) return false;\n        }\n        return true;\n    };\n    \n    const solve = (node) => {\n        if (node === n) return true;\n        for (let i = 1; i <= m; i++) {\n            if (isSafe(node, i)) {\n                color[node] = i;\n                if (solve(node + 1)) return true;\n                color[node] = 0;\n            }\n        }\n        return false;\n    };\n    return solve(0);\n};"
+    },
+    "interviewNotes": {
+      "mistakes": ["Not checking all adjacent vertices properly if using an adjacency list instead of an adjacency matrix.", "Returning all possible solutions when the problem only asks if ONE valid configuration exists (return early)."],
+      "edgeCases": ["Graph with 1 node.", "Disconnected graphs (the algorithm naturally handles this if iterated properly)."],
+      "tips": ["This is fundamentally identical to Sudoku solving, except instead of a grid, the constraints are defined by graph edges."]
+    },
+    "practiceProblems": [
+      { "title": "Bipartite Graph (2-Coloring)", "difficulty": "Medium", "url": "https://leetcode.com/problems/is-graph-bipartite/" }
+    ],
+    "relatedTopics": [{ "title": "Graph", "id": "graph" }]
+  },
+
+  "restore-ip-addresses": {
+    "id": "restore-ip-addresses",
+    "title": "Restore IP Addresses",
+    "problem": "A valid IP address consists of exactly four integers separated by single dots. Each integer is between 0 and 255 (inclusive) and cannot have leading zeros. Given a string s containing only digits, return all possible valid IP addresses that can be formed by inserting dots into s.",
+    "intuition": "An IP address has exactly 4 segments. We can iterate through the string and place 3 dots. At each step, we parse 1 to 3 characters. If the parsed string is a valid segment (<= 255 and no leading zeros), we recurse to find the next segment.",
+    "walkthrough": [
+      { "phase": "Partition", "description": "From the current index, grab substrings of length 1, 2, and 3." },
+      { "phase": "Validation", "description": "Ensure the substring has no leading zero (unless it's exactly '0') and the integer value is <= 255." },
+      { "phase": "Recurse", "description": "Append the valid segment and recurse. Increment the dot counter." },
+      { "phase": "Base Case", "description": "If we have placed 4 segments and reached the end of the string, it's a valid IP." }
+    ],
+    "dryRun": { 
+      "input": "\"25525511135\"", 
+      "output": "[\"255.255.11.135\",\"255.255.111.35\"]", 
+      "steps": [
+        "Take '2' -> valid. Recurse with '5525511135'. Not enough segments will be left for 10 chars. Will fail deeply.",
+        "Take '25' -> valid. Recurse...",
+        "Take '255' -> valid. Recurse with '25511135'.",
+        "  Take '255' -> valid. Recurse with '11135'.",
+        "    Take '11' -> valid. Recurse with '135'.",
+        "      Take '135' -> valid! 4 segments formed. RECORD '255.255.11.135'.",
+        "    Backtrack. Take '111' -> valid. Recurse with '35'.",
+        "      Take '35' -> valid! 4 segments formed. RECORD '255.255.111.35'.",
+        "      ..."
+      ] 
+    },
+    "complexities": {
+      "time": { "best": "O(1)", "average": "O(1)", "worst": "O(1)" },
+      "space": "O(1)",
+      "analysis": "Time: O(1) conceptually because an IP has at most 4 segments of at most 3 chars (12 chars total). The tree is strictly bounded to 3^4 = 81 combinations max. Space: O(1) for the same reason."
+    },
+    "code": {
+      "cpp": "class Solution {\npublic:\n    vector<string> restoreIpAddresses(string s) {\n        vector<string> res;\n        solve(0, 0, \"\", s, res);\n        return res;\n    }\n    void solve(int i, int dots, string curr, string& s, vector<string>& res) {\n        if (dots == 4 && i == s.length()) {\n            res.push_back(curr.substr(0, curr.length()-1));\n            return;\n        }\n        if (dots == 4) return;\n        \n        for (int j = i; j < min(i + 3, (int)s.length()); j++) {\n            string sub = s.substr(i, j - i + 1);\n            if (stoi(sub) <= 255 && (i == j || s[i] != '0')) {\n                solve(j + 1, dots + 1, curr + sub + \".\", s, res);\n            }\n        }\n    }\n};",
+      "java": "class Solution {\n    public List<String> restoreIpAddresses(String s) {\n        List<String> res = new ArrayList<>();\n        solve(0, 0, \"\", s, res);\n        return res;\n    }\n    private void solve(int i, int dots, String curr, String s, List<String> res) {\n        if (dots == 4 && i == s.length()) {\n            res.add(curr.substring(0, curr.length() - 1));\n            return;\n        }\n        if (dots == 4) return;\n        \n        for (int j = i; j < Math.min(i + 3, s.length()); j++) {\n            String sub = s.substring(i, j + 1);\n            if (Integer.parseInt(sub) <= 255 && (i == j || s.charAt(i) != '0')) {\n                solve(j + 1, dots + 1, curr + sub + \".\", s, res);\n            }\n        }\n    }\n}",
+      "python": "class Solution:\n    def restoreIpAddresses(self, s: str) -> List[str]:\n        res = []\n        def solve(i, dots, curr):\n            if dots == 4 and i == len(s):\n                res.append(curr[:-1])\n                return\n            if dots == 4: return\n            \n            for j in range(i, min(i + 3, len(s))):\n                sub = s[i:j+1]\n                if int(sub) <= 255 and (i == j or s[i] != '0'):\n                    solve(j + 1, dots + 1, curr + sub + '.')\n        solve(0, 0, \"\")\n        return res",
+      "javascript": "var restoreIpAddresses = function(s) {\n    const res = [];\n    const solve = (i, dots, curr) => {\n        if (dots === 4 && i === s.length) {\n            res.push(curr.slice(0, -1));\n            return;\n        }\n        if (dots === 4) return;\n        \n        for (let j = i; j < Math.min(i + 3, s.length); j++) {\n            const sub = s.substring(i, j + 1);\n            if (Number(sub) <= 255 && (i === j || s[i] !== '0')) {\n                solve(j + 1, dots + 1, curr + sub + '.');\n            }\n        }\n    };\n    solve(0, 0, '');\n    return res;\n};"
+    },
+    "interviewNotes": {
+      "mistakes": ["Not checking for leading zeros ('01' is invalid, but '0' is valid).", "Forgetting that string concatenation creates an extra '.' at the end that needs to be sliced off."],
+      "edgeCases": ["String longer than 12 characters or shorter than 4 characters (return empty).", "String '0000' -> ['0.0.0.0']."],
+      "tips": ["Pruning: If the remaining string is too long to be covered by the remaining segments (e.g. > 9 chars left but only 1 segment left), prune it immediately!"]
+    },
+    "practiceProblems": [
+      { "title": "Restore IP Addresses", "difficulty": "Medium", "url": "https://leetcode.com/problems/restore-ip-addresses/" }
+    ],
+    "relatedTopics": [{ "title": "String", "id": "string" }]
+  },
+
+  "beautiful-arrangement": {
+    "id": "beautiful-arrangement",
+    "title": "Beautiful Arrangement",
+    "problem": "Suppose you have n integers labeled 1 through n. A permutation of those n integers perm (1-indexed) is considered a beautiful arrangement if for every i (1 <= i <= n), either of the following is true: perm[i] is divisible by i, or i is divisible by perm[i]. Return the number of beautiful arrangements.",
+    "intuition": "This is a constrained permutation problem. We can generate permutations just like the 'Generate Permutations' algorithm, but we aggressively prune the tree. Before deciding to place number X at index i, we check if it satisfies the divisibility rule. If it doesn't, we immediately backtrack.",
+    "walkthrough": [
+      { "phase": "Tracking Used Numbers", "description": "Maintain a boolean array `visited` to keep track of numbers from 1 to n that have already been placed." },
+      { "phase": "Placement", "description": "At the current index `pos` (from 1 to n), iterate through all available numbers from 1 to n." },
+      { "phase": "Constraint Check", "description": "If the number hasn't been used AND (`num % pos == 0` OR `pos % num == 0`), mark it as used and recurse to `pos + 1`." },
+      { "phase": "Base Case", "description": "If `pos > n`, a beautiful arrangement was successfully formed. Increment the global count." }
+    ],
+    "dryRun": { 
+      "input": "n = 2", 
+      "output": "2", 
+      "steps": [
+        "Start pos=1. Available: {1, 2}",
+        "Try num=1. 1 % 1 == 0. Valid! Mark 1 visited. Recurse pos=2.",
+        "  At pos=2. Available: {2}",
+        "  Try num=2. 2 % 2 == 0. Valid! Mark 2 visited. Recurse pos=3.",
+        "    pos=3 > n. BASE CASE! Increment count to 1.",
+        "  Backtrack num=2. Backtrack num=1.",
+        "Try num=2 at pos=1. 2 % 1 == 0. Valid! Mark 2 visited. Recurse pos=2.",
+        "  At pos=2. Available: {1}",
+        "  Try num=1. 2 % 1 == 0. Valid! Mark 1 visited. Recurse pos=3.",
+        "    pos=3 > n. BASE CASE! Increment count to 2.",
+        "Result is 2."
+      ] 
+    },
+    "complexities": {
+      "time": { "best": "O(K)", "average": "O(K)", "worst": "O(K)" },
+      "space": "O(N)",
+      "analysis": "Time: O(K) where K is the number of valid permutations. Thanks to aggressive pruning, it is vastly faster than O(N!). Space: O(N) for the visited array and recursion stack."
+    },
+    "code": {
+      "cpp": "class Solution {\n    int count = 0;\npublic:\n    int countArrangement(int n) {\n        vector<bool> visited(n + 1, false);\n        solve(1, n, visited);\n        return count;\n    }\n    void solve(int pos, int n, vector<bool>& visited) {\n        if (pos > n) {\n            count++;\n            return;\n        }\n        for (int i = 1; i <= n; i++) {\n            if (!visited[i] && (i % pos == 0 || pos % i == 0)) {\n                visited[i] = true;\n                solve(pos + 1, n, visited);\n                visited[i] = false;\n            }\n        }\n    }\n};",
+      "java": "class Solution {\n    int count = 0;\n    public int countArrangement(int n) {\n        boolean[] visited = new boolean[n + 1];\n        solve(1, n, visited);\n        return count;\n    }\n    void solve(int pos, int n, boolean[] visited) {\n        if (pos > n) {\n            count++;\n            return;\n        }\n        for (int i = 1; i <= n; i++) {\n            if (!visited[i] && (i % pos == 0 || pos % i == 0)) {\n                visited[i] = true;\n                solve(pos + 1, n, visited);\n                visited[i] = false;\n            }\n        }\n    }\n}",
+      "python": "class Solution:\n    def countArrangement(self, n: int) -> int:\n        visited = [False] * (n + 1)\n        self.count = 0\n        \n        def solve(pos):\n            if pos > n:\n                self.count += 1\n                return\n            for i in range(1, n + 1):\n                if not visited[i] and (i % pos == 0 or pos % i == 0):\n                    visited[i] = True\n                    solve(pos + 1)\n                    visited[i] = False\n        solve(1)\n        return self.count",
+      "javascript": "var countArrangement = function(n) {\n    let count = 0;\n    const visited = new Array(n + 1).fill(false);\n    \n    const solve = (pos) => {\n        if (pos > n) {\n            count++;\n            return;\n        }\n        for (let i = 1; i <= n; i++) {\n            if (!visited[i] && (i % pos === 0 || pos % i === 0)) {\n                visited[i] = true;\n                solve(pos + 1);\n                visited[i] = false;\n            }\n        }\n    };\n    \n    solve(1);\n    return count;\n};"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using generating all permutations and checking divisibility at the end. This will result in Time Limit Exceeded (TLE) as N! is too large.", "1-indexing mistakes. The problem states it is 1-indexed, so ensure the arrays and loops start at 1."],
+      "edgeCases": ["n = 1 (returns 1).", "n = 15 (max n). Recursion tree is highly pruned so it passes instantly."],
+      "tips": ["Optimization: Interestingly, filling the positions backwards (from n down to 1) is faster! Larger numbers have fewer multiples/factors, so the tree branches less early on."]
+    },
+    "practiceProblems": [
+      { "title": "Beautiful Arrangement", "difficulty": "Medium", "url": "https://leetcode.com/problems/beautiful-arrangement/" }
+    ],
+    "relatedTopics": [{ "title": "Math", "id": "math" }]
+  }
+}

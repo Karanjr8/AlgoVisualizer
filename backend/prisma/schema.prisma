@@ -1,0 +1,132 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  password  String     
+  name            String?
+  username        String?    @unique
+  avatar          String?
+  currentStreak   Int        @default(0)
+  learningHours   Float      @default(0.0)
+  xp              Int        @default(0)
+  level           Int        @default(1)
+  progress        Progress[]
+  achievements    UserAchievement[]
+  activities      UserActivity[]
+  practiceAttempts PracticeAttempt[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model UserActivity {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  action      String
+  description String
+  timestamp   DateTime @default(now())
+}
+model Progress {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  algorithmId   String   
+  completed     Boolean  @default(false)
+  score         Int      @default(0) 
+  lastAccessed  DateTime @default(now())
+
+  @@unique([userId, algorithmId])
+}
+
+model Algorithm {
+  id                String   @id @default(uuid())
+  slug              String   @unique
+  name              String
+  category          String
+  difficulty        String
+  complexity        String
+  introduction      String
+  intuition         String
+  interviewNotes    String
+  relatedTopics     String
+  visualizationType String
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Question {
+  id                 String   @id @default(uuid())
+  title              String
+  difficulty         String
+  topic              String
+  pattern            String
+  statement          String
+  hints              String
+  solution           String
+  expectedComplexity String
+  tags               String
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model RoadmapNode {
+  id               String   @id @default(uuid())
+  title            String
+  category         String
+  difficulty       String
+  estimatedTime    String
+  description      String
+  recommendedOrder Int
+  prerequisites    String
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Achievement {
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  icon            String
+  xpReward        Int
+  unlockCondition String
+  
+  users           UserAchievement[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PracticeAttempt {
+  id              String   @id @default(uuid())
+  userId          String?  
+  user            User?    @relation(fields: [userId], references: [id])
+  mode            String
+  difficulty      String
+  score           Int
+  accuracy        Float
+  completionTime  Int
+  
+  createdAt       DateTime @default(now())
+}

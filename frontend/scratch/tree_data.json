@@ -1,0 +1,379 @@
+{
+  "binary-tree": {
+    "id": "binary-tree",
+    "introduction": "A Binary Tree is a hierarchical data structure where each node has at most two children, referred to as the left child and the right child.",
+    "intuition": "Think of a corporate hierarchy or a family tree where each person can have at most two direct subordinates or children.",
+    "walkthrough": [
+      { "phase": "Root", "description": "The topmost node of the tree." },
+      { "phase": "Children", "description": "Each node can have 0, 1, or 2 children." },
+      { "phase": "Leaves", "description": "Nodes with no children are called leaf nodes." }
+    ],
+    "dryRun": {
+      "input": "Node A with left B and right C",
+      "output": "Tree depth 2",
+      "steps": [
+        "Root is A",
+        "A.left points to B",
+        "A.right points to C"
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(1)", "average": "O(log N)", "worst": "O(N)" },
+      "space": "O(N)",
+      "analysis": "Accessing elements takes time proportional to the depth of the tree. Worst case (a skewed tree) takes O(N)."
+    },
+    "code": {
+      "cpp": "struct TreeNode {\n    int val;\n    TreeNode *left;\n    TreeNode *right;\n    TreeNode(int x) : val(x), left(NULL), right(NULL) {}\n};",
+      "java": "class TreeNode {\n    int val;\n    TreeNode left;\n    TreeNode right;\n    TreeNode(int x) { val = x; }\n}",
+      "python": "class TreeNode:\n    def __init__(self, val=0, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right",
+      "javascript": "class TreeNode {\n    constructor(val = 0, left = null, right = null) {\n        this.val = val;\n        this.left = left;\n        this.right = right;\n    }\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Not checking for null pointers before accessing a node's left or right children."],
+      "edgeCases": ["Empty tree (root is null)", "Tree with only a root node"],
+      "tips": ["Almost all binary tree problems can be solved using recursion. Think about the base case (node == null)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "bst": {
+    "id": "bst",
+    "introduction": "A Binary Search Tree (BST) is a binary tree where every node in the left subtree is smaller than the root, and every node in the right subtree is larger.",
+    "intuition": "It works like searching in a dictionary or a phone book. If you are looking for 'M' and you are at 'K', you only need to search the right half.",
+    "walkthrough": [
+      { "phase": "Compare", "description": "Compare the target value with the current node's value." },
+      { "phase": "Traverse", "description": "If target < node.val, go left. If target > node.val, go right." },
+      { "phase": "Found", "description": "If target == node.val, return the node." }
+    ],
+    "dryRun": {
+      "input": "Search 3 in BST [5, 2, 7, 1, 3]",
+      "output": "Node 3 found",
+      "steps": [
+        "Root is 5. 3 < 5, so go left to 2.",
+        "Current is 2. 3 > 2, so go right to 3.",
+        "Current is 3. 3 == 3. Return node."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(log N)", "average": "O(log N)", "worst": "O(N)" },
+      "space": "O(log N)",
+      "analysis": "Average search, insertion, and deletion takes O(log N) due to halving the search space. In the worst case (unbalanced tree), it degenerates to O(N)."
+    },
+    "code": {
+      "cpp": "TreeNode* searchBST(TreeNode* root, int val) {\n    if (root == NULL || root->val == val) return root;\n    if (root->val > val) return searchBST(root->left, val);\n    return searchBST(root->right, val);\n}",
+      "java": "public TreeNode searchBST(TreeNode root, int val) {\n    if (root == null || root.val == val) return root;\n    if (root.val > val) return searchBST(root.left, val);\n    return searchBST(root.right, val);\n}",
+      "python": "def searchBST(root, val):\n    if not root or root.val == val: return root\n    if root.val > val: return searchBST(root.left, val)\n    return searchBST(root.right, val)",
+      "javascript": "function searchBST(root, val) {\n    if (!root || root.val === val) return root;\n    if (root.val > val) return searchBST(root.left, val);\n    return searchBST(root.right, val);\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Assuming an inorder traversal of any binary tree is sorted (it's only sorted for BSTs)."],
+      "edgeCases": ["Searching for a value not in the BST"],
+      "tips": ["An inorder traversal of a BST yields a sorted array. This is a very common trick for BST problems."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "avl-tree": {
+    "id": "avl-tree",
+    "introduction": "An AVL tree is a self-balancing Binary Search Tree where the difference between heights of left and right subtrees cannot be more than one for all nodes.",
+    "intuition": "If a tree gets too lopsided, operations become slow (O(N)). AVL trees automatically perform rotations to pull the tree back into a balanced shape.",
+    "walkthrough": [
+      { "phase": "Insert", "description": "Insert the node like a standard BST." },
+      { "phase": "Update Height", "description": "Update the height of the current node." },
+      { "phase": "Balance Factor", "description": "Calculate the balance factor (left_height - right_height). If it's > 1 or < -1, perform rotations to rebalance." }
+    ],
+    "dryRun": {
+      "input": "Insert 3, 2, 1 into AVL",
+      "output": "Balanced tree with 2 at root",
+      "steps": [
+        "Insert 3 (root)",
+        "Insert 2 (left of 3). Balance factor of 3 is 1.",
+        "Insert 1 (left of 2). Balance factor of 3 is 2. (Left-Left Case)",
+        "Right rotate around 3. 2 becomes root, 1 is left, 3 is right."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(log N)", "average": "O(log N)", "worst": "O(log N)" },
+      "space": "O(N)",
+      "analysis": "Because the tree is strictly balanced, all operations (search, insert, delete) take O(log N) time."
+    },
+    "code": {
+      "cpp": "// Advanced concept. Code omitted for brevity.",
+      "java": "// Advanced concept. Code omitted for brevity.",
+      "python": "# Advanced concept. Code omitted for brevity.",
+      "javascript": "// Advanced concept. Code omitted for brevity."
+    },
+    "interviewNotes": {
+      "mistakes": ["Miscalculating heights or getting the 4 rotation cases (LL, LR, RL, RR) mixed up."],
+      "edgeCases": ["Rotations that propagate all the way up to the root."],
+      "tips": ["You rarely have to implement a full AVL tree in an interview, but you should understand how rotations work and when they are applied."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "tree-traversal": {
+    "id": "tree-traversal",
+    "introduction": "Tree traversal involves visiting every node in a tree exactly once. The common depth-first methods are Pre-order, In-order, and Post-order.",
+    "intuition": "Think of exploring a maze. Do you want to process the room you are in first (Pre), explore the left path, process the room, then the right (In), or explore all paths fully before processing the room (Post)?",
+    "walkthrough": [
+      { "phase": "In-order", "description": "Left, Root, Right. For a BST, this visits nodes in ascending order." },
+      { "phase": "Pre-order", "description": "Root, Left, Right. Useful for copying a tree." },
+      { "phase": "Post-order", "description": "Left, Right, Root. Useful for deleting a tree, as you delete children before the parent." }
+    ],
+    "dryRun": {
+      "input": "Tree: Root(2), L(1), R(3). In-order",
+      "output": "1, 2, 3",
+      "steps": [
+        "Go left from 2 to 1.",
+        "1 has no left. Print 1.",
+        "Go back to 2. Print 2.",
+        "Go right from 2 to 3. 3 has no left. Print 3."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(H)",
+      "analysis": "O(N) time to visit all nodes. O(H) space for the recursion stack, where H is the height of the tree."
+    },
+    "code": {
+      "cpp": "void inorder(TreeNode* root) {\n    if (!root) return;\n    inorder(root->left);\n    cout << root->val << \" \";\n    inorder(root->right);\n}",
+      "java": "public void inorder(TreeNode root) {\n    if (root == null) return;\n    inorder(root.left);\n    System.out.print(root.val + \" \");\n    inorder(root.right);\n}",
+      "python": "def inorder(root):\n    if not root: return\n    inorder(root.left)\n    print(root.val, end=\" \")\n    inorder(root.right)",
+      "javascript": "function inorder(root) {\n    if (!root) return;\n    inorder(root.left);\n    console.log(root.val);\n    inorder(root.right);\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Confusing the order of the recursive calls for the different traversals."],
+      "edgeCases": ["Empty tree"],
+      "tips": ["If asked to do this iteratively instead of recursively, you will need to use an explicit Stack."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "lca": {
+    "id": "lca",
+    "introduction": "The Lowest Common Ancestor (LCA) of two nodes p and q in a tree is the lowest node that has both p and q as descendants.",
+    "intuition": "If two people want to find their closest shared relative, they look up their family trees until their paths intersect.",
+    "walkthrough": [
+      { "phase": "Base Case", "description": "If root is null, p, or q, return root." },
+      { "phase": "Search", "description": "Recursively search the left and right subtrees for p and q." },
+      { "phase": "Combine", "description": "If both left and right return a node, the current root is the LCA. If only one returns a node, pass that node up." }
+    ],
+    "dryRun": {
+      "input": "LCA of 5 and 1 in Tree where 3 is root, 5 is left, 1 is right",
+      "output": "3",
+      "steps": [
+        "Root is 3. Search left for 5 and 1. Search right for 5 and 1.",
+        "Left subtree returns 5.",
+        "Right subtree returns 1.",
+        "Since both sides returned non-null, 3 is the LCA."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(H)",
+      "analysis": "We may have to visit every node in the tree to find p and q."
+    },
+    "code": {
+      "cpp": "TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {\n    if (!root || root == p || root == q) return root;\n    TreeNode* left = lowestCommonAncestor(root->left, p, q);\n    TreeNode* right = lowestCommonAncestor(root->right, p, q);\n    if (left && right) return root;\n    return left ? left : right;\n}",
+      "java": "public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {\n    if (root == null || root == p || root == q) return root;\n    TreeNode left = lowestCommonAncestor(root.left, p, q);\n    TreeNode right = lowestCommonAncestor(root.right, p, q);\n    if (left != null && right != null) return root;\n    return left != null ? left : right;\n}",
+      "python": "def lowestCommonAncestor(root, p, q):\n    if not root or root == p or root == q: return root\n    left = lowestCommonAncestor(root.left, p, q)\n    right = lowestCommonAncestor(root.right, p, q)\n    if left and right: return root\n    return left or right",
+      "javascript": "function lowestCommonAncestor(root, p, q) {\n    if (!root || root === p || root === q) return root;\n    let left = lowestCommonAncestor(root.left, p, q);\n    let right = lowestCommonAncestor(root.right, p, q);\n    if (left && right) return root;\n    return left ? left : right;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Assuming p and q are guaranteed to be in the tree (if not, this algorithm might return a false positive)."],
+      "edgeCases": ["p is a descendant of q (or vice versa)"],
+      "tips": ["For a BST, this is even easier (O(log N)): just find the first node whose value is strictly between p.val and q.val."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "tree-diameter": {
+    "id": "tree-diameter",
+    "introduction": "The diameter of a tree is the length of the longest path between any two nodes in a tree. This path may or may not pass through the root.",
+    "intuition": "The longest path passing through any given node is the max depth of its left subtree plus the max depth of its right subtree. We calculate this for every node and keep track of the maximum.",
+    "walkthrough": [
+      { "phase": "DFS", "description": "Write a recursive function that returns the height of a subtree." },
+      { "phase": "Update Max", "description": "Inside the function, update a global (or passed by reference) variable with left_height + right_height." },
+      { "phase": "Return", "description": "Return max(left_height, right_height) + 1 to the parent call." }
+    ],
+    "dryRun": {
+      "input": "Tree: 1 -> (2, 3), 2 -> (4, 5)",
+      "output": "Diameter: 3 (Path: 4-2-1-3)",
+      "steps": [
+        "Depth of 4 and 5 is 1. Diameter at 2 is 1+1 = 2.",
+        "Depth of 2 is 2. Depth of 3 is 1.",
+        "Diameter at 1 is 2+1 = 3.",
+        "Max diameter seen is 3."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(H)",
+      "analysis": "O(N) because we visit each node exactly once using a bottom-up approach."
+    },
+    "code": {
+      "cpp": "int max_diam = 0;\nint diameterOfBinaryTree(TreeNode* root) {\n    depth(root);\n    return max_diam;\n}\nint depth(TreeNode* node) {\n    if (!node) return 0;\n    int left = depth(node->left);\n    int right = depth(node->right);\n    max_diam = max(max_diam, left + right);\n    return max(left, right) + 1;\n}",
+      "java": "int max_diam = 0;\npublic int diameterOfBinaryTree(TreeNode root) {\n    depth(root);\n    return max_diam;\n}\nprivate int depth(TreeNode node) {\n    if (node == null) return 0;\n    int left = depth(node.left);\n    int right = depth(node.right);\n    max_diam = Math.max(max_diam, left + right);\n    return Math.max(left, right) + 1;\n}",
+      "python": "def diameterOfBinaryTree(root):\n    max_diam = 0\n    def depth(node):\n        nonlocal max_diam\n        if not node: return 0\n        left = depth(node.left)\n        right = depth(node.right)\n        max_diam = max(max_diam, left + right)\n        return max(left, right) + 1\n    depth(root)\n    return max_diam",
+      "javascript": "function diameterOfBinaryTree(root) {\n    let max_diam = 0;\n    function depth(node) {\n        if (!node) return 0;\n        let left = depth(node.left);\n        let right = depth(node.right);\n        max_diam = Math.max(max_diam, left + right);\n        return Math.max(left, right) + 1;\n    }\n    depth(root);\n    return max_diam;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Assuming the diameter must pass through the root node (it doesn't have to)."],
+      "edgeCases": ["Tree with 1 node (diameter is 0)"],
+      "tips": ["This pattern (returning height while simultaneously updating a global max variable) is incredibly common in tree problems."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "balanced-tree": {
+    "id": "balanced-tree",
+    "introduction": "A height-balanced binary tree is a binary tree in which the left and right subtrees of every node differ in height by no more than 1.",
+    "intuition": "Similar to finding the diameter, we recursively find the height of the left and right subtrees. If at any point the difference is > 1, the tree is unbalanced.",
+    "walkthrough": [
+      { "phase": "DFS", "description": "Write a function that returns the height of a tree." },
+      { "phase": "Check", "description": "If a subtree is unbalanced, return -1 (a sentinel value)." },
+      { "phase": "Propagate", "description": "If a parent receives -1 from any child, it immediately returns -1." }
+    ],
+    "dryRun": {
+      "input": "Root 1 -> Left 2 -> Left 3",
+      "output": "False",
+      "steps": [
+        "Depth of 3 is 1.",
+        "At 2: Left depth 1, right depth 0. Diff 1. Balanced. Depth 2.",
+        "At 1: Left depth 2, right depth 0. Diff 2. Unbalanced! Return -1."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(H)",
+      "analysis": "O(N) time because we do a single bottom-up traversal. If we did top-down, it would be O(N^2)."
+    },
+    "code": {
+      "cpp": "bool isBalanced(TreeNode* root) {\n    return dfsHeight(root) != -1;\n}\nint dfsHeight(TreeNode* root) {\n    if (!root) return 0;\n    int left = dfsHeight(root->left);\n    if (left == -1) return -1;\n    int right = dfsHeight(root->right);\n    if (right == -1) return -1;\n    if (abs(left - right) > 1) return -1;\n    return max(left, right) + 1;\n}",
+      "java": "public boolean isBalanced(TreeNode root) {\n    return dfsHeight(root) != -1;\n}\nprivate int dfsHeight(TreeNode root) {\n    if (root == null) return 0;\n    int left = dfsHeight(root.left);\n    if (left == -1) return -1;\n    int right = dfsHeight(root.right);\n    if (right == -1) return -1;\n    if (Math.abs(left - right) > 1) return -1;\n    return Math.max(left, right) + 1;\n}",
+      "python": "def isBalanced(root):\n    def dfs(node):\n        if not node: return 0\n        left = dfs(node.left)\n        if left == -1: return -1\n        right = dfs(node.right)\n        if right == -1: return -1\n        if abs(left - right) > 1: return -1\n        return max(left, right) + 1\n    return dfs(root) != -1",
+      "javascript": "function isBalanced(root) {\n    function dfs(node) {\n        if (!node) return 0;\n        let left = dfs(node.left);\n        if (left === -1) return -1;\n        let right = dfs(node.right);\n        if (right === -1) return -1;\n        if (Math.abs(left - right) > 1) return -1;\n        return Math.max(left, right) + 1;\n    }\n    return dfs(root) !== -1;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using a top-down O(N^2) approach by calculating height repeatedly for every node."],
+      "edgeCases": ["Empty tree (is balanced)"],
+      "tips": ["Always mention that your bottom-up approach is O(N) because it reuses height calculations, demonstrating optimization skills."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "tree-views": {
+    "id": "tree-views",
+    "introduction": "Tree views (Top, Bottom, Left, Right) involve looking at a 3D representation of a tree from a specific angle and returning the nodes visible from that angle.",
+    "intuition": "Left/Right views are easily solved with Level Order Traversal (BFS) by taking the first/last node of each level. Top/Bottom views use BFS but keep track of the horizontal distance (x-coordinate) of each node.",
+    "walkthrough": [
+      { "phase": "Right View", "description": "Do a BFS. Add the last node of each level queue to the result." },
+      { "phase": "Top View", "description": "Do a BFS while tracking horizontal distance (HD). Store the first node seen at each HD in a map." }
+    ],
+    "dryRun": {
+      "input": "Right View of 1 -> (2, 3), 2 -> (4, null)",
+      "output": "1, 3, 4",
+      "steps": [
+        "Level 0: [1]. Last node is 1.",
+        "Level 1: [2, 3]. Last node is 3.",
+        "Level 2: [4]. Last node is 4."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(N)",
+      "analysis": "BFS processes each node once. The queue and result arrays take O(N) space."
+    },
+    "code": {
+      "cpp": "// Example for Right Side View\nvector<int> rightSideView(TreeNode* root) {\n    vector<int> res;\n    if (!root) return res;\n    queue<TreeNode*> q;\n    q.push(root);\n    while (!q.empty()) {\n        int size = q.size();\n        for (int i = 0; i < size; i++) {\n            TreeNode* node = q.front(); q.pop();\n            if (i == size - 1) res.push_back(node->val);\n            if (node->left) q.push(node->left);\n            if (node->right) q.push(node->right);\n        }\n    }\n    return res;\n}",
+      "java": "public List<Integer> rightSideView(TreeNode root) {\n    List<Integer> res = new ArrayList<>();\n    if (root == null) return res;\n    Queue<TreeNode> q = new LinkedList<>();\n    q.add(root);\n    while (!q.isEmpty()) {\n        int size = q.size();\n        for (int i = 0; i < size; i++) {\n            TreeNode node = q.poll();\n            if (i == size - 1) res.add(node.val);\n            if (node.left != null) q.add(node.left);\n            if (node.right != null) q.add(node.right);\n        }\n    }\n    return res;\n}",
+      "python": "def rightSideView(root):\n    res = []\n    if not root: return res\n    q = collections.deque([root])\n    while q:\n        size = len(q)\n        for i in range(size):\n            node = q.popleft()\n            if i == size - 1: res.append(node.val)\n            if node.left: q.append(node.left)\n            if node.right: q.append(node.right)\n    return res",
+      "javascript": "function rightSideView(root) {\n    const res = [];\n    if (!root) return res;\n    const q = [root];\n    while (q.length > 0) {\n        let size = q.length;\n        for (let i = 0; i < size; i++) {\n            let node = q.shift();\n            if (i === size - 1) res.push(node.val);\n            if (node.left) q.push(node.left);\n            if (node.right) q.push(node.right);\n        }\n    }\n    return res;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using DFS for Top/Bottom views without tracking depth properly, causing nodes lower in the tree to overwrite higher nodes."],
+      "edgeCases": ["Nodes overlapping at the same horizontal distance in Top/Bottom view."],
+      "tips": ["Right side view can also be done via DFS by strictly exploring Right before Left and tracking max depth seen so far."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "serialize-tree": {
+    "id": "serialize-tree",
+    "introduction": "Serialization is the process of converting a data structure into a sequence of bits or a string so that it can be stored or transmitted and later reconstructed.",
+    "intuition": "We can use a Pre-order traversal to visit every node. To reconstruct the exact shape of the tree, we must also record null pointers (e.g., using 'N' or 'null').",
+    "walkthrough": [
+      { "phase": "DFS Pre-order", "description": "Visit root, then left, then right." },
+      { "phase": "Record Nulls", "description": "If a node is null, append a special character like 'N' to the string." },
+      { "phase": "Join", "description": "Join all values with a delimiter like a comma." }
+    ],
+    "dryRun": {
+      "input": "Tree: 1 -> (2, 3)",
+      "output": "String: '1,2,N,N,3,N,N'",
+      "steps": [
+        "Root is 1. String: '1'",
+        "Left is 2. String: '1,2'",
+        "2's left is null. String: '1,2,N'",
+        "2's right is null. String: '1,2,N,N'",
+        "Right of 1 is 3... and so on."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(N)",
+      "analysis": "O(N) to traverse and build the string."
+    },
+    "code": {
+      "cpp": "string serialize(TreeNode* root) {\n    if (!root) return \"N,\";\n    return to_string(root->val) + \",\" + serialize(root->left) + serialize(root->right);\n}",
+      "java": "public String serialize(TreeNode root) {\n    if (root == null) return \"N,\";\n    return root.val + \",\" + serialize(root.left) + serialize(root.right);\n}",
+      "python": "def serialize(root):\n    res = []\n    def dfs(node):\n        if not node:\n            res.append(\"N\")\n            return\n        res.append(str(node.val))\n        dfs(node.left)\n        dfs(node.right)\n    dfs(root)\n    return \",\".join(res)",
+      "javascript": "function serialize(root) {\n    const res = [];\n    function dfs(node) {\n        if (!node) { res.push(\"N\"); return; }\n        res.push(node.val);\n        dfs(node.left);\n        dfs(node.right);\n    }\n    dfs(root);\n    return res.join(\",\");\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Not using a delimiter (like comma), making it impossible to distinguish between the value '12' and the values '1', '2'."],
+      "edgeCases": ["Empty tree"],
+      "tips": ["BFS (Level Order) serialization is also very common and is exactly how LeetCode formats its tree test cases in arrays."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "deserialize-tree": {
+    "id": "deserialize-tree",
+    "introduction": "Deserialization is the reverse of serialization: reconstructing the binary tree from its string representation.",
+    "intuition": "If we serialized using Pre-order (Root, Left, Right), we can rebuild it exactly the same way. We consume the string array left to right, building the root first, then its left child, then its right child.",
+    "walkthrough": [
+      { "phase": "Split", "description": "Split the serialized string by the delimiter (comma) into an array or queue." },
+      { "phase": "Recursive Build", "description": "Pop the front value. If it's 'N', return null. Otherwise, create a node." },
+      { "phase": "Attach", "description": "Recursively call build for node.left and node.right." }
+    ],
+    "dryRun": {
+      "input": "String: '1,2,N,N,3,N,N'",
+      "output": "Tree: 1 -> (2, 3)",
+      "steps": [
+        "Pop '1'. Create Node(1).",
+        "Pop '2'. Node(1).left = Node(2).",
+        "Pop 'N'. Node(2).left = null.",
+        "Pop 'N'. Node(2).right = null. Return to 1.",
+        "Pop '3'. Node(1).right = Node(3)."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(N)",
+      "analysis": "O(N) to parse the string and create N nodes."
+    },
+    "code": {
+      "cpp": "// Rebuilding from queue omitted for brevity.",
+      "java": "// Rebuilding from queue omitted for brevity.",
+      "python": "def deserialize(data):\n    vals = iter(data.split(\",\"))\n    def dfs():\n        val = next(vals)\n        if val == \"N\": return None\n        node = TreeNode(int(val))\n        node.left = dfs()\n        node.right = dfs()\n        return node\n    return dfs()",
+      "javascript": "function deserialize(data) {\n    const vals = data.split(\",\");\n    let i = 0;\n    function dfs() {\n        if (vals[i] === \"N\") { i++; return null; }\n        let node = new TreeNode(parseInt(vals[i++]));\n        node.left = dfs();\n        node.right = dfs();\n        return node;\n    }\n    return dfs();\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using an index variable that doesn't correctly update across recursive calls (e.g., passing it by value instead of using a global/reference)."],
+      "edgeCases": ["String representing an empty tree ('N')"],
+      "tips": ["Python's iter() and next() are incredibly elegant for this problem."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "trie-intro": {
+    "id": "trie-intro",
+    "introduction": "A Trie (Prefix Tree) is a tree-like data structure used to store a dynamic set of strings. It is highly optimized for fast retrieval, autocomplete features, and spell checking.",
+    "intuition": "Think of looking up a word in a dictionary. You first find the page for the first letter, then the section for the second letter, and so on. A Trie structures data exactly like this.",
+    "walkthrough": [
+      { "phase": "Node Structure", "description": "Each node contains an array of 26 pointers (one for each letter) and a boolean `isEndOfWord` flag." },
+      { "phase": "Insert", "description": "Iterate through characters. If the child node doesn't exist, create it. Move to the child. At the end, set `isEndOfWord = true`." },
+      { "phase": "Search", "description": "Iterate through characters. If a child doesn't exist, return false. At the end, return the `isEndOfWord` flag." }
+    ],
+    "dryRun": {
+      "input": "Insert 'cat', 'car'. Search 'cat', 'ca'",
+      "output": "Search 'cat' -> true. Search 'ca' -> false (but prefix is true).",
+      "steps": [
+        "Insert 'cat': root -> c -> a -> t (end=true)",
+        "Insert 'car': root -> c -> a -> r (end=true)",
+        "Search 'ca': root -> c -> a. End of 'ca' is not true. Return false."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(L)", "average": "O(L)", "worst": "O(L)" },
+      "space": "O(N * L * 26)",
+      "analysis": "Time is O(L) where L is the length of the word. Space can be large if there are many unique words with few common prefixes."
+    },
+    "code": {
+      "cpp": "class TrieNode {\npublic:\n    TrieNode* children[26];\n    bool isEnd;\n    TrieNode() { \n        isEnd = false;\n        for(int i=0; i<26; i++) children[i] = NULL;\n    }\n};\nclass Trie {\n    TrieNode* root;\npublic:\n    Trie() { root = new TrieNode(); }\n    void insert(string word) {\n        TrieNode* node = root;\n        for(char c : word) {\n            if(!node->children[c - 'a']) node->children[c - 'a'] = new TrieNode();\n            node = node->children[c - 'a'];\n        }\n        node->isEnd = true;\n    }\n};",
+      "java": "// Trie Implementation. Code omitted.",
+      "python": "# Trie Implementation. Code omitted.",
+      "javascript": "// Trie Implementation. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using a Hash Map for dictionary problems when prefix matching is required. Hash Maps cannot do prefix matching efficiently."],
+      "edgeCases": ["Inserting empty string", "Searching a string longer than any inserted string"],
+      "tips": ["Always clarify the character set. If it's just lowercase english letters, an array of size 26 is best. If it's ASCII, size 256. If unicode, use a Hash Map in the node."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "design-add-search": {
+    "id": "design-add-search",
+    "introduction": "Design a data structure that supports adding new words and finding if a string matches any previously added string. The search query may contain the dot '.' character which acts as a wildcard matching any single letter.",
+    "intuition": "Standard Trie search, but when we encounter a '.', we must recursively search ALL 26 possible children of the current node.",
+    "walkthrough": [
+      { "phase": "Add Word", "description": "Standard Trie insert operation." },
+      { "phase": "Search Word", "description": "Recursive DFS search starting from the root node and index 0 of the word." },
+      { "phase": "Wildcard Check", "description": "If char is '.', loop over all 26 children. If any recursive search returns true, return true." }
+    ],
+    "dryRun": {
+      "input": "Add 'bad', 'dad', 'mad'. Search 'pad', 'bad', '.ad', 'b..'",
+      "output": "False, True, True, True",
+      "steps": [
+        "Search '.ad': At root, '.' means check children 'b', 'd', 'm'.",
+        "Check child 'b'. Next char 'a' matches. Next 'd' matches. True."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(L)", "average": "O(26^L)", "worst": "O(26^L)" },
+      "space": "O(N * L)",
+      "analysis": "Time complexity for a word of all wildcards '.....' is O(26^L). Space is O(L) for recursion stack plus the Trie storage."
+    },
+    "code": {
+      "cpp": "class WordDictionary {\n    TrieNode* root;\npublic:\n    WordDictionary() { root = new TrieNode(); }\n    void addWord(string word) { /* standard insert */ }\n    bool search(string word) { return searchHelper(word, root, 0); }\n    bool searchHelper(string& word, TrieNode* node, int i) {\n        if (i == word.size()) return node->isEnd;\n        if (word[i] == '.') {\n            for (int c = 0; c < 26; c++) {\n                if (node->children[c] && searchHelper(word, node->children[c], i + 1)) return true;\n            }\n            return false;\n        } else {\n            if (!node->children[word[i] - 'a']) return false;\n            return searchHelper(word, node->children[word[i] - 'a'], i + 1);\n        }\n    }\n};",
+      "java": "// WordDictionary. Code omitted.",
+      "python": "# WordDictionary. Code omitted.",
+      "javascript": "// WordDictionary. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using BFS instead of DFS for the wildcard search. BFS can use too much memory storing states for long strings of wildcards."],
+      "edgeCases": ["Search string consists entirely of dots"],
+      "tips": ["This is the exact same logic used in Word Search II for moving in a grid."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "word-search-ii": {
+    "id": "word-search-ii",
+    "introduction": "Given an m x n board of characters and a list of strings words, return all words on the board.",
+    "intuition": "Running standard DFS for every word from every cell is O(W * M * N * 4^L), which is too slow. Instead, we insert all words into a Trie, and run DFS from every cell simultaneously checking against the Trie.",
+    "walkthrough": [
+      { "phase": "Build Trie", "description": "Insert all words into a Trie. Store the actual word string at the `isEnd` node for easy extraction." },
+      { "phase": "Grid DFS", "description": "Iterate through every cell (r, c). Start DFS passing the root of the Trie." },
+      { "phase": "Prune & Collect", "description": "If the current character doesn't exist in the current Trie node, stop (Prune). If it's a valid word node, add to results and mark `isEnd = false` to prevent duplicates." }
+    ],
+    "dryRun": {
+      "input": "Board: [['o','a','a','n'],['e','t','a','e']], Words: ['oath','pea','eat','rain']",
+      "output": "['eat','oath']",
+      "steps": [
+        "Trie built with 'oath', 'pea', etc.",
+        "DFS from (0,0) 'o'. Matches root->'o'. Move to 'a'. Matches 'o'->'a'. Move to 't'. Matches 'a'->'t'. Move to 'h'. Matches 't'->'h'. Word found!"
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(M * N * 3^L)", "average": "O(M * N * 3^L)", "worst": "O(M * N * 3^L)" },
+      "space": "O(Total Chars in Words)",
+      "analysis": "Time complexity drops because we only explore paths in the grid that actually form prefixes of words in our dictionary. We use 3 directions not 4, because we don't go back."
+    },
+    "code": {
+      "cpp": "// Word Search II algorithm using Trie + DFS. Code omitted due to length.",
+      "java": "// Word Search II. Code omitted.",
+      "python": "# Word Search II. Code omitted.",
+      "javascript": "// Word Search II. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Not temporarily modifying the board to prevent revisiting cells (e.g. `char temp = board[r][c]; board[r][c] = '#'; ... board[r][c] = temp;`)."],
+      "edgeCases": ["Duplicate words in input", "Grid smaller than word"],
+      "tips": ["Optimization: Remove leaf nodes from the Trie once their word is found to prune future searches even faster."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}

@@ -1,0 +1,378 @@
+{
+  "dp-intro": {
+    "id": "dp-intro",
+    "introduction": "Dynamic Programming (DP) is a method for solving complex problems by breaking them down into simpler, overlapping subproblems, and storing the results to avoid redundant computations.",
+    "intuition": "If you calculate 5! (factorial of 5), you don't need to recalculate it when asked for 6!. You just multiply 6 * 5!.",
+    "walkthrough": [
+      { "phase": "Memoization (Top-Down)", "description": "Write a recursive function. Store results in a hash map or array. If the state is seen again, return the stored result." },
+      { "phase": "Tabulation (Bottom-Up)", "description": "Build an array/table starting from the smallest base cases, iterating up to the target state." }
+    ],
+    "dryRun": {
+      "input": "Fibonacci(5)",
+      "output": "5",
+      "steps": [
+        "Base cases: F(0)=0, F(1)=1",
+        "F(2) = 0 + 1 = 1",
+        "F(3) = 1 + 1 = 2",
+        "F(4) = 1 + 2 = 3",
+        "F(5) = 2 + 3 = 5"
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(N)",
+      "analysis": "DP transforms exponential time O(2^N) recursive algorithms into linear time O(N)."
+    },
+    "code": {
+      "cpp": "int fib(int n, vector<int>& memo) {\n    if (n <= 1) return n;\n    if (memo[n] != -1) return memo[n];\n    return memo[n] = fib(n - 1, memo) + fib(n - 2, memo);\n}",
+      "java": "public int fib(int n, int[] memo) {\n    if (n <= 1) return n;\n    if (memo[n] != -1) return memo[n];\n    return memo[n] = fib(n - 1, memo) + fib(n - 2, memo);\n}",
+      "python": "def fib(n, memo):\n    if n <= 1: return n\n    if n in memo: return memo[n]\n    memo[n] = fib(n - 1, memo) + fib(n - 2, memo)\n    return memo[n]",
+      "javascript": "function fib(n, memo) {\n    if (n <= 1) return n;\n    if (memo[n] !== undefined) return memo[n];\n    return memo[n] = fib(n - 1, memo) + fib(n - 2, memo);\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using a global variable for memoization without resetting it between test cases."],
+      "edgeCases": ["n = 0"],
+      "tips": ["Always start by writing the plain recursive solution. Once it's correct, adding memoization is trivial (just 2 extra lines of code)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "climbing-stairs": {
+    "id": "climbing-stairs",
+    "introduction": "You are climbing a staircase. It takes n steps to reach the top. Each time you can either climb 1 or 2 steps. How many distinct ways can you climb to the top?",
+    "intuition": "To reach step N, you must have come from either step N-1 (taking a 1-step) or step N-2 (taking a 2-step). So, Ways(N) = Ways(N-1) + Ways(N-2). This is exactly the Fibonacci sequence!",
+    "walkthrough": [
+      { "phase": "Base Cases", "description": "1 way to reach step 1. 2 ways to reach step 2." },
+      { "phase": "Iteration", "description": "Loop from 3 to N, calculating `dp[i] = dp[i-1] + dp[i-2]`." },
+      { "phase": "Optimization", "description": "Instead of an array, just keep track of the previous two numbers." }
+    ],
+    "dryRun": {
+      "input": "N = 4",
+      "output": "5",
+      "steps": [
+        "N=1: 1 way",
+        "N=2: 2 ways",
+        "N=3: 1 + 2 = 3 ways",
+        "N=4: 2 + 3 = 5 ways"
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(1)",
+      "analysis": "Time is O(N) because we iterate to N. Space is O(1) if we optimize the state array to two variables."
+    },
+    "code": {
+      "cpp": "int climbStairs(int n) {\n    if (n <= 2) return n;\n    int prev2 = 1, prev1 = 2;\n    for (int i = 3; i <= n; i++) {\n        int curr = prev1 + prev2;\n        prev2 = prev1;\n        prev1 = curr;\n    }\n    return prev1;\n}",
+      "java": "public int climbStairs(int n) {\n    if (n <= 2) return n;\n    int prev2 = 1, prev1 = 2;\n    for (int i = 3; i <= n; i++) {\n        int curr = prev1 + prev2;\n        prev2 = prev1;\n        prev1 = curr;\n    }\n    return prev1;\n}",
+      "python": "def climbStairs(n):\n    if n <= 2: return n\n    prev2, prev1 = 1, 2\n    for i in range(3, n + 1):\n        curr = prev1 + prev2\n        prev2 = prev1\n        prev1 = curr\n    return prev1",
+      "javascript": "function climbStairs(n) {\n    if (n <= 2) return n;\n    let prev2 = 1, prev1 = 2;\n    for (let i = 3; i <= n; i++) {\n        let curr = prev1 + prev2;\n        prev2 = prev1;\n        prev1 = curr;\n    }\n    return prev1;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using recursion without memoization (O(2^N) time)."],
+      "edgeCases": ["N = 1"],
+      "tips": ["This is the 'Hello World' of Dynamic Programming. Always learn to space-optimize 1D DP from O(N) to O(1)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "house-robber": {
+    "id": "house-robber",
+    "introduction": "You are a professional robber. Each house has a certain amount of money stashed. The only constraint is that adjacent houses have security systems connected. Find the max money you can rob.",
+    "intuition": "For each house, you have a choice: Rob it (and add its money to the max money from 2 houses ago) OR Skip it (and keep the max money from the previous house).",
+    "walkthrough": [
+      { "phase": "Choice 1", "description": "Rob current: `nums[i] + dp[i-2]`" },
+      { "phase": "Choice 2", "description": "Skip current: `dp[i-1]`" },
+      { "phase": "State Transition", "description": "`dp[i] = max(rob, skip)`" }
+    ],
+    "dryRun": {
+      "input": "Houses: [2, 7, 9, 3, 1]",
+      "output": "12 (Rob 2, 9, 1)",
+      "steps": [
+        "House 0 (2): Max=2",
+        "House 1 (7): Max=max(2, 7)=7",
+        "House 2 (9): Max=max(7, 2+9)=11",
+        "House 3 (3): Max=max(11, 7+3)=11",
+        "House 4 (1): Max=max(11, 11+1)=12"
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N)", "average": "O(N)", "worst": "O(N)" },
+      "space": "O(1)",
+      "analysis": "Similar to Fibonacci, we only need to look back at the previous 2 states, so space can be O(1)."
+    },
+    "code": {
+      "cpp": "int rob(vector<int>& nums) {\n    int prev2 = 0, prev1 = 0;\n    for (int num : nums) {\n        int curr = max(prev1, prev2 + num);\n        prev2 = prev1;\n        prev1 = curr;\n    }\n    return prev1;\n}",
+      "java": "public int rob(int[] nums) {\n    int prev2 = 0, prev1 = 0;\n    for (int num : nums) {\n        int curr = Math.max(prev1, prev2 + num);\n        prev2 = prev1;\n        prev1 = curr;\n    }\n    return prev1;\n}",
+      "python": "def rob(nums):\n    prev2, prev1 = 0, 0\n    for num in nums:\n        curr = max(prev1, prev2 + num)\n        prev2 = prev1\n        prev1 = curr\n    return prev1",
+      "javascript": "function rob(nums) {\n    let prev2 = 0, prev1 = 0;\n    for (let num of nums) {\n        let curr = Math.max(prev1, prev2 + num);\n        prev2 = prev1;\n        prev1 = curr;\n    }\n    return prev1;\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Initializing `prev1` with `nums[0]` and looping from index 1. It's safer to start `prev1` and `prev2` at 0 and loop through the entire array."],
+      "edgeCases": ["Single house", "Empty array"],
+      "tips": ["House Robber II (houses in a circle) is just running this algorithm twice: once from 0 to n-2, and once from 1 to n-1."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "coin-change": {
+    "id": "coin-change",
+    "introduction": "Given an integer array `coins` and an `amount`, return the fewest number of coins that you need to make up that amount.",
+    "intuition": "To make amount X, look at all available coins. If you use a coin of value C, the number of coins needed is `1 + minCoins(X - C)`. Try all coins and find the minimum.",
+    "walkthrough": [
+      { "phase": "Init DP Array", "description": "Create an array of size `amount + 1` filled with Infinity (or `amount + 1`). dp[0] = 0." },
+      { "phase": "Iterate Amounts", "description": "For each amount from 1 to `amount`..." },
+      { "phase": "Iterate Coins", "description": "For each coin, if `coin <= amount`, `dp[amount] = min(dp[amount], 1 + dp[amount - coin])`." }
+    ],
+    "dryRun": {
+      "input": "Coins: [1, 2, 5], Amount: 11",
+      "output": "3",
+      "steps": [
+        "dp[0] = 0",
+        "dp[1] = 1 + dp[1-1] = 1",
+        "dp[2] = min(1+dp[1], 1+dp[0]) = 1",
+        "...",
+        "dp[11] = 1 + dp[6] = 1 + 2 = 3 (used 5, 5, 1)"
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(amount * coins)", "average": "O(amount * coins)", "worst": "O(amount * coins)" },
+      "space": "O(amount)",
+      "analysis": "Two nested loops: outer loop runs `amount` times, inner loop runs `coins.length` times."
+    },
+    "code": {
+      "cpp": "int coinChange(vector<int>& coins, int amount) {\n    vector<int> dp(amount + 1, amount + 1);\n    dp[0] = 0;\n    for(int i = 1; i <= amount; i++) {\n        for(int coin : coins) {\n            if(i - coin >= 0) {\n                dp[i] = min(dp[i], 1 + dp[i - coin]);\n            }\n        }\n    }\n    return dp[amount] > amount ? -1 : dp[amount];\n}",
+      "java": "public int coinChange(int[] coins, int amount) {\n    int[] dp = new int[amount + 1];\n    Arrays.fill(dp, amount + 1);\n    dp[0] = 0;\n    for (int i = 1; i <= amount; i++) {\n        for (int coin : coins) {\n            if (i - coin >= 0) {\n                dp[i] = Math.min(dp[i], 1 + dp[i - coin]);\n            }\n        }\n    }\n    return dp[amount] > amount ? -1 : dp[amount];\n}",
+      "python": "def coinChange(coins, amount):\n    dp = [amount + 1] * (amount + 1)\n    dp[0] = 0\n    for i in range(1, amount + 1):\n        for c in coins:\n            if i - c >= 0:\n                dp[i] = min(dp[i], 1 + dp[i - c])\n    return dp[amount] if dp[amount] != amount + 1 else -1",
+      "javascript": "function coinChange(coins, amount) {\n    let dp = new Array(amount + 1).fill(amount + 1);\n    dp[0] = 0;\n    for (let i = 1; i <= amount; i++) {\n        for (let c of coins) {\n            if (i - c >= 0) {\n                dp[i] = Math.min(dp[i], 1 + dp[i - c]);\n            }\n        }\n    }\n    return dp[amount] > amount ? -1 : dp[amount];\n}"
+    },
+    "interviewNotes": {
+      "mistakes": ["Using a Greedy approach (always picking largest coin). This fails for cases like coins=[1, 3, 4], amount=6. Greedy gives 4+1+1=3. DP gives 3+3=2."],
+      "edgeCases": ["Amount is 0", "Cannot make amount with given coins"],
+      "tips": ["Filling the DP array with `amount + 1` is a smart way to represent Infinity without integer overflow issues when adding 1."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "lis": {
+    "id": "lis",
+    "introduction": "Given an integer array `nums`, return the length of the longest strictly increasing subsequence.",
+    "intuition": "For each number at index `i`, its longest increasing subsequence is 1 plus the LIS of any strictly smaller number before it.",
+    "walkthrough": [
+      { "phase": "Init DP Array", "description": "Create an array `dp` of size N, initialized to 1 (every number is an LIS of length 1 by itself)." },
+      { "phase": "Nested Loops", "description": "For `i` from 1 to N, and `j` from 0 to `i-1`." },
+      { "phase": "Update", "description": "If `nums[j] < nums[i]`, `dp[i] = max(dp[i], 1 + dp[j])`." }
+    ],
+    "dryRun": {
+      "input": "[10, 9, 2, 5, 3, 7]",
+      "output": "3 (Subsequence: 2, 3, 7)",
+      "steps": [
+        "Init dp: [1, 1, 1, 1, 1, 1]",
+        "5 (idx 3): Can append to 2. dp[3] = 1+dp[2] = 2.",
+        "3 (idx 4): Can append to 2. dp[4] = 1+dp[2] = 2.",
+        "7 (idx 5): Can append to 2, 5, 3. dp[5] = max(1+dp[3], 1+dp[4]) = 3."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N log N)", "average": "O(N^2)", "worst": "O(N^2)" },
+      "space": "O(N)",
+      "analysis": "The standard DP approach takes O(N^2). It can be optimized to O(N log N) using Binary Search and a Patience Sorting technique."
+    },
+    "code": {
+      "cpp": "int lengthOfLIS(vector<int>& nums) {\n    if(nums.empty()) return 0;\n    vector<int> dp(nums.size(), 1);\n    int res = 1;\n    for(int i = 1; i < nums.size(); i++) {\n        for(int j = 0; j < i; j++) {\n            if(nums[i] > nums[j]) {\n                dp[i] = max(dp[i], dp[j] + 1);\n            }\n        }\n        res = max(res, dp[i]);\n    }\n    return res;\n}",
+      "java": "// O(N^2) DP. Code omitted.",
+      "python": "# O(N^2) DP. Code omitted.",
+      "javascript": "// O(N^2) DP. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Thinking the result is always `dp[n-1]`. The LIS can end at any index, so you must track the max of the entire `dp` array."],
+      "edgeCases": ["All numbers same", "Strictly decreasing array"],
+      "tips": ["If the interviewer asks for an O(N log N) solution, you must use Binary Search (maintaining an array of the smallest tails of all increasing subsequences)."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "lcs": {
+    "id": "lcs",
+    "introduction": "Given two strings `text1` and `text2`, return the length of their longest common subsequence. This is a classic 2D DP problem.",
+    "intuition": "Compare the last characters of the strings. If they match, the LCS length is 1 + LCS(rest of strings). If they don't, the LCS is the max of LCS(drop last char of string 1) and LCS(drop last char of string 2).",
+    "walkthrough": [
+      { "phase": "2D Grid", "description": "Create a 2D array `dp[N+1][M+1]` initialized to 0." },
+      { "phase": "Match", "description": "If `text1[i-1] == text2[j-1]`, then `dp[i][j] = 1 + dp[i-1][j-1]`." },
+      { "phase": "Mismatch", "description": "If different, `dp[i][j] = max(dp[i-1][j], dp[i][j-1])`." }
+    ],
+    "dryRun": {
+      "input": "text1 = 'abcde', text2 = 'ace'",
+      "output": "3 ('ace')",
+      "steps": [
+        "Grid cells filled row by row.",
+        "When 'c' matches 'c', it takes diagonal + 1.",
+        "When 'd' mismatches 'c', it takes max(top, left)."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N * M)", "average": "O(N * M)", "worst": "O(N * M)" },
+      "space": "O(M)",
+      "analysis": "Time is O(N*M). Space is O(N*M) for a full grid, but can be optimized to O(M) by only keeping the previous row."
+    },
+    "code": {
+      "cpp": "int longestCommonSubsequence(string text1, string text2) {\n    int n = text1.size(), m = text2.size();\n    vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0));\n    for(int i = 1; i <= n; i++) {\n        for(int j = 1; j <= m; j++) {\n            if(text1[i - 1] == text2[j - 1]) dp[i][j] = 1 + dp[i - 1][j - 1];\n            else dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);\n        }\n    }\n    return dp[n][m];\n}",
+      "java": "// LCS. Code omitted.",
+      "python": "# LCS. Code omitted.",
+      "javascript": "// LCS. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using a 1-indexed DP array but forgetting to use 0-indexed lookups for the actual string characters (e.g. `text1[i-1]`)."],
+      "edgeCases": ["No common subsequence"],
+      "tips": ["LCS is the foundation for Edit Distance, Palindromic Subsequences, and Sequence Alignment algorithms."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "knapsack-01": {
+    "id": "knapsack-01",
+    "introduction": "Given N items with weights and values, and a knapsack of capacity W, find the maximum value you can pack. You can either take an item completely or leave it (0/1 property).",
+    "intuition": "For each item, you either include it (add its value and subtract its weight from capacity) or exclude it. Take the max of these two choices.",
+    "walkthrough": [
+      { "phase": "2D Grid", "description": "Create a 2D array `dp[N+1][W+1]` initialized to 0." },
+      { "phase": "Exclude", "description": "`dp[i][w] = dp[i-1][w]` (inherit max value without this item)." },
+      { "phase": "Include", "description": "If `weights[i-1] <= w`, `dp[i][w] = max(dp[i][w], values[i-1] + dp[i-1][w-weights[i-1]])`." }
+    ],
+    "dryRun": {
+      "input": "W = 4. weights=[1,2,3], values=[10,15,40]",
+      "output": "50 (Items 1 and 3)",
+      "steps": [
+        "Cap 4, Item 3 (w:3, v:40): Can take. Value = 40.",
+        "Cap 4, Items 1 & 3: W=1 left. Can take Item 1 (v:10). Value = 50."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N * W)", "average": "O(N * W)", "worst": "O(N * W)" },
+      "space": "O(W)",
+      "analysis": "Time is Pseudo-Polynomial O(N*W). Space can be optimized to a 1D array of size W by traversing backwards."
+    },
+    "code": {
+      "cpp": "int knapSack(int W, int wt[], int val[], int n) {\n    vector<int> dp(W + 1, 0);\n    for(int i = 0; i < n; i++) {\n        for(int w = W; w >= wt[i]; w--) {\n            dp[w] = max(dp[w], val[i] + dp[w - wt[i]]);\n        }\n    }\n    return dp[W];\n}",
+      "java": "// 0/1 Knapsack. Space optimized to 1D array.",
+      "python": "# 0/1 Knapsack. Space optimized to 1D array.",
+      "javascript": "// 0/1 Knapsack. Space optimized to 1D array."
+    },
+    "interviewNotes": {
+      "mistakes": ["When using a 1D DP array for space optimization, iterating left-to-right. You MUST iterate right-to-left (`w = W` down to `wt[i]`), otherwise you might use the same item multiple times (which solves the Unbounded Knapsack problem, not 0/1)."],
+      "edgeCases": ["All weights > Capacity"],
+      "tips": ["Subset Sum and Partition Equal Subset Sum are exact clones of this algorithm."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "edit-distance": {
+    "id": "edit-distance",
+    "introduction": "Find the minimum number of operations (Insert, Delete, Replace) required to convert word1 into word2.",
+    "intuition": "Compare characters from the end. If they match, cost is 0. If they don't, we can try Insert, Delete, or Replace, and we add 1 to the minimum cost of those 3 operations.",
+    "walkthrough": [
+      { "phase": "Base Cases", "description": "If one string is empty, cost is length of other string (all insertions)." },
+      { "phase": "Match", "description": "If `w1[i-1] == w2[j-1]`, `dp[i][j] = dp[i-1][j-1]`." },
+      { "phase": "Mismatch", "description": "`dp[i][j] = 1 + min(Insert, Delete, Replace)`." }
+    ],
+    "dryRun": {
+      "input": "w1 = 'cat', w2 = 'cut'",
+      "output": "1 (replace 'a' with 'u')",
+      "steps": [
+        "'t' == 't', cost is same as 'ca' to 'cu'.",
+        "'a' != 'u', cost is 1 + min(cost('c','cu'), cost('ca','c'), cost('c','c')).",
+        "cost('c','c') is 0. Total = 1 + 0 = 1."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N * M)", "average": "O(N * M)", "worst": "O(N * M)" },
+      "space": "O(M)",
+      "analysis": "Similar to LCS, space can be optimized to O(M)."
+    },
+    "code": {
+      "cpp": "int minDistance(string word1, string word2) {\n    int n = word1.size(), m = word2.size();\n    vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0));\n    for(int i = 0; i <= n; i++) dp[i][0] = i;\n    for(int j = 0; j <= m; j++) dp[0][j] = j;\n    for(int i = 1; i <= n; i++) {\n        for(int j = 1; j <= m; j++) {\n            if(word1[i - 1] == word2[j - 1]) dp[i][j] = dp[i - 1][j - 1];\n            else dp[i][j] = 1 + min({dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]});\n        }\n    }\n    return dp[n][m];\n}",
+      "java": "// Edit Distance. Code omitted.",
+      "python": "# Edit Distance. Code omitted.",
+      "javascript": "// Edit Distance. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Not initializing the base cases correctly. `dp[i][0] = i` is crucial because it means deleting all `i` characters."],
+      "edgeCases": ["One string is empty"],
+      "tips": ["Also known as Levenshtein Distance. Used heavily in spell checkers and DNA sequence alignment."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "mcm": {
+    "id": "mcm",
+    "introduction": "Matrix Chain Multiplication finds the most efficient way to multiply a sequence of matrices. The problem is not to perform the multiplications, but to decide the sequence of multiplications.",
+    "intuition": "Matrix multiplication is associative. Multiplying (A*B)*C might take 1000 operations, while A*(B*C) might take 10,000. We test every possible 'split' point recursively.",
+    "walkthrough": [
+      { "phase": "Interval DP", "description": "This is Interval DP. We define `dp[i][j]` as the min cost to multiply matrices from index i to j." },
+      { "phase": "Partition", "description": "For a range i to j, try splitting at every `k` between i and j-1." },
+      { "phase": "Cost Calculation", "description": "Cost = `dp[i][k] + dp[k+1][j] + (arr[i-1] * arr[k] * arr[j])`." }
+    ],
+    "dryRun": {
+      "input": "Dimensions: [10, 20, 30, 40]",
+      "output": "18000",
+      "steps": [
+        "Matrices: A(10x20), B(20x30), C(30x40)",
+        "(AB)C = 10*20*30 + 10*30*40 = 6000 + 12000 = 18000",
+        "A(BC) = 20*30*40 + 10*20*40 = 24000 + 8000 = 32000"
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N^3)", "average": "O(N^3)", "worst": "O(N^3)" },
+      "space": "O(N^2)",
+      "analysis": "There are O(N^2) states, and for each state, we iterate `k` up to N times."
+    },
+    "code": {
+      "cpp": "int matrixMultiplication(int N, int arr[]) {\n    vector<vector<int>> dp(N, vector<int>(N, 0));\n    for(int len = 2; len < N; len++) {\n        for(int i = 1; i < N - len + 1; i++) {\n            int j = i + len - 1;\n            dp[i][j] = INT_MAX;\n            for(int k = i; k < j; k++) {\n                int cost = dp[i][k] + dp[k+1][j] + arr[i-1]*arr[k]*arr[j];\n                dp[i][j] = min(dp[i][j], cost);\n            }\n        }\n    }\n    return dp[1][N-1];\n}",
+      "java": "// MCM. Code omitted.",
+      "python": "# MCM. Code omitted.",
+      "javascript": "// MCM. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using Tabulation first. Interval DP is much easier to write and understand using Memoized Recursion (Top-Down)."],
+      "edgeCases": ["Only 1 or 2 matrices"],
+      "tips": ["Burst Balloons and Palindrome Partitioning follow the exact same Interval DP pattern."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "digit-dp": {
+    "id": "digit-dp",
+    "introduction": "Digit DP is used to count the number of integers in a range [L, R] that satisfy a certain property, operating digit by digit.",
+    "intuition": "Instead of checking every number from L to R (which is O(10^18) for large numbers), we construct the number digit by digit from left to right.",
+    "walkthrough": [
+      { "phase": "States", "description": "Index (current digit), Tight (are we bound by the upper limit?), and specific constraints (e.g. sum of digits)." },
+      { "phase": "Loop Digits", "description": "Loop from 0 to `limit`. If `Tight` is true, `limit` is the max digit at this index. Otherwise, `limit` is 9." },
+      { "phase": "Memoize", "description": "Store results for `(index, constraint, tight)`. Note: we rarely memoize when `tight == true`." }
+    ],
+    "dryRun": {
+      "input": "Count numbers <= 23 with digit sum = 5",
+      "output": "2 (which are 5, 14, 23)",
+      "steps": [
+        "First digit 0: Next can be 5 (Sum 5). Valid.",
+        "First digit 1: Next can be 4. Valid.",
+        "First digit 2 (Tight=True): Next can be 3. Valid."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(digits * states)", "average": "O(digits * states)", "worst": "O(digits * states)" },
+      "space": "O(states)",
+      "analysis": "Time complexity is extremely small, roughly O(18 * 10 * states) for numbers up to 10^18."
+    },
+    "code": {
+      "cpp": "// Digit DP. Code omitted due to length.",
+      "java": "// Digit DP. Code omitted.",
+      "python": "# Digit DP. Code omitted.",
+      "javascript": "// Digit DP. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Memoizing the state when `tight == true`. The tight constraint is specific to the upper bound string and won't be repeated in the same way."],
+      "edgeCases": ["L = 0"],
+      "tips": ["Always solve for `f(R) - f(L-1)` instead of finding the range directly. This simplifies the DP to only care about an upper bound."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}

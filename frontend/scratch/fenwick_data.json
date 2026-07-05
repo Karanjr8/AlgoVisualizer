@@ -1,0 +1,78 @@
+{
+  "fenwick-tree-intro": {
+    "id": "fenwick-tree-intro",
+    "introduction": "A Binary Indexed Tree (BIT) or Fenwick Tree is a data structure that can efficiently update elements and calculate prefix sums in a table of numbers.",
+    "intuition": "Every integer can be represented as sum of powers of two (its binary representation). A BIT stores partial sums based on these powers of two. We can navigate these ranges by adding or subtracting the Least Significant Bit (LSB).",
+    "walkthrough": [
+      { "phase": "Isolate LSB", "description": "The Least Significant Bit of `i` can be extracted using `i & (-i)`." },
+      { "phase": "Point Update", "description": "To add `val` at index `i`, we update `tree[i]`, then move to `i = i + (i & (-i))` to update all ranges that encompass `i`." },
+      { "phase": "Prefix Query", "description": "To get sum from 1 to `i`, we add `tree[i]` to our sum, then move to `i = i - (i & (-i))` to get the sum of the preceding range." }
+    ],
+    "dryRun": {
+      "input": "Array of size 8. Add(3, 5). Query(3)",
+      "output": "Sum = 5",
+      "steps": [
+        "Update(3, 5): tree[3]+=5. Next i = 3 + (3 & -3) = 3 + 1 = 4. tree[4]+=5. Next i = 4 + (4 & -4) = 4 + 4 = 8. tree[8]+=5.",
+        "Query(3): sum += tree[3]. Next i = 3 - (3 & -3) = 2. sum += tree[2]. Next i = 2 - (2 & -2) = 0. Stop."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(log N)", "average": "O(log N)", "worst": "O(log N)" },
+      "space": "O(N)",
+      "analysis": "Both update and query jump through set bits, which can be at most log(N)."
+    },
+    "code": {
+      "cpp": "class BIT {\n    vector<int> tree;\n    int n;\npublic:\n    BIT(int n) : n(n) { tree.resize(n + 1, 0); }\n    void add(int i, int delta) {\n        for (; i <= n; i += i & -i) tree[i] += delta;\n    }\n    int query(int i) {\n        int sum = 0;\n        for (; i > 0; i -= i & -i) sum += tree[i];\n        return sum;\n    }\n};",
+      "java": "// BIT Implementation. Code omitted.",
+      "python": "# BIT Implementation. Code omitted.",
+      "javascript": "// BIT Implementation. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Using 0-based indexing for the tree array. BIT requires 1-based indexing because `0 & -0` is 0, which causes an infinite loop in the update/query functions."],
+      "edgeCases": ["Updating with negative numbers (fully supported)"],
+      "tips": ["Always use BIT over Segment Tree if you only need Prefix Sums and Point Updates. It is much faster in practice and requires 4x less memory."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  },
+  "count-inversions": {
+    "id": "count-inversions",
+    "introduction": "Given an array, an inversion is a pair `(i, j)` where `i < j` and `arr[i] > arr[j]`. Find the total number of inversions.",
+    "intuition": "If we iterate from right to left, we want to know how many elements we've seen so far that are smaller than the current element. A Fenwick Tree can keep a running frequency count of elements seen.",
+    "walkthrough": [
+      { "phase": "Coordinate Compression", "description": "If array elements are large or negative, compress them to ranks 1 to N." },
+      { "phase": "Iterate Backwards", "description": "Loop from the end of the array to the start." },
+      { "phase": "Query & Add", "description": "Query the BIT for sum of frequencies from 1 to `arr[i]-1`. Add this to total inversions. Then, Add(arr[i], 1) to the BIT." }
+    ],
+    "dryRun": {
+      "input": "Array: [2, 4, 1, 3, 5]",
+      "output": "3 inversions: (2,1), (4,1), (4,3)",
+      "steps": [
+        "Index 4 (val=5): Query(4) = 0. Add(5).",
+        "Index 3 (val=3): Query(2) = 0. Add(3).",
+        "Index 2 (val=1): Query(0) = 0. Add(1).",
+        "Index 1 (val=4): Query(3) = 2 (vals 1,3 seen). Inv+=2. Add(4).",
+        "Index 0 (val=2): Query(1) = 1 (val 1 seen). Inv+=1. Add(2).",
+        "Total = 3."
+      ]
+    },
+    "complexities": {
+      "time": { "best": "O(N log N)", "average": "O(N log N)", "worst": "O(N log N)" },
+      "space": "O(N)",
+      "analysis": "For each of the N elements, we do a Query O(log N) and an Add O(log N)."
+    },
+    "code": {
+      "cpp": "int countInversions(vector<int>& arr) {\n    int n = arr.size();\n    vector<int> temp = arr;\n    sort(temp.begin(), temp.end());\n    for(int i=0; i<n; i++) {\n        arr[i] = lower_bound(temp.begin(), temp.end(), arr[i]) - temp.begin() + 1;\n    }\n    BIT bit(n);\n    int inv = 0;\n    for(int i = n - 1; i >= 0; i--) {\n        inv += bit.query(arr[i] - 1);\n        bit.add(arr[i], 1);\n    }\n    return inv;\n}",
+      "java": "// Count Inversions. Code omitted.",
+      "python": "# Count Inversions. Code omitted.",
+      "javascript": "// Count Inversions. Code omitted."
+    },
+    "interviewNotes": {
+      "mistakes": ["Forgetting Coordinate Compression. If an element in the array is 10^9, you can't create a BIT of size 10^9. You must map the values to 1...N."],
+      "edgeCases": ["Array is already sorted (0 inversions)", "Array is reverse sorted (Max inversions)"],
+      "tips": ["Merge Sort is the standard algorithm for this problem, but the BIT approach is extremely elegant and often easier to write in an interview once you know the BIT template."]
+    },
+    "practiceProblems": [],
+    "relatedTopics": []
+  }
+}
