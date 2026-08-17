@@ -830,119 +830,212 @@ export const CATEGORIES: CategoryData[] = [
       { id: 'digit-dp', title: 'Digit DP', difficulty: 'Hard', timeComplexity: 'O(digits * states)', spaceComplexity: 'O(states)', description: 'Counting numbers in a range satisfying properties.', section: 'Advanced DP' }
     ] 
   },
-    { 
-    id: "greedy-algorithms", 
-    title: "Greedy Algorithms", 
-    count: 9, 
-    desc: "Make the locally optimal choice at each stage to find a global optimum.", 
-    overview: "Greedy algorithms build up a solution piece by piece, always choosing the next piece that offers the most obvious and immediate benefit. While they don't always yield the globally optimal solution, when they do, they are incredibly fast.", 
-    objectives: [
-      "Understand when a problem has the Greedy Choice Property.",
-      "Solve interval scheduling problems (Activity Selection).",
-      "Solve fractional knapsack problems."
-    ], 
-    Icon: CategoryIcons.Greedy, 
-    color: "from-yellow-500 to-amber-400", 
-    algorithms: [
-      { id: 'activity-selection', title: 'Activity Selection', difficulty: 'Easy', timeComplexity: 'O(N log N)', spaceComplexity: 'O(1)', description: 'Select the maximum number of non-overlapping activities.', section: 'Intervals' },
-      { id: 'fractional-knapsack', title: 'Fractional Knapsack', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(1)', description: 'Maximize value in knapsack allowing fractions of items.', section: 'Optimization' },
-      { id: 'job-sequencing', title: 'Job Sequencing with Deadlines', difficulty: 'Medium', timeComplexity: 'O(N^2)', spaceComplexity: 'O(N)', description: 'Maximize profit by scheduling jobs before their deadlines.', section: 'Optimization' },
-      { id: 'huffman-coding', title: 'Huffman Coding', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Lossless data compression algorithm.', section: 'Strings' }
-    ] 
-  },
-    { 
+  { 
     id: "heap", 
     title: "Heap / Priority Queue", 
-    count: 7, 
+    count: 14, 
     desc: "Specialized tree-based structure maintaining the max/min element.", 
     overview: "A Heap is a complete binary tree where the parent node is either always greater than (Max Heap) or always less than (Min Heap) its children. It's the underlying structure of a Priority Queue.", 
     objectives: [
       "Understand the array representation of a binary heap.",
       "Master the heapify up and heapify down operations.",
-      "Solve top K frequent elements and Kth largest element problems."
+      "Solve top K frequent elements, Kth largest, and streaming median problems."
     ], 
     Icon: CategoryIcons.Heap, 
     color: "from-amber-600 to-orange-500", 
+    hasIntro: true,
     algorithms: [
-      { id: 'heap-intro', title: 'Introduction to Heaps', difficulty: 'Easy', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Insert, Delete, and Peek operations.', section: 'Basics' },
-      { id: 'kth-largest', title: 'Kth Largest Element', difficulty: 'Medium', timeComplexity: 'O(N log K)', spaceComplexity: 'O(K)', description: 'Find the Kth largest element in an array using a Min Heap.', section: 'Standard' },
+      { id: 'heap-intro', title: 'Introduction to Heaps', difficulty: 'Easy', timeComplexity: 'O(1) / O(log N)', spaceComplexity: 'O(N)', description: 'Complete binary tree, array indexing, and core operations.', section: 'Fundamentals' },
+      { id: 'min-max-heap', title: 'Min Heap vs Max Heap', difficulty: 'Easy', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Comparison of parent-child invariants and extract operations.', section: 'Fundamentals' },
+      { id: 'heap-operations', title: 'Heap Operations', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(1)', description: 'Step-by-step Insert (Bubble Up) and Extract (Shift Down).', section: 'Fundamentals' },
+      { id: 'priority-queue-design', title: 'Priority Queue Design', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Building an Abstract Priority Queue on top of a Binary Heap.', section: 'Fundamentals' },
+      
+      { id: 'heap-sort', title: 'Heap Sort', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(1)', description: 'In-place comparison sort using Max Heap extraction.', section: 'Intermediate' },
+      { id: 'kth-largest', title: 'Kth Largest Element', difficulty: 'Medium', timeComplexity: 'O(N log K)', spaceComplexity: 'O(K)', description: 'Find the Kth largest element in an array using a Min Heap.', section: 'Intermediate' },
+      { id: 'kth-smallest', title: 'Kth Smallest Element', difficulty: 'Medium', timeComplexity: 'O(N log K)', spaceComplexity: 'O(K)', description: 'Find the Kth smallest element in an array using a Max Heap.', section: 'Intermediate' },
+      { id: 'top-k-frequent', title: 'Top K Frequent Elements', difficulty: 'Medium', timeComplexity: 'O(N log K)', spaceComplexity: 'O(N)', description: 'Frequency map pipeline paired with a Min Heap of size K.', section: 'Intermediate' },
+      { id: 'k-closest-elements', title: 'K Closest Elements', difficulty: 'Medium', timeComplexity: 'O(N log K)', spaceComplexity: 'O(K)', description: 'Find K numbers closest to target using distance comparisons.', section: 'Intermediate' },
+      { id: 'k-closest-points', title: 'K Closest Points to Origin', difficulty: 'Medium', timeComplexity: 'O(N log K)', spaceComplexity: 'O(K)', description: 'Euclidean distance calculation on 2D plane with Max Heap.', section: 'Intermediate' },
+
       { id: 'merge-k-sorted', title: 'Merge K Sorted Lists', difficulty: 'Hard', timeComplexity: 'O(N log K)', spaceComplexity: 'O(K)', description: 'Merge k linked lists using a Priority Queue.', section: 'Advanced' },
-      { id: 'median-data-stream', title: 'Find Median from Data Stream', difficulty: 'Hard', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Maintain two heaps to find the running median.', section: 'Advanced' }
+      { id: 'sliding-window-maximum', title: 'Sliding Window Maximum', difficulty: 'Hard', timeComplexity: 'O(N log K)', spaceComplexity: 'O(K)', description: 'Dynamic heap tracking of maximum values in a moving window.', section: 'Advanced' },
+      { id: 'task-scheduler', title: 'Task Scheduler', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(1)', description: 'CPU task execution timeline with cooldowns via Max Heap.', section: 'Advanced' },
+      { id: 'median-data-stream', title: 'Find Median from Data Stream', difficulty: 'Hard', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Maintain two heaps (Max & Min) to find the running median.', section: 'Advanced' }
     ] 
   },
     { 
     id: "trie", 
-    title: "Trie", 
-    count: 5, 
-    desc: "Prefix trees optimized for rapid string searching and autocomplete.", 
-    overview: "A Trie (Prefix Tree) is a specialized tree used to store associative data structures. They are exceptionally fast for string matching, autocomplete, and spell checkers.", 
+    title: "Trie (Prefix Tree)", 
+    count: 15, 
+    desc: "Prefix trees optimized for rapid string searching, autocomplete, and dictionary lookups.", 
+    overview: "A Trie (Prefix Tree) is a tree-like data structure used to locate specific keys within a set. Characters are stored on tree edges and nodes, enabling O(L) time lookups where L is string length.", 
     objectives: [
-      "Understand the Node structure of a Trie.",
-      "Implement Insert, Search, and StartsWith operations.",
-      "Solve advanced word search problems using a Trie."
+      "Understand character edge branching and endOfWord node markers.",
+      "Master Insert, Search, and StartsWith prefix operations in O(L) time.",
+      "Build real-world systems like Autocomplete, Contacts, and File System Tries."
     ], 
     Icon: CategoryIcons.Trie, 
     color: "from-teal-500 to-emerald-400", 
+    hasIntro: true,
     algorithms: [
-      { id: 'trie-intro', title: 'Implement Trie', difficulty: 'Medium', timeComplexity: 'O(L)', spaceComplexity: 'O(N*L)', description: 'Insert, Search, and Prefix match in O(Length) time.', section: 'Basics' },
-      { id: 'design-add-search', title: 'Design Add and Search Words', difficulty: 'Medium', timeComplexity: 'O(26^L)', spaceComplexity: 'O(N*L)', description: 'Search supporting the "." wildcard character.', section: 'Standard' },
-      { id: 'word-search-ii', title: 'Word Search II', difficulty: 'Hard', timeComplexity: 'O(M*N*3^L)', spaceComplexity: 'O(K*L)', description: 'Find all words from a dictionary in a 2D board using a Trie.', section: 'Advanced' }
+      { id: 'trie-intro', title: 'Introduction to Trie', difficulty: 'Easy', timeComplexity: 'O(L)', spaceComplexity: 'O(N * L)', description: 'Core prefix tree structure and shared prefix storage.', section: 'Fundamentals' },
+      { id: 'trie-node-structure', title: 'Trie Node Structure', difficulty: 'Easy', timeComplexity: 'O(1)', spaceComplexity: 'O(26)', description: 'Memory layout, child pointers array, and endOfWord flag.', section: 'Fundamentals' },
+      { id: 'trie-insert', title: 'Insert Word', difficulty: 'Easy', timeComplexity: 'O(L)', spaceComplexity: 'O(L)', description: 'Character-by-character node creation and traversal.', section: 'Fundamentals' },
+      { id: 'trie-search', title: 'Search Word', difficulty: 'Easy', timeComplexity: 'O(L)', spaceComplexity: 'O(1)', description: 'Exact word search vs missing node detection.', section: 'Fundamentals' },
+      { id: 'trie-prefix-search', title: 'Starts With / Prefix Search', difficulty: 'Easy', timeComplexity: 'O(L)', spaceComplexity: 'O(1)', description: 'Prefix match traversal without requiring endOfWord flag.', section: 'Fundamentals' },
+
+      { id: 'word-dictionary', title: 'Word Dictionary (Wildcard Search)', difficulty: 'Medium', timeComplexity: 'O(26^L)', spaceComplexity: 'O(N * L)', description: 'Search supporting the "." wildcard character via DFS.', section: 'Intermediate' },
+      { id: 'longest-common-prefix', title: 'Longest Common Prefix', difficulty: 'Easy', timeComplexity: 'O(N * L)', spaceComplexity: 'O(N * L)', description: 'Unbranched path traversal until first branching node.', section: 'Intermediate' },
+      { id: 'replace-words', title: 'Replace Words', difficulty: 'Medium', timeComplexity: 'O(N * L)', spaceComplexity: 'O(N * L)', description: 'Root word replacement in sentences using prefix matching.', section: 'Intermediate' },
+      { id: 'search-suggestions-system', title: 'Search Suggestions System', difficulty: 'Medium', timeComplexity: 'O(L + M)', spaceComplexity: 'O(N * L)', description: 'Product search suggestions updating dynamically per key press.', section: 'Intermediate' },
+      { id: 'word-search-ii', title: 'Word Search II', difficulty: 'Hard', timeComplexity: 'O(M * N * 3^L)', spaceComplexity: 'O(K * L)', description: 'Find all valid words in 2D matrix using Trie + DFS pruning.', section: 'Advanced' },
+
+      { id: 'autocomplete-system', title: 'Auto Complete System', difficulty: 'Hard', timeComplexity: 'O(L + K)', spaceComplexity: 'O(N * L)', description: 'Real-time search bar autocomplete with candidate ranking.', section: 'Advanced' },
+      { id: 'design-search-engine', title: 'Design Search Engine Prefix Matching', difficulty: 'Hard', timeComplexity: 'O(L)', spaceComplexity: 'O(N * L)', description: 'Search query engine prefix matching and hit counting.', section: 'Advanced' },
+      { id: 'top-k-frequent-words', title: 'Top K Frequent Words', difficulty: 'Medium', timeComplexity: 'O(N log K)', spaceComplexity: 'O(N)', description: 'Trie frequency counter paired with Min-Heap ranking.', section: 'Advanced' },
+      { id: 'contacts-app', title: 'Contacts Application', difficulty: 'Medium', timeComplexity: 'O(L + K)', spaceComplexity: 'O(N * L)', description: 'Phonebook contact search by name prefix.', section: 'Advanced' },
+      { id: 'file-system-trie', title: 'File System Path Trie', difficulty: 'Hard', timeComplexity: 'O(L)', spaceComplexity: 'O(N * L)', description: 'Directory hierarchy tree splitting on path slashes.', section: 'Advanced' }
     ] 
   },
     { 
     id: "segment-tree", 
     title: "Segment Tree", 
-    count: 4, 
-    desc: "Store intervals or segments to query range sums and min/max efficiently.", 
-    overview: "A Segment Tree allows querying and updating array intervals in O(log N) time, vastly outperforming the O(N) time of naive approaches.", 
+    count: 12, 
+    desc: "Store intervals or segments to query range sums, min/max, and perform lazy propagation efficiently.", 
+    overview: "A Segment Tree allows querying and updating array intervals in O(log N) time, vastly outperforming naive O(N) approaches for dynamic range operations.", 
     objectives: [
-      "Build a Segment Tree from an array.",
-      "Perform Range Queries (Sum, Min, Max).",
-      "Perform Point Updates.",
-      "Understand Lazy Propagation for Range Updates."
+      "Understand why Segment Trees outperform naive O(N) and prefix sum O(1) query / O(N) update approaches.",
+      "Build a Segment Tree bottom-up and top-down.",
+      "Perform Range Queries (Sum, Minimum, Maximum) in O(log N).",
+      "Execute Point Updates and propagate updates upward.",
+      "Master Lazy Propagation for O(log N) Range Updates and Range Assignments."
     ], 
     Icon: CategoryIcons.SegmentTree, 
-    color: "from-fuchsia-500 to-pink-400", 
+    color: "from-fuchsia-500 to-pink-400",
+    hasIntro: true, 
     algorithms: [
-      { id: 'segment-tree-intro', title: 'Segment Tree Basics', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Build, Point Update, and Range Query.', section: 'Basics' },
-      { id: 'lazy-propagation', title: 'Lazy Propagation', difficulty: 'Hard', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Range Updates without updating every child immediately.', section: 'Advanced' }
+      { id: 'segment-tree-intro', title: 'Segment Tree Intro', difficulty: 'Easy', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'What is a Segment Tree & Why do we need it?', section: 'Introduction' },
+      { id: 'build-segment-tree', title: 'Building a Segment Tree', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(N)', description: 'Leaf creation, parent merge, and tree construction.', section: 'Core Topics' },
+      { id: 'range-sum-query', title: 'Range Sum Query', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Query range sums traversing covered, partial, and disjoint nodes.', section: 'Core Topics' },
+      { id: 'range-min-query', title: 'Range Minimum Query', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Query minimum values over arbitrary sub-arrays.', section: 'Core Topics' },
+      { id: 'range-max-query', title: 'Range Maximum Query', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Query maximum values over arbitrary sub-arrays.', section: 'Core Topics' },
+      { id: 'point-update', title: 'Point Update', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Update a single element and propagate changes upward.', section: 'Core Topics' },
+      { id: 'range-update', title: 'Range Update', difficulty: 'Hard', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Updating intervals with lazy state management.', section: 'Core Topics' },
+      { id: 'lazy-propagation', title: 'Lazy Propagation', difficulty: 'Hard', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Defer updates to child nodes using a secondary lazy array.', section: 'Advanced Topics' },
+      { id: 'range-assignment', title: 'Range Assignment Updates', difficulty: 'Hard', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Overwriting ranges with uniform values lazily.', section: 'Advanced Topics' },
+      { id: 'segment-tree-applications', title: 'Segment Tree Applications', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Real-world and competitive programming applications.', section: 'Advanced Topics' },
+      { id: 'count-smaller-numbers', title: 'Count Smaller Numbers After Self', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Dynamic frequency counts using segment tree traversal.', section: 'Interview Problems' },
+      { id: 'skyline-problem', title: 'Skyline-Style Range Maximum Overlap', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Building heights and range maximum overlap tracking.', section: 'Interview Problems' }
     ] 
   },
     { 
     id: "binary-indexed-tree", 
     title: "Binary Indexed Tree", 
-    count: 3, 
-    desc: "Efficiently update elements and calculate prefix sums in an array.", 
-    overview: "Also known as a Fenwick Tree, it provides O(log N) point updates and prefix sum queries using much less code and space than a Segment Tree.", 
+    count: 11, 
+    desc: "Perform dynamic prefix sums and point updates in O(log N) time with elegant LSB bitwise math.", 
+    overview: "Also known as a Fenwick Tree, a Binary Indexed Tree (BIT) provides O(log N) point updates and prefix sum queries using an incredibly lightweight N-size array and simple bit manipulation.", 
     objectives: [
-      "Understand the LSB (Least Significant Bit) isolation trick.",
-      "Implement Add and Query operations."
+      "Understand why BIT overcomes Prefix Sum update bottlenecks and array search queries.",
+      "Master the LSB (Least Significant Bit) isolation trick: x & -x.",
+      "Understand what sub-range each BIT[i] node stores.",
+      "Execute Point Updates (add +V at index i) in O(log N).",
+      "Execute Prefix Sum and Range Sum Queries in O(log N).",
+      "Compare BIT vs Segment Tree trade-offs in memory, code simplicity, and flexibility."
     ], 
     Icon: CategoryIcons.BinaryIndexedTree, 
-    color: "from-violet-500 to-purple-400", 
+    color: "from-violet-500 to-purple-400",
+    hasIntro: true, 
     algorithms: [
-      { id: 'fenwick-tree-intro', title: 'Fenwick Tree', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Point update and Range Sum query.', section: 'Basics' },
-      { id: 'count-inversions', title: 'Count Inversions', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Count smaller elements after self using BIT.', section: 'Applications' }
+      { id: 'fenwick-tree-intro', title: 'Binary Indexed Tree Intro', difficulty: 'Easy', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'What is a BIT & How does it work?', section: 'Introduction' },
+      { id: 'prefix-sum-refresher', title: 'Prefix Sum Refresher', difficulty: 'Easy', timeComplexity: 'O(1) / O(N)', spaceComplexity: 'O(N)', description: 'O(1) prefix sums vs O(N) update bottleneck.', section: 'Foundations' },
+      { id: 'why-bit-exists', title: 'Why BIT Exists', difficulty: 'Easy', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Motivating example: Dynamic prefix sums & updates.', section: 'Foundations' },
+      { id: 'bit-structure', title: 'BIT Structure & Ranges', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Understanding what range each BIT[i] node stores.', section: 'Core Concepts' },
+      { id: 'lowbit-operation', title: 'Lowbit Operation (x & -x)', difficulty: 'Medium', timeComplexity: 'O(1)', spaceComplexity: 'O(1)', description: 'Bitwise two\'s complement LSB isolation animation.', section: 'Core Concepts' },
+      { id: 'bit-point-update', title: 'Point Update in BIT', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Add +V at index i and propagate via i += i & -i.', section: 'Operations' },
+      { id: 'prefix-sum-query', title: 'Prefix Sum Query in BIT', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Accumulate prefix sum by stepping i -= i & -i.', section: 'Operations' },
+      { id: 'bit-range-sum-query', title: 'Range Sum Query', difficulty: 'Medium', timeComplexity: 'O(log N)', spaceComplexity: 'O(N)', description: 'Range sum(L, R) = prefix(R) - prefix(L-1).', section: 'Operations' },
+      { id: 'coordinate-compression-bit', title: 'Coordinate Compression', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Mapping large numbers to small ranks for BIT indexing.', section: 'Advanced Topics' },
+      { id: 'count-inversions', title: 'Count Inversions', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Counting smaller elements after self using BIT frequency tree.', section: 'Interview Problems' },
+      { id: 'order-statistics-bit', title: 'Order Statistics & Frequency Queries', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'K-th smallest element binary lifting on Fenwick Tree.', section: 'Interview Problems' }
     ] 
   },
     { 
     id: "advanced-patterns", 
     title: "Advanced Patterns", 
-    count: 10, 
-    desc: "Master complex interview setups like monotonic stack and sweep line.", 
-    overview: "This module covers specialized algorithms and data structure patterns that appear in hard interview rounds.", 
+    count: 14, 
+    desc: "Master high-frequency interview pattern recognition & problem mapping.", 
+    overview: "The final stage of the AlgoVis roadmap. Learn how to map complex problem descriptions to optimal algorithmic patterns, decode disguised interview questions, and execute production solutions.", 
     objectives: [
-      "String matching: KMP and Rabin-Karp.",
-      "Stack patterns: Monotonic Stack.",
-      "Intervals: Sweep Line Algorithm."
+      "Master Monotonic Stack & Monotonic Queue window maintenance.",
+      "Apply Union Find (DSU) for dynamic connectivity and component tracking.",
+      "Process intervals and overlaps with Sweep Line event algorithms.",
+      "Execute O(1) range updates using Difference Arrays.",
+      "Identify Binary Search On Answer feasibility functions.",
+      "Solve advanced Graph (Topological Sort, Shortest Path, MST) & State Compression DP problems."
     ], 
     Icon: CategoryIcons.Advanced, 
-    color: "from-primary to-secondary", 
+    color: "from-primary to-secondary",
+    hasIntro: true, 
     algorithms: [
-      { id: 'kmp', title: 'KMP String Matching', difficulty: 'Hard', timeComplexity: 'O(N+M)', spaceComplexity: 'O(M)', description: 'Find substring using the LPS array.', section: 'Strings' },
-      { id: 'rabin-karp', title: 'Rabin-Karp', difficulty: 'Medium', timeComplexity: 'O(N+M)', spaceComplexity: 'O(1)', description: 'Find substring using Rolling Hash.', section: 'Strings' },
-      { id: 'monotonic-stack', title: 'Monotonic Stack', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(N)', description: 'Next Greater Element paradigm.', section: 'Arrays' },
-      { id: 'sweep-line', title: 'Sweep Line', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Process intervals sorted by time/coordinate.', section: 'Intervals' }
+      { id: 'monotonic-stack-pattern', title: 'Monotonic Stack Pattern', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(N)', description: 'Next Greater Element, Daily Temps, and Histogram Area.', section: 'Monotonic Structures' },
+      { id: 'monotonic-queue-pattern', title: 'Monotonic Queue Pattern', difficulty: 'Hard', timeComplexity: 'O(N)', spaceComplexity: 'O(K)', description: 'Sliding Window Maximum and Constrained Window Sums.', section: 'Monotonic Structures' },
+      { id: 'union-find-pattern', title: 'Union Find (DSU) Pattern', difficulty: 'Medium', timeComplexity: 'O(α(N))', spaceComplexity: 'O(N)', description: 'Dynamic Connectivity, Provinces, and Cycle Detection.', section: 'Disjoint Sets' },
+      { id: 'sweep-line-pattern', title: 'Sweep Line Pattern', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Meeting Rooms, Interval Overlaps, and Timeline Events.', section: 'Intervals' },
+      { id: 'difference-array-pattern', title: 'Difference Array Pattern', difficulty: 'Medium', timeComplexity: 'O(1) update / O(N)', spaceComplexity: 'O(N)', description: 'Batch range updates (+D at L, -D at R+1) & reconstruction.', section: 'Range Modifications' },
+      { id: 'binary-search-on-answer-pattern', title: 'Binary Search On Answer', difficulty: 'Medium', timeComplexity: 'O(N log(Max-Min))', spaceComplexity: 'O(1)', description: 'Minimize Maximum, Koko Bananas, and Feasibility Checks.', section: 'Search Space' },
+      { id: 'bit-manipulation-patterns', title: 'Bit Manipulation Patterns', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(1)', description: 'XOR Cancellation, Single Number, and Subsets.', section: 'Bitwise Tricks' },
+      { id: 'meet-in-the-middle-pattern', title: 'Meet In The Middle Pattern', difficulty: 'Hard', timeComplexity: 'O(2^(N/2) log(2^(N/2)))', spaceComplexity: 'O(2^(N/2))', description: 'Splitting N=40 search space into two N/2 halves.', section: 'Divide & Conquer' },
+      { id: 'topological-sort-patterns', title: 'Topological Sort Patterns', difficulty: 'Medium', timeComplexity: 'O(V + E)', spaceComplexity: 'O(V)', description: 'Dependency Ordering, Course Schedule, and Alien Dictionary.', section: 'Graph Patterns' },
+      { id: 'shortest-path-patterns', title: 'Shortest Path Patterns', difficulty: 'Hard', timeComplexity: 'O((V + E) log V)', spaceComplexity: 'O(V)', description: 'Dijkstra Minimum Cost, Network Delay, and Flights.', section: 'Graph Patterns' },
+      { id: 'mst-patterns', title: 'Minimum Spanning Tree Patterns', difficulty: 'Hard', timeComplexity: 'O(E log E)', spaceComplexity: 'O(V)', description: 'Kruskal, Prim, and Connecting City Infrastructure.', section: 'Graph Patterns' },
+      { id: 'state-compression-dp-pattern', title: 'State Compression DP Pattern', difficulty: 'Hard', timeComplexity: 'O(2^N * N^2)', spaceComplexity: 'O(2^N * N)', description: 'Bitmask DP, Traveling Salesperson, and Subsets DP.', section: 'Advanced DP' },
+      { id: 'kmp', title: 'KMP String Matching', difficulty: 'Hard', timeComplexity: 'O(N+M)', spaceComplexity: 'O(M)', description: 'Find substring using the LPS array.', section: 'String Patterns' },
+      { id: 'rabin-karp', title: 'Rabin-Karp', difficulty: 'Medium', timeComplexity: 'O(N+M)', spaceComplexity: 'O(1)', description: 'Find substring using Rolling Hash.', section: 'String Patterns' }
     ] 
+  },
+  {
+    id: "greedy-algorithms",
+    title: "Greedy Algorithms",
+    count: 23,
+    desc: "Make locally optimal choices to find global solutions. Master interval scheduling, heaps, and array greedy strategies.",
+    overview: "A Greedy Algorithm makes the locally optimal choice at each step with the hope of finding a global optimum. Learn when greedy works, why it fails, how to prove greedy choice properties, and pattern recognition for interview problem solving.",
+    objectives: [
+      "Understand Local vs Global Optimum and the Greedy Choice Property.",
+      "Identify greedy subproblem properties and proving optimality.",
+      "Master Interval Scheduling, Activity Selection, and Sweep Line techniques.",
+      "Use Priority Queues to make efficient greedy choices in O(log N) time."
+    ],
+    Icon: CategoryIcons.Greedy,
+    color: "from-yellow-500 to-amber-400",
+    hasIntro: true,
+    algorithms: [
+      { id: 'greedy-intro', title: 'Introduction to Greedy', difficulty: 'Easy', timeComplexity: 'O(N)', spaceComplexity: 'O(1)', description: 'Core principles: local optimum, global optimum, choices, and failure cases.', section: 'Fundamentals' },
+      { id: 'greedy-vs-brute-force', title: 'Greedy vs Brute Force', difficulty: 'Easy', timeComplexity: 'O(N) vs O(2ⁿ)', spaceComplexity: 'O(1)', description: 'Tradeoff between exhaustive search and immediate choice decisions.', section: 'Fundamentals' },
+      { id: 'greedy-vs-dp', title: 'Greedy vs Dynamic Programming', difficulty: 'Easy', timeComplexity: 'O(N log N) vs O(N×W)', spaceComplexity: 'O(1)', description: 'When local choice is sufficient vs when subproblem overlap requires DP.', section: 'Fundamentals' },
+      { id: 'identify-greedy', title: 'How to Identify Greedy Problems', difficulty: 'Easy', timeComplexity: 'O(1)', spaceComplexity: 'O(1)', description: 'Interview heuristics: sorting, min/max choices, non-overlapping intervals.', section: 'Fundamentals' },
+
+      { id: 'activity-selection', title: 'Activity Selection', difficulty: 'Easy', timeComplexity: 'O(N log N)', spaceComplexity: 'O(1)', description: 'Select maximum non-conflicting activities by sorting finish times.', section: 'Classic Problems' },
+      { id: 'fractional-knapsack', title: 'Fractional Knapsack', difficulty: 'Easy', timeComplexity: 'O(N log N)', spaceComplexity: 'O(1)', description: 'Maximize value by taking items sorted by value-to-weight ratio.', section: 'Classic Problems' },
+      { id: 'job-sequencing', title: 'Job Sequencing with Deadlines', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Schedule jobs in free slots before deadlines to maximize profit.', section: 'Classic Problems' },
+      { id: 'huffman-encoding', title: 'Huffman Encoding', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Construct optimal prefix codes by merging lowest character frequencies.', section: 'Classic Problems' },
+      { id: 'minimum-platforms', title: 'Minimum Platforms', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(1)', description: 'Determine minimum railway platforms needed using arrival/departure sorting.', section: 'Classic Problems' },
+      { id: 'meeting-rooms', title: 'Meeting Rooms', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Find minimum meeting rooms required for overlapping time slots.', section: 'Classic Problems' },
+
+      { id: 'non-overlapping-intervals', title: 'Non Overlapping Intervals', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(1)', description: 'Find minimum number of intervals to remove to make remaining non-overlapping.', section: 'Interval Problems' },
+      { id: 'merge-intervals', title: 'Merge Intervals', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Combine all overlapping intervals after sorting by start time.', section: 'Interval Problems' },
+      { id: 'insert-interval', title: 'Insert Interval', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(N)', description: 'Insert new interval into sorted non-overlapping list and merge if necessary.', section: 'Interval Problems' },
+      { id: 'minimum-arrows-balloons', title: 'Minimum Arrows to Burst Balloons', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(1)', description: 'Shoot minimum vertical arrows to burst all overlapping balloon intervals.', section: 'Interval Problems' },
+
+      { id: 'jump-game', title: 'Jump Game', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(1)', description: 'Determine if you can reach the last index by tracking max reachable reach.', section: 'Array Greedy' },
+      { id: 'jump-game-ii', title: 'Jump Game II', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(1)', description: 'Find minimum number of jumps to reach end using layer-by-layer window.', section: 'Array Greedy' },
+      { id: 'gas-station', title: 'Gas Station', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(1)', description: 'Find starting station index to complete circular tour with net fuel surplus.', section: 'Array Greedy' },
+      { id: 'candy-distribution', title: 'Candy Distribution', difficulty: 'Hard', timeComplexity: 'O(N)', spaceComplexity: 'O(N)', description: 'Distribute minimum candies to children based on ratings using left & right passes.', section: 'Array Greedy' },
+
+      { id: 'task-scheduling-greedy', title: 'Task Scheduling', difficulty: 'Medium', timeComplexity: 'O(N)', spaceComplexity: 'O(1)', description: 'Calculate minimum CPU time to execute tasks with cooldown period n.', section: 'Advanced Greedy' },
+      { id: 'ipo', title: 'IPO', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Maximize final capital by picking top profit projects available within capital limit.', section: 'Advanced Greedy' },
+      { id: 'reorganize-string', title: 'Reorganize String', difficulty: 'Medium', timeComplexity: 'O(N log K)', spaceComplexity: 'O(K)', description: 'Rearrange characters so no adjacent characters are identical using Max Heap.', section: 'Advanced Greedy' },
+      { id: 'min-cost-connect-ropes', title: 'Minimum Cost to Connect Ropes', difficulty: 'Medium', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Connect all ropes into one rope with minimum cost by repeatedly merging 2 smallest.', section: 'Advanced Greedy' },
+      { id: 'greedy-scheduling', title: 'Greedy Scheduling Problems', difficulty: 'Hard', timeComplexity: 'O(N log N)', spaceComplexity: 'O(N)', description: 'Optimize total penalty and weighted completion times in complex schedulers.', section: 'Advanced Greedy' }
+    ]
   }
 ];

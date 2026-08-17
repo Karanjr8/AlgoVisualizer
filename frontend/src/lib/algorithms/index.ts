@@ -34,6 +34,30 @@ import {
   generateLCAFrames, generateGenericTreeFrames,
   generateBSTInsertFrames, generateBSTDeleteFrames, generateBSTSearchFrames
 } from './treeGenerators';
+import { generateGenericHeapFrames } from './heapGenerators';
+import { generateGenericTrieFrames } from './trieGenerators';
+import {
+  generateGreedyIntroFrames,
+  generateActivitySelectionFrames,
+  generateFractionalKnapsackFrames,
+  generateJobSequencingFrames,
+  generateHuffmanEncodingFrames,
+  generateMinimumPlatformsFrames,
+  generateMeetingRoomsFrames,
+  generateNonOverlappingIntervalsFrames,
+  generateMergeIntervalsFrames,
+  generateInsertIntervalFrames,
+  generateMinimumArrowsFrames,
+  generateJumpGameFrames,
+  generateJumpGameIIFrames,
+  generateGasStationFrames,
+  generateCandyDistributionFrames,
+  generateTaskSchedulingGreedyFrames,
+  generateIPOGreedyFrames,
+  generateReorganizeStringFrames,
+  generateMinCostConnectRopesFrames,
+  generateGreedySchedulingFrames
+} from './greedyGenerators';
 
 export type AlgorithmGenerator = (
   elements: VisualElement[],
@@ -135,7 +159,63 @@ export const ALGORITHM_REGISTRY: Record<
   'balanced-tree': { label: 'Balanced Trees', generate: () => generateGenericTreeFrames('Balanced Trees') },
   'tree-views': { label: 'Binary Tree Views', generate: () => generateGenericTreeFrames('Binary Tree Views') },
   'serialize-tree': { label: 'Serialization', generate: () => generateGenericTreeFrames('Serialization') },
-  'deserialize-tree': { label: 'Deserialization', generate: () => generateGenericTreeFrames('Deserialization') }
+  'deserialize-tree': { label: 'Deserialization', generate: () => generateGenericTreeFrames('Deserialization') },
+
+  'heap-intro': { label: 'Introduction to Heaps', generate: () => generateGenericHeapFrames('Introduction to Heaps') },
+  'min-max-heap': { label: 'Min Heap vs Max Heap', generate: () => generateGenericHeapFrames('Min Heap vs Max Heap') },
+  'heap-operations': { label: 'Heap Operations', generate: () => generateGenericHeapFrames('Heap Operations') },
+  'priority-queue-design': { label: 'Priority Queue Design', generate: () => generateGenericHeapFrames('Priority Queue Design') },
+  'heap-sort': { label: 'Heap Sort', generate: () => generateGenericHeapFrames('Heap Sort') },
+  'kth-largest': { label: 'Kth Largest Element', generate: () => generateGenericHeapFrames('Kth Largest Element') },
+  'kth-smallest': { label: 'Kth Smallest Element', generate: () => generateGenericHeapFrames('Kth Smallest Element') },
+  'top-k-frequent': { label: 'Top K Frequent Elements', generate: () => generateGenericHeapFrames('Top K Frequent Elements') },
+  'k-closest-elements': { label: 'K Closest Elements', generate: () => generateGenericHeapFrames('K Closest Elements') },
+  'k-closest-points': { label: 'K Closest Points to Origin', generate: () => generateGenericHeapFrames('K Closest Points to Origin') },
+  'merge-k-sorted': { label: 'Merge K Sorted Lists', generate: () => generateGenericHeapFrames('Merge K Sorted Lists') },
+  'sliding-window-maximum': { label: 'Sliding Window Maximum', generate: () => generateGenericHeapFrames('Sliding Window Maximum') },
+  'task-scheduler': { label: 'Task Scheduler', generate: () => generateGenericHeapFrames('Task Scheduler') },
+  'median-data-stream': { label: 'Find Median from Data Stream', generate: () => generateGenericHeapFrames('Find Median from Data Stream') },
+
+  'trie-intro': { label: 'Introduction to Trie', generate: () => generateGenericTrieFrames('Introduction to Trie') },
+  'trie-node-structure': { label: 'Trie Node Structure', generate: () => generateGenericTrieFrames('Trie Node Structure') },
+  'trie-insert': { label: 'Insert Word', generate: () => generateGenericTrieFrames('Insert Word') },
+  'trie-search': { label: 'Search Word', generate: () => generateGenericTrieFrames('Search Word') },
+  'trie-prefix-search': { label: 'Starts With / Prefix Search', generate: () => generateGenericTrieFrames('Starts With / Prefix Search') },
+  'word-dictionary': { label: 'Word Dictionary (Wildcard Search)', generate: () => generateGenericTrieFrames('Word Dictionary') },
+  'design-add-search': { label: 'Design Add and Search Words', generate: () => generateGenericTrieFrames('Design Add and Search Words') },
+  'longest-common-prefix': { label: 'Longest Common Prefix', generate: () => generateGenericTrieFrames('Longest Common Prefix') },
+  'replace-words': { label: 'Replace Words', generate: () => generateGenericTrieFrames('Replace Words') },
+  'search-suggestions-system': { label: 'Search Suggestions System', generate: () => generateGenericTrieFrames('Search Suggestions System') },
+  'word-search-ii': { label: 'Word Search II', generate: () => generateGenericTrieFrames('Word Search II') },
+  'autocomplete-system': { label: 'Auto Complete System', generate: () => generateGenericTrieFrames('Auto Complete System') },
+  'design-search-engine': { label: 'Design Search Engine Prefix Matching', generate: () => generateGenericTrieFrames('Design Search Engine Prefix Matching') },
+  'top-k-frequent-words': { label: 'Top K Frequent Words', generate: () => generateGenericTrieFrames('Top K Frequent Words') },
+  'contacts-app': { label: 'Contacts Application', generate: () => generateGenericTrieFrames('Contacts Application') },
+  'file-system-trie': { label: 'File System Path Trie', generate: () => generateGenericTrieFrames('File System Path Trie') },
+
+  'greedy-intro': { label: 'Introduction to Greedy', generate: () => generateGreedyIntroFrames() },
+  'greedy-vs-brute-force': { label: 'Greedy vs Brute Force', generate: () => generateGreedyIntroFrames() },
+  'greedy-vs-dp': { label: 'Greedy vs Dynamic Programming', generate: () => generateGreedyIntroFrames() },
+  'identify-greedy': { label: 'How to Identify Greedy Problems', generate: () => generateGreedyIntroFrames() },
+  'activity-selection': { label: 'Activity Selection', generate: () => generateActivitySelectionFrames() },
+  'fractional-knapsack': { label: 'Fractional Knapsack', generate: () => generateFractionalKnapsackFrames() },
+  'job-sequencing': { label: 'Job Sequencing with Deadlines', generate: () => generateJobSequencingFrames() },
+  'huffman-encoding': { label: 'Huffman Encoding', generate: () => generateHuffmanEncodingFrames() },
+  'minimum-platforms': { label: 'Minimum Platforms', generate: () => generateMinimumPlatformsFrames() },
+  'meeting-rooms': { label: 'Meeting Rooms', generate: () => generateMeetingRoomsFrames() },
+  'non-overlapping-intervals': { label: 'Non Overlapping Intervals', generate: () => generateNonOverlappingIntervalsFrames() },
+  'merge-intervals': { label: 'Merge Intervals', generate: () => generateMergeIntervalsFrames() },
+  'insert-interval': { label: 'Insert Interval', generate: () => generateInsertIntervalFrames() },
+  'minimum-arrows-balloons': { label: 'Minimum Arrows to Burst Balloons', generate: () => generateMinimumArrowsFrames() },
+  'jump-game': { label: 'Jump Game', generate: () => generateJumpGameFrames() },
+  'jump-game-ii': { label: 'Jump Game II', generate: () => generateJumpGameIIFrames() },
+  'gas-station': { label: 'Gas Station', generate: () => generateGasStationFrames() },
+  'candy-distribution': { label: 'Candy Distribution', generate: () => generateCandyDistributionFrames() },
+  'task-scheduling-greedy': { label: 'Task Scheduling', generate: () => generateTaskSchedulingGreedyFrames() },
+  'ipo': { label: 'IPO', generate: () => generateIPOGreedyFrames() },
+  'reorganize-string': { label: 'Reorganize String', generate: () => generateReorganizeStringFrames() },
+  'min-cost-connect-ropes': { label: 'Minimum Cost to Connect Ropes', generate: () => generateMinCostConnectRopesFrames() },
+  'greedy-scheduling': { label: 'Greedy Scheduling Problems', generate: () => generateGreedySchedulingFrames() }
 } as any; 
 
 export function generateFrames(

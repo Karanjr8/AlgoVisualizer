@@ -4,14 +4,9 @@ import { RoadmapNode, RoadmapNodeData } from '../components/roadmap/RoadmapNode'
 import { RoadmapPath } from '../components/roadmap/RoadmapPath';
 import { CATEGORIES } from '../data/categories';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { Sparkles } from 'lucide-react';
 
 export const Roadmap = () => {
-  // Mock Progress Logic:
-  // Let's pretend the user has finished Sorting and Searching.
-  // Their current focus is Sliding Window.
-  // Recommended next is Two Pointers.
-  // Everything else is future.
-
   const getMockState = (categoryId: string): RoadmapNodeData['state'] => {
     switch(categoryId) {
       case 'sorting-algorithms': return 'completed';
@@ -24,7 +19,7 @@ export const Roadmap = () => {
 
   const getDifficulty = (categoryId: string): RoadmapNodeData['difficulty'] => {
     const hardTopics = ['graphs', 'dynamic-programming', 'segment-tree', 'binary-indexed-tree', 'advanced-patterns'];
-    const mediumTopics = ['backtracking', 'trees', 'trie', 'heap', 'two-pointers'];
+    const mediumTopics = ['backtracking', 'trees', 'trie', 'heap', 'two-pointers', 'greedy-algorithms'];
     if (hardTopics.includes(categoryId)) return 'Advanced';
     if (mediumTopics.includes(categoryId)) return 'Intermediate';
     return 'Beginner';
@@ -43,6 +38,7 @@ export const Roadmap = () => {
       case 'dynamic-programming': return ['Recursion', 'Graphs'];
       case 'heap': return ['Trees'];
       case 'trie': return ['Trees'];
+      case 'greedy-algorithms': return ['Sorting Algorithms'];
       default: return [];
     }
   };
@@ -82,42 +78,48 @@ export const Roadmap = () => {
     useTwo = !useTwo;
   }
 
-
   const svgRef = React.useRef<SVGSVGElement>(null);
 
   return (
     <WorkspaceLayout>
-      <div className="pt-4 w-full relative">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-16 text-center max-w-2xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Learning Journey</h1>
-          <p className="text-muted-foreground text-lg">
-            A guided adventure through Computer Science. Follow the path to master algorithms, 
-            or jump ahead to any topic you want. You set the pace!
-          </p>
-        </motion.div>
+      <div className="w-full relative text-left flex flex-col gap-6">
+        {/* Left-Aligned Widescreen Header Banner */}
+        <div className="relative bg-card border border-border/80 p-8 sm:p-10 rounded-3xl overflow-hidden shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex flex-col items-start gap-2.5 max-w-3xl">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold text-xs uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5" /> Interactive Learning Map
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground">
+              Computer Science <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-400 to-blue-500">Roadmap</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">
+              A guided adventure through Computer Science. Follow the path to master algorithms step-by-step or jump ahead to any topic.
+            </p>
+          </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap justify-center items-center gap-6 mb-16 bg-card/50 backdrop-blur-sm p-4 rounded-full border border-border w-max mx-auto shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-            <span className="text-sm font-medium">Completed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
-            <span className="text-sm font-medium">Current Focus</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-sm font-medium">Recommended</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-border" />
-            <span className="text-sm font-medium text-muted-foreground">Future</span>
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-4 bg-background/80 border border-border/70 p-4 rounded-2xl shrink-0">
+            <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+              <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+              <span>Completed</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+              <div className="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
+              <span>Current</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+              <div className="w-3 h-3 rounded-full bg-blue-500" />
+              <span>Recommended</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+              <div className="w-3 h-3 rounded-full bg-border" />
+              <span>Future</span>
+            </div>
           </div>
         </div>
 
-        <div className="relative w-full max-w-4xl mx-auto py-12">
-          {/* Single SVG Container for all edges */}
+        {/* Widescreen Node Map Area */}
+        <div className="relative w-full py-8">
           <svg 
             ref={svgRef}
             className="absolute inset-0 w-full h-full pointer-events-none z-10"
@@ -129,7 +131,6 @@ export const Roadmap = () => {
               
               const connections: React.ReactNode[] = [];
               
-              // If current row has 1 node, it splits to the next row (which has 2 nodes, or 1 if end of array)
               if (row.length === 1) {
                 const fromNode = row[0];
                 nextRow.forEach(toNode => {
@@ -147,7 +148,6 @@ export const Roadmap = () => {
                   );
                 });
               } 
-              // If current row has 2 nodes, they both merge into the next row's center node
               else if (row.length === 2 && nextRow.length === 1) {
                 const toNode = nextRow[0];
                 row.forEach(fromNode => {
@@ -176,7 +176,6 @@ export const Roadmap = () => {
               return (
                 <div key={rowIndex} className="flex justify-center items-center w-full gap-24 md:gap-40">
                   {row.map((node, colIndex) => {
-                    // Tooltip goes outside: left node -> tooltip left, right node -> tooltip right, center node -> tooltip right
                     const tooltipPosition = row.length === 1 ? 'right' : colIndex === 0 ? 'left' : 'right';
 
                     return (

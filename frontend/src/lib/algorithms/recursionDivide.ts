@@ -1,4 +1,5 @@
 import { VisualizationFrame, CallStackFrame, VisualElement } from '../../types/visualizer';
+import { mergeSort } from './mergeSort';
 
 export function generateRecursiveBinarySearchFrames(initialElements: VisualElement[], target: number): VisualizationFrame[] {
   const frames: VisualizationFrame[] = [];
@@ -70,74 +71,8 @@ export function generateRecursiveBinarySearchFrames(initialElements: VisualEleme
   if (frames.length > 0) frames[frames.length - 1].event.type = 'COMPLETE';
   return frames;
 }
-
 export function generateRecursiveMergeSortFrames(initialElements: VisualElement[]): VisualizationFrame[] {
-  const frames: VisualizationFrame[] = [];
-  let currentStack: CallStackFrame[] = [];
-  let callIdCounter = 0;
-  const elements = JSON.parse(JSON.stringify(initialElements));
-  const n = elements.length;
-
-  function pushFrame(stack: CallStackFrame[], eventType: any, explanation: string, highlight: number[] = []) {
-    frames.push({
-      elements: JSON.parse(JSON.stringify(elements)), 
-      event: { type: eventType, explanation },
-      callStack: JSON.parse(JSON.stringify(stack)),
-      context: { phaseName: 'Divide & Conquer', goal: 'Merge Sort', totalPasses: n, currentPass: 0, overallProgress: 0 }
-    });
-  }
-
-  function merge(l: number, mid: number, r: number) {
-    pushFrame(currentStack, 'MERGE', `Merging halves: [${l}, ${mid}] and [${mid+1}, ${r}]`, [l, r]);
-    const left = elements.slice(l, mid + 1);
-    const right = elements.slice(mid + 1, r + 1);
-    let i = 0, j = 0, k = l;
-    
-    while (i < left.length && j < right.length) {
-      if (left[i].value <= right[j].value) {
-        elements[k++] = JSON.parse(JSON.stringify(left[i++]));
-      } else {
-        elements[k++] = JSON.parse(JSON.stringify(right[j++]));
-      }
-    }
-    while (i < left.length) elements[k++] = JSON.parse(JSON.stringify(left[i++]));
-    while (j < right.length) elements[k++] = JSON.parse(JSON.stringify(right[j++]));
-    
-    pushFrame(currentStack, 'MERGE', `Merged segment [${l}, ${r}] successfully!`, [l, r]);
-  }
-
-  function sort(l: number, r: number) {
-    const id = `call-${callIdCounter++}`;
-    currentStack.push({ id, name: 'sort', args: { l: l.toString(), r: r.toString() }, isActive: true, status: 'pending' });
-    pushFrame(currentStack, 'CALL', `Calling sort(l=${l}, r=${r})`, [l, r]);
-
-    if (l >= r) {
-      const top = currentStack[currentStack.length - 1];
-      top.status = 'resolving';
-      pushFrame(currentStack, 'BASE_CASE', `Base case: segment has 1 or 0 elements. It's already sorted.`);
-    } else {
-      const mid = Math.floor(l + (r - l) / 2);
-      pushFrame(currentStack, 'DIVIDE', `Dividing at mid=${mid}. Calling sort(${l}, ${mid}) on Left half.`);
-      sort(l, mid);
-      
-      pushFrame(currentStack, 'DIVIDE', `Left half sorted. Calling sort(${mid+1}, ${r}) on Right half.`);
-      sort(mid + 1, r);
-      
-      merge(l, mid, r);
-      
-      const top = currentStack.find(f => f.id === id)!;
-      top.status = 'resolving';
-    }
-
-    const top = currentStack.find(f => f.id === id)!;
-    top.status = 'resolved';
-    pushFrame(currentStack, 'RETURN', `Returning from sort(l=${l}, r=${r})`);
-    currentStack = currentStack.filter(f => f.id !== id);
-  }
-
-  sort(0, n - 1);
-  if (frames.length > 0) frames[frames.length - 1].event.type = 'COMPLETE';
-  return frames;
+  return mergeSort(initialElements);
 }
 
 export function generateRecursiveQuickSortFrames(initialElements: VisualElement[]): VisualizationFrame[] {

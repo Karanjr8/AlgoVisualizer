@@ -1,34 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Clock, ArrowRight, TrendingUp, Compass, BookOpen, Target, FileText } from 'lucide-react';
+import { Search, X, Clock, ArrowRight, Compass, BookOpen, Target, FileText, Layers, Hash, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../../store/useSearchStore';
-
-interface SearchResult {
-  id: string;
-  type: string;
-  title: string;
-  subtitle: string;
-  url: string;
-  score: number;
-}
-
-interface SearchGroup {
-  label: string;
-  items: SearchResult[];
-}
+import { searchContent, SearchItem } from '../../lib/searchRegistry';
 
 const POPULAR_SEARCHES = ['Binary Search', 'Dynamic Programming', 'Two Pointers', 'Graph Traversal', 'Sorting'];
 
 export const GlobalSearch = () => {
   const { isOpen, setIsOpen } = useSearchStore();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchGroup[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<SearchItem[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   
-  // Flattened items for keyboard navigation
-  const [flatItems, setFlatItems] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,96 +27,90 @@ export const GlobalSearch = () => {
     } catch (e) { }
   }, []);
 
-  // Handle Cmd+K / Ctrl+K
+  // Handle Cmd+K / Ctrl+K and Global Keyboard Nav
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsOpen(true);
       }
-      if (e.key === 'Escape' && isOpen) {
+      
+      if (!isOpen) return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
         setIsOpen(false);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => (results.length > 0 ? (prev + 1) % results.length : 0));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => (results.length > 0 ? (prev - 1 + results.length) % results.length : 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (results.length > 0 && results[selectedIndex]) {
+          handleSelect(results[selectedIndex]);
+        } else if (query.trim() && results.length === 0) {
+          // Fallback behavior if no results but hit enter
+          setIsOpen(false);
+          navigate('/explore');
+          window.scrollTo(0, 0);
+        }
       }
     };
+    
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, setIsOpen]);
+  }, [isOpen, setIsOpen, results, selectedIndex, query, navigate]);
 
-  // Focus input when opened
+  // Focus input when opened and reset state
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
-      setQuery('');
-      setResults([]);
-      setSelectedIndex(0);
+      // Reset only slightly delayed so exit animation doesn't snap
+      setTimeout(() => {
+        setQuery('');
+        setResults([]);
+        setSelectedIndex(0);
+      }, 200);
     }
   }, [isOpen]);
 
-  // Debounced Search
+  // Local Search Execution (Immediate, no debounce needed for local data)
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
-      setFlatItems([]);
       setSelectedIndex(0);
       return;
     }
-
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}`);
-        if (res.ok) {
-          const data: SearchGroup[] = await res.json();
-          setResults(data);
-          
-          const flattened = data.flatMap(g => g.items);
-          setFlatItems(flattened);
-          setSelectedIndex(0);
-        }
-      } catch (e) {
-        console.error('Search error', e);
-      } finally {
-        setLoading(false);
-      }
-    }, 250);
-
-    return () => clearTimeout(timer);
+    
+    const searchRes = searchContent(query);
+    setResults(searchRes);
+    setSelectedIndex(0);
   }, [query]);
 
-  // Keyboard Navigation
+  // Scroll active item into view
   useEffect(() => {
-    const handleNavigation = (e: KeyboardEvent) => {
-      if (!isOpen || flatItems.length === 0) return;
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setSelectedIndex(prev => (prev + 1) % flatItems.length);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSelectedIndex(prev => (prev - 1 + flatItems.length) % flatItems.length);
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (flatItems[selectedIndex]) {
-          handleSelect(flatItems[selectedIndex]);
-        }
+    if (listRef.current) {
+      const activeEl = listRef.current.querySelector('[data-active="true"]');
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
       }
-    };
-    
-    window.addEventListener('keydown', handleNavigation);
-    return () => window.removeEventListener('keydown', handleNavigation);
-  }, [isOpen, flatItems, selectedIndex]);
+    }
+  }, [selectedIndex]);
 
-  const handleSelect = (item: SearchResult) => {
+  const handleSelect = (item: SearchItem) => {
     // Save to recent searches
     const newRecent = [item.title, ...recentSearches.filter(s => s !== item.title)].slice(0, 5);
     setRecentSearches(newRecent);
     localStorage.setItem('recentSearches', JSON.stringify(newRecent));
     
     setIsOpen(false);
-    navigate(item.url);
+    navigate(item.route);
+    window.scrollTo(0, 0);
   };
 
   const handleQuickSearch = (term: string) => {
@@ -142,10 +120,12 @@ export const GlobalSearch = () => {
 
   const getIconForType = (type: string) => {
     switch (type) {
-      case 'Algorithm': return <BookOpen className="w-4 h-4 text-blue-400" />;
-      case 'Practice Question': return <Target className="w-4 h-4 text-red-400" />;
-      case 'Roadmap Topic': return <Compass className="w-4 h-4 text-green-400" />;
-      default: return <FileText className="w-4 h-4 text-gray-400" />;
+      case 'Algorithm': return <BookOpen className="w-5 h-5 text-primary" />;
+      case 'Category': return <Layers className="w-5 h-5 text-secondary" />;
+      case 'Pattern': return <Hash className="w-5 h-5 text-accent" />;
+      case 'Data Structure': return <FileText className="w-5 h-5 text-blue-400" />;
+      case 'Lesson': return <Target className="w-5 h-5 text-green-400" />;
+      default: return <Compass className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
@@ -166,33 +146,35 @@ export const GlobalSearch = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="w-full max-w-2xl bg-[#141517] border border-[#2a2b2f] rounded-2xl shadow-2xl overflow-hidden pointer-events-auto flex flex-col max-h-[70vh]"
+              className="w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden pointer-events-auto flex flex-col max-h-[70vh]"
             >
               {/* Search Header */}
-              <div className="flex items-center px-4 border-b border-[#2a2b2f] relative">
-                <Search className={`w-5 h-5 ${loading ? 'text-[#00f0ff] animate-pulse' : 'text-muted-foreground'} shrink-0`} />
+              <div className="flex items-center px-4 border-b border-border relative bg-card">
+                <Search className="w-5 h-5 text-muted-foreground shrink-0" />
                 <input
                   ref={inputRef}
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="What do you want to learn? (e.g. 'binary search', 'dp')"
-                  className="flex-1 bg-transparent border-none outline-none text-lg py-5 px-4 text-white placeholder:text-muted-foreground/50"
+                  className="flex-1 bg-transparent border-none outline-none text-lg py-5 px-4 text-foreground placeholder:text-muted-foreground/50"
+                  autoComplete="off"
+                  spellCheck="false"
                 />
                 {query && (
-                  <button onClick={() => setQuery('')} className="p-1 rounded-full hover:bg-white/10 text-muted-foreground hover:text-white transition-colors">
+                  <button onClick={() => setQuery('')} className="p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors mr-2">
                     <X className="w-4 h-4" />
                   </button>
                 )}
-                <div className="hidden sm:flex items-center gap-1 ml-4 px-2 py-1 bg-white/5 rounded border border-white/10 text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
+                <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-muted rounded border border-border text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
                   ESC
                 </div>
               </div>
 
               {/* Search Body */}
-              <div className="flex-1 overflow-y-auto" ref={listRef}>
+              <div className="flex-1 overflow-y-auto bg-card/50" ref={listRef}>
                 
-                {/* Empty State / Suggestions */}
+                {/* Empty State / Suggestions (When no query) */}
                 {!query.trim() && (
                   <div className="p-4 space-y-6">
                     {recentSearches.length > 0 && (
@@ -205,7 +187,7 @@ export const GlobalSearch = () => {
                             <button
                               key={term}
                               onClick={() => handleQuickSearch(term)}
-                              className="px-3 py-1.5 bg-white/5 border border-white/10 hover:border-white/20 rounded-lg text-sm text-gray-300 hover:text-white transition-colors"
+                              className="px-3 py-1.5 bg-muted border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
                             >
                               {term}
                             </button>
@@ -213,19 +195,22 @@ export const GlobalSearch = () => {
                         </div>
                       </div>
                     )}
-
                     <div>
                       <h3 className="text-xs uppercase tracking-widest font-bold text-muted-foreground mb-3 flex items-center gap-2 px-2">
-                        <TrendingUp className="w-4 h-4 text-purple-400" /> Popular
+                        <TrendingUp className="w-4 h-4" /> Popular
                       </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {POPULAR_SEARCHES.map(term => (
+                      <div className="flex flex-col gap-1">
+                        {POPULAR_SEARCHES.map((term) => (
                           <button
                             key={term}
                             onClick={() => handleQuickSearch(term)}
-                            className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 hover:border-purple-500/40 rounded-lg text-sm text-purple-200 transition-colors"
+                            className="flex items-center justify-between w-full p-3 rounded-xl hover:bg-accent text-left group transition-colors"
                           >
-                            {term}
+                            <div className="flex items-center gap-3">
+                              <Search className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                              <span className="text-muted-foreground group-hover:text-foreground font-medium">{term}</span>
+                            </div>
+                            <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                           </button>
                         ))}
                       </div>
@@ -233,84 +218,93 @@ export const GlobalSearch = () => {
                   </div>
                 )}
 
-                {/* No Results */}
-                {query.trim() && results.length === 0 && !loading && (
-                  <div className="p-12 text-center flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-                      <Search className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <p className="text-lg font-bold text-white mb-2">No results found for "{query}"</p>
-                    <p className="text-muted-foreground text-sm max-w-sm mb-6">
-                      We couldn't find anything matching your query. Try using synonyms or broader terms.
-                    </p>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleQuickSearch('Dynamic Programming')} className="text-xs text-[#00f0ff] hover:underline">Dynamic Programming</button>
-                      <span className="text-muted-foreground text-xs">•</span>
-                      <button onClick={() => handleQuickSearch('Sorting')} className="text-xs text-[#00f0ff] hover:underline">Sorting</button>
-                      <span className="text-muted-foreground text-xs">•</span>
-                      <button onClick={() => handleQuickSearch('Graphs')} className="text-xs text-[#00f0ff] hover:underline">Graphs</button>
-                    </div>
+                {/* Results State */}
+                {query.trim() && results.length > 0 && (
+                  <div className="p-2 py-3">
+                    {results.map((item, index) => {
+                      const isActive = index === selectedIndex;
+                      return (
+                        <div
+                          key={item.id}
+                          data-active={isActive}
+                          onClick={() => handleSelect(item)}
+                          onMouseEnter={() => setSelectedIndex(index)}
+                          className={`w-full text-left p-3 rounded-xl mb-1 cursor-pointer transition-colors flex gap-4 items-center group ${
+                            isActive ? 'bg-primary/10 border border-primary/20 shadow-sm' : 'hover:bg-accent border border-transparent'
+                          }`}
+                        >
+                          <div className={`p-2 rounded-lg shrink-0 ${isActive ? 'bg-primary/20' : 'bg-muted group-hover:bg-background'}`}>
+                            {getIconForType(item.type)}
+                          </div>
+                          
+                          <div className="flex-1 overflow-hidden">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className={`font-bold truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                                {item.title}
+                              </h4>
+                              {item.difficulty && (
+                                <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
+                                  item.difficulty === 'Easy' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                  item.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+                                  'bg-red-500/10 text-red-500 border-red-500/20'
+                                }`}>
+                                  {item.difficulty}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center text-xs text-muted-foreground gap-2">
+                              <span className="font-semibold text-foreground/60">{item.category}</span>
+                              <span className="w-1 h-1 rounded-full bg-border" />
+                              <span className="truncate">{item.type}</span>
+                              {item.complexity && (
+                                <>
+                                  <span className="w-1 h-1 rounded-full bg-border" />
+                                  <span className="truncate font-mono">{item.complexity}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 opacity-0 group-hover:opacity-100 data-[active=true]:opacity-100 transition-opacity">
+                             <ArrowRight className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
-                {/* Results List */}
-                {results.length > 0 && (
-                  <div className="p-2 space-y-4">
-                    {results.map((group) => (
-                      <div key={group.label}>
-                        <div className="px-3 py-2 text-[11px] uppercase tracking-widest font-bold text-muted-foreground">
-                          {group.label}
-                        </div>
-                        <div className="space-y-1">
-                          {group.items.map((item) => {
-                            const isSelected = flatItems[selectedIndex]?.id === item.id;
-                            return (
-                              <button
-                                key={item.id}
-                                onClick={() => handleSelect(item)}
-                                onMouseEnter={() => setSelectedIndex(flatItems.findIndex(i => i.id === item.id))}
-                                className={`w-full flex items-center justify-between p-3 rounded-xl transition-all text-left ${
-                                  isSelected 
-                                    ? 'bg-[#00f0ff]/10 border border-[#00f0ff]/30' 
-                                    : 'border border-transparent hover:bg-white/5'
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isSelected ? 'bg-white/10' : 'bg-[#0d0e10] border border-[#2a2b2f]'}`}>
-                                    {getIconForType(item.type)}
-                                  </div>
-                                  <div>
-                                    <div className={`font-semibold text-sm ${isSelected ? 'text-white' : 'text-gray-300'}`}>
-                                      {item.title}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {item.subtitle}
-                                    </div>
-                                  </div>
-                                </div>
-                                
-                                {isSelected && (
-                                  <ArrowRight className="w-4 h-4 text-[#00f0ff]" />
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
+                {/* No Results State */}
+                {query.trim() && results.length === 0 && (
+                  <div className="py-16 px-4 text-center">
+                    <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Compass className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2">No matching topic found.</h3>
+                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                      We couldn't find anything matching "{query}". Check for typos or explore all algorithms instead.
+                    </p>
+                    <button 
+                      onClick={() => {
+                        setIsOpen(false);
+                        navigate('/explore');
+                      }}
+                      className="btn btn-outline border-border hover:bg-muted font-bold px-6 py-2 rounded-xl"
+                    >
+                      Explore All Algorithms
+                    </button>
                   </div>
                 )}
               </div>
-              
-              {/* Footer */}
-              <div className="px-4 py-3 bg-[#0d0e10] border-t border-[#2a2b2f] flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-4 text-xs text-muted-foreground font-semibold">
-                  <div className="flex items-center gap-1.5"><span className="px-1.5 py-0.5 rounded bg-white/10 border border-white/5">↑↓</span> to navigate</div>
-                  <div className="flex items-center gap-1.5"><span className="px-1.5 py-0.5 rounded bg-white/10 border border-white/5">↵</span> to select</div>
-                  <div className="flex items-center gap-1.5"><span className="px-1.5 py-0.5 rounded bg-white/10 border border-white/5">ESC</span> to close</div>
+
+              {/* Search Footer (Keyboard hints) */}
+              <div className="bg-muted px-4 py-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground font-medium">
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-background border border-border">↑</kbd><kbd className="px-1.5 py-0.5 rounded bg-background border border-border">↓</kbd> to navigate</span>
+                  <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-background border border-border">↵</kbd> to select</span>
                 </div>
-                <div className="text-[10px] uppercase font-bold tracking-widest text-[#00f0ff]/50">
-                  Intelligent Discovery
+                <div className="hidden sm:flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-pulse" /> Local Registry
                 </div>
               </div>
             </motion.div>

@@ -2,6 +2,8 @@ export interface AlgorithmContent {
   id: string;
   introduction: string;
   intuition: string;
+  whyGreedyWorks?: string;
+  patternRecognition?: string[];
   walkthrough: { phase: string; description: string }[];
   dryRun: { input: string; output: string; steps: string[] };
   complexities: {
@@ -22,9 +24,23 @@ export interface AlgorithmContent {
   };
   practiceProblems: { title: string; difficulty: 'Easy' | 'Medium' | 'Hard'; url: string }[];
   relatedTopics: { title: string; id: string }[];
+  recognitionSignals?: string[];
 }
 
+import { heapAlgorithmContent } from './heapAlgorithmContent';
+import { trieAlgorithmContent } from './trieAlgorithmContent';
+import { greedyAlgorithmContent } from './greedyAlgorithmContent';
+import { segmentTreeAlgorithmContent } from './segmentTreeAlgorithmContent';
+import { bitAlgorithmContent } from './bitAlgorithmContent';
+import { advancedPatternsAlgorithmContent } from './advancedPatternsAlgorithmContent';
+
 export const algorithmContent: Record<string, AlgorithmContent> = {
+  ...heapAlgorithmContent,
+  ...trieAlgorithmContent,
+  ...greedyAlgorithmContent,
+  ...segmentTreeAlgorithmContent,
+  ...bitAlgorithmContent,
+  ...advancedPatternsAlgorithmContent,
   "tree-types": {
     "id": "tree-types",
     "introduction": "While a Binary Tree is simply a tree where every node has at most two children, structural constraints can be applied to create specialized trees. These constraints directly impact the mathematical properties of the tree.",

@@ -74,6 +74,91 @@ export interface EducationalContext {
   currentPass: number;
 }
 
+export type MergeSortStage =
+  | 'STAGE_1_ORIGINAL'
+  | 'STAGE_2_DIVIDE'
+  | 'STAGE_3_TREE'
+  | 'STAGE_4_COMPARE'
+  | 'STAGE_5_TEMP'
+  | 'STAGE_6_FINAL_MERGE';
+
+export interface MergeTreeNode {
+  id: string;
+  label: string;
+  range: [number, number];
+  elements: VisualElement[];
+  depth: number;
+  status: 'active' | 'waiting' | 'base_case' | 'merged';
+  parentId?: string;
+}
+
+export interface MergeSortState {
+  stage: MergeSortStage;
+  currentDepth: number;
+  maxDepth: number;
+  activeRange?: [number, number];
+  midIndex?: number;
+  leftSubarray?: VisualElement[];
+  rightSubarray?: VisualElement[];
+  tempArray?: VisualElement[];
+  leftPointer?: number;
+  rightPointer?: number;
+  comparedPair?: [number, number];
+  selectedForMerge?: VisualElement | null;
+  mergedSubarray?: VisualElement[];
+  treeNodes?: MergeTreeNode[];
+  milestone?: string;
+  currentActionText?: string;
+  explanationText?: string;
+}
+
+export interface GreedyState {
+  stepIndex?: number;
+  phase?: string;
+  activities?: Array<{ id: string; name?: string; start: number; end: number; selected?: boolean; discarded?: boolean; active?: boolean }>;
+  knapsackItems?: Array<{ id: string; weight: number; value: number; ratio: number; takenFraction: number; active?: boolean }>;
+  currentCapacity?: number;
+  maxCapacity?: number;
+  totalValue?: number;
+  jobs?: Array<{ id: string; profit: number; deadline: number; status: 'pending' | 'scheduled' | 'skipped' | 'checking'; slotAssigned?: number }>;
+  timeSlots?: Array<{ slot: number; jobId?: string; profit?: number }>;
+  huffmanNodes?: Array<{ id: string; label: string; freq: number; code?: string; left?: string; right?: string; isMerged?: boolean }>;
+  huffmanCodes?: Record<string, string>;
+  trainEvents?: Array<{ time: number; type: 'arrival' | 'departure'; trainId: string }>;
+  platformsCount?: number;
+  maxPlatforms?: number;
+  activeTrains?: string[];
+  meetingRooms?: Array<{ roomId: number; currentMeeting?: string }>;
+  intervals?: Array<{ id: string; start: number; end: number; status: 'normal' | 'selected' | 'removed' | 'merged' | 'comparing' }>;
+  mergedIntervals?: Array<{ start: number; end: number }>;
+  balloons?: Array<{ id: string; start: number; end: number; bursted?: boolean; arrowIndex?: number }>;
+  arrows?: Array<{ pos: number; id: number }>;
+  jumpArray?: number[];
+  currentIndex?: number;
+  maxReach?: number;
+  currentWindow?: [number, number];
+  nextWindowEnd?: number;
+  jumpCount?: number;
+  gasStations?: Array<{ gas: number; cost: number; net: number }>;
+  currentTank?: number;
+  startIndex?: number;
+  candies?: number[];
+  leftPassCandies?: number[];
+  rightPassCandies?: number[];
+  passPhase?: 'init' | 'left' | 'right' | 'complete';
+  ropes?: number[];
+  currentMergeCost?: number;
+  totalCost?: number;
+  heapItems?: Array<{ label: string; val: number }>;
+  coinChoices?: Array<{ coin: number; remaining: number; status: 'picked' | 'rejected' | 'exploring' }>;
+  targetCoins?: number;
+  coinsUsed?: number[];
+  reorganizeChar?: string;
+  reorganizeResult?: string;
+  ipoCapital?: number;
+  ipoProfits?: number[];
+}
+
 export interface VisualizationFrame {
   elements: VisualElement[];
   grid?: VisualElement[][];
@@ -82,6 +167,9 @@ export interface VisualizationFrame {
   description?: string;
   context?: EducationalContext;
   callStack?: CallStackFrame[];
+  mergeSortState?: MergeSortState;
+  greedyState?: GreedyState;
+  segmentTreeState?: any;
 }
 
 export type AlgorithmType =
@@ -160,4 +248,92 @@ export type AlgorithmType =
   | 'balanced-tree'
   | 'tree-views'
   | 'serialize-tree'
-  | 'deserialize-tree';
+  | 'deserialize-tree'
+  | 'heap-intro'
+  | 'min-max-heap'
+  | 'heap-operations'
+  | 'priority-queue-design'
+  | 'heap-sort'
+  | 'kth-largest'
+  | 'kth-smallest'
+  | 'top-k-frequent'
+  | 'k-closest-elements'
+  | 'k-closest-points'
+  | 'merge-k-sorted'
+  | 'sliding-window-maximum'
+  | 'task-scheduler'
+  | 'median-data-stream'
+  | 'trie-intro'
+  | 'trie-node-structure'
+  | 'trie-insert'
+  | 'trie-search'
+  | 'trie-prefix-search'
+  | 'word-dictionary'
+  | 'design-add-search'
+  | 'longest-common-prefix'
+  | 'replace-words'
+  | 'search-suggestions-system'
+  | 'word-search-ii'
+  | 'autocomplete-system'
+  | 'design-search-engine'
+  | 'top-k-frequent-words'
+  | 'contacts-app'
+  | 'file-system-trie'
+  | 'greedy-intro'
+  | 'greedy-vs-brute-force'
+  | 'greedy-vs-dp'
+  | 'identify-greedy'
+  | 'activity-selection'
+  | 'fractional-knapsack'
+  | 'job-sequencing'
+  | 'huffman-encoding'
+  | 'minimum-platforms'
+  | 'meeting-rooms'
+  | 'non-overlapping-intervals'
+  | 'merge-intervals'
+  | 'insert-interval'
+  | 'minimum-arrows-balloons'
+  | 'jump-game'
+  | 'jump-game-ii'
+  | 'gas-station'
+  | 'candy-distribution'
+  | 'task-scheduling-greedy'
+  | 'ipo'
+  | 'reorganize-string'
+  | 'min-cost-connect-ropes'
+  | 'greedy-scheduling'
+  | 'segment-tree-intro'
+  | 'build-segment-tree'
+  | 'range-sum-query'
+  | 'range-min-query'
+  | 'range-max-query'
+  | 'point-update'
+  | 'range-update'
+  | 'lazy-propagation'
+  | 'range-assignment'
+  | 'segment-tree-applications'
+  | 'count-smaller-numbers'
+  | 'skyline-problem'
+  | 'fenwick-tree-intro'
+  | 'prefix-sum-refresher'
+  | 'why-bit-exists'
+  | 'bit-structure'
+  | 'lowbit-operation'
+  | 'bit-point-update'
+  | 'prefix-sum-query'
+  | 'bit-range-sum-query'
+  | 'coordinate-compression-bit'
+  | 'count-inversions'
+  | 'order-statistics-bit'
+  | 'monotonic-stack-pattern'
+  | 'monotonic-queue-pattern'
+  | 'union-find-pattern'
+  | 'sweep-line-pattern'
+  | 'difference-array-pattern'
+  | 'binary-search-on-answer-pattern'
+  | 'bit-manipulation-patterns'
+  | 'meet-in-the-middle-pattern'
+  | 'topological-sort-patterns'
+  | 'shortest-path-patterns'
+  | 'mst-patterns'
+  | 'state-compression-dp-pattern';

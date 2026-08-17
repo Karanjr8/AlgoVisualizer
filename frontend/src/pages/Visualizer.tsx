@@ -15,7 +15,7 @@ import { CATEGORIES } from '../data/categories';
 import { 
   Clock, HardDrive, AlertCircle, PlayCircle, BookOpen, Search, 
   CheckCircle2, Code2, Link as LinkIcon, Sparkles, AlertTriangle, Lightbulb, Map,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, FileText
 } from 'lucide-react';
 
 export const Visualizer = () => {
@@ -53,6 +53,7 @@ export const Visualizer = () => {
 
 
   const navLinks = [
+    { id: 'problem-description', label: 'Problem Description', icon: <FileText className="w-4 h-4" /> },
     { id: 'visualization', label: 'Interactive Visualization', icon: <PlayCircle className="w-4 h-4" /> },
     { id: 'overview', label: 'Overview & Intuition', icon: <BookOpen className="w-4 h-4" /> },
     { id: 'walkthrough', label: 'Step-by-Step Walkthrough', icon: <Map className="w-4 h-4" /> },
@@ -68,14 +69,14 @@ export const Visualizer = () => {
       navLinks={navLinks}
     >
           {/* Header Section */}
-          <header>
+          <header className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <Link to={`/explore/${category?.id}`} className="text-primary hover:underline text-sm font-semibold tracking-wide">{category?.title || 'Algorithms'}</Link>
               <span className="text-muted-foreground/40">/</span>
               <span className="text-muted-foreground text-sm font-semibold capitalize">{algoMeta?.title || algorithm}</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-8">{algoMeta?.title || 'Algorithm'}</h1>
+            <h1 className="type-page-title mb-6">{algoMeta?.title || 'Algorithm'}</h1>
             
             <div className="flex flex-wrap items-center gap-4">
               <span className="px-4 py-1.5 rounded-full text-xs font-bold border border-green-500/30 text-green-400 bg-green-500/10 uppercase tracking-wider shadow-sm">
@@ -92,8 +93,41 @@ export const Visualizer = () => {
             </div>
           </header>
 
+          {/* Problem Description Section (First under Header) */}
+          <section id="problem-description" className="w-full scroll-mt-24 mb-12 text-left">
+            <div className="bg-card/80 border border-border/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-lg space-y-6">
+              <div className="flex items-center gap-3 border-b border-border/60 pb-4">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Problem Description</h2>
+                  <p className="text-xs text-muted-foreground">{algoMeta?.description || 'Problem statement and requirements'}</p>
+                </div>
+              </div>
+
+              <div className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                <p className="text-foreground font-medium">{content.introduction}</p>
+              </div>
+
+              {content.dryRun && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs pt-2">
+                  <div className="p-4 rounded-2xl bg-background/60 border border-border/80 space-y-1">
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Sample Input</span>
+                    <span className="text-xs font-bold text-foreground">{content.dryRun.input}</span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-background/60 border border-border/80 space-y-1">
+                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Expected Output</span>
+                    <span className="text-xs font-bold text-foreground">{content.dryRun.output}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
           {/* Visualization Anchor (Centerpiece) */}
-          <section id="visualization" className="container mx-auto scroll-mt-24 mb-16">
+          <section id="visualization" className="w-full scroll-mt-24 mb-16 text-left">
             <div className="w-full bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col relative min-h-[500px] md:min-h-[600px]">
               <div className="flex-1 w-full flex flex-col items-center justify-center p-4 md:p-8 relative bg-gradient-to-b from-transparent to-background/50">
                 
@@ -142,6 +176,37 @@ export const Visualizer = () => {
                 <p className="text-muted-foreground leading-relaxed text-sm">{content.intuition}</p>
               </div>
             </div>
+
+            {content.whyGreedyWorks && (
+              <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <h2 className="text-lg font-bold text-amber-400">Why Greedy Works Here</h2>
+                </div>
+                <p className="text-muted-foreground leading-relaxed text-sm whitespace-pre-line">{content.whyGreedyWorks}</p>
+              </div>
+            )}
+
+            {content.patternRecognition && content.patternRecognition.length > 0 && (
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                    <Search className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <h2 className="text-lg font-bold text-emerald-400">How to Recognize This Pattern</h2>
+                </div>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {content.patternRecognition.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs md:text-sm text-gray-300 bg-background/50 border border-border/60 p-3 rounded-xl">
+                      <span className="text-emerald-400 font-bold">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
 
           {/* Walkthrough */}
@@ -237,7 +302,6 @@ export const Visualizer = () => {
                   {content.interviewNotes?.mistakes.map((note, i) => (
                     <li key={i} className="text-xs md:text-sm text-muted-foreground flex items-start gap-2">
                       <span className="text-orange-400/50 mt-0.5 md:mt-1">•</span> {note}
-                      <span className="text-orange-500/50 mt-0.5 md:mt-1">•</span> {note}
                     </li>
                   ))}
                 </ul>

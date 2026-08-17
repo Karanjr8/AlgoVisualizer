@@ -14,7 +14,20 @@ model User {
   name            String?
   username        String?    @unique
   avatar          String?
+  bio             String?
+  college         String?
+  degree          String?
+  graduationYear  Int?
+  currentRole     String?
+  githubUrl       String?
+  linkedinUrl     String?
+  leetcodeUrl     String?
+  portfolioUrl    String?
+  
   currentStreak   Int        @default(0)
+  longestStreak   Int        @default(0)
+  lastActiveDate  DateTime?
+  
   learningHours   Float      @default(0.0)
   xp              Int        @default(0)
   level           Int        @default(1)

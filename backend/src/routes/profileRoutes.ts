@@ -1,18 +1,24 @@
 import { Router } from 'express';
+import { requireAuth } from '../middlewares/auth';
 import { 
   getUserProfile, 
   getUserProgress, 
   getUserPracticeStats,
   getUserFeed,
-  getUserRecommendations
+  getUserRecommendations,
+  updateUserProfile
 } from '../controllers/profileController';
 
 const router = Router();
 
-router.get('/:id', getUserProfile);
-router.get('/:id/progress', getUserProgress);
-router.get('/:id/practice-stats', getUserPracticeStats);
-router.get('/:id/feed', getUserFeed);
-router.get('/:id/recommendations', getUserRecommendations);
+// Apply auth middleware to all profile routes
+router.use(requireAuth);
+
+router.get('/', getUserProfile);
+router.put('/', updateUserProfile);
+router.get('/progress', getUserProgress);
+router.get('/practice-stats', getUserPracticeStats);
+router.get('/feed', getUserFeed);
+router.get('/recommendations', getUserRecommendations);
 
 export default router;

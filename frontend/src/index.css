@@ -116,6 +116,38 @@
 }
 
 @layer components {
+  /* Global Unified Typography Scale Tokens */
+  .type-hero-title {
+    @apply text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-foreground;
+  }
+  .type-page-title {
+    @apply text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-foreground;
+  }
+  .type-section-title {
+    @apply text-2xl sm:text-3xl font-black tracking-tight text-foreground;
+  }
+  .type-subsection-title {
+    @apply text-lg sm:text-xl font-bold text-foreground;
+  }
+  .type-card-title {
+    @apply text-base sm:text-lg font-bold text-foreground;
+  }
+  .type-body {
+    @apply text-base sm:text-lg font-medium text-muted-foreground leading-relaxed;
+  }
+  .type-secondary {
+    @apply text-sm sm:text-base font-medium text-muted-foreground leading-relaxed;
+  }
+  .type-helper {
+    @apply text-xs sm:text-sm font-semibold text-muted-foreground;
+  }
+  .type-badge {
+    @apply text-xs sm:text-sm font-bold uppercase tracking-wider;
+  }
+  .type-code-label {
+    @apply font-mono text-sm sm:text-base font-bold;
+  }
+
   .btn {
     @apply inline-flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }

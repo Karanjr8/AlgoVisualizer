@@ -51,7 +51,7 @@ export const Explore = () => {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-primary font-semibold mb-2">
         <Compass className="w-5 h-5" /> Explore Library
       </motion.div>
-      <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-3xl font-black tracking-tight mb-8">
+      <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="type-page-title mb-8">
         Master every algorithm.
       </motion.h1>
 
