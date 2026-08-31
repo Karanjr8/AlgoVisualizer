@@ -23,14 +23,19 @@ export const WorkspaceLayout = ({ leftPanel, children, navLinks }: WorkspaceLayo
   useEffect(() => {
     if (!navLinks || navLinks.length === 0) return;
 
+    let rafId: number | null = null;
     const observer = new IntersectionObserver(
       (entries) => {
         const visibleSections = entries.filter((entry) => entry.isIntersecting);
         if (visibleSections.length > 0) {
-          setActiveSection(visibleSections[0].target.id);
+          const targetId = visibleSections[0].target.id;
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(() => {
+            setActiveSection((prev) => (prev !== targetId ? targetId : prev));
+          });
         }
       },
-      { rootMargin: '-20% 0px -60% 0px', threshold: 0.1 }
+      { rootMargin: '-15% 0px -50% 0px', threshold: 0.1 }
     );
 
     navLinks.forEach((link) => {
@@ -38,7 +43,10 @@ export const WorkspaceLayout = ({ leftPanel, children, navLinks }: WorkspaceLayo
       if (el) observer.observe(el);
     });
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, [navLinks]);
 
   const scrollTo = (id: string) => {
@@ -56,7 +64,7 @@ export const WorkspaceLayout = ({ leftPanel, children, navLinks }: WorkspaceLayo
       {/* LEFT COLUMN - Sticky & Collapsable (Only if sidebar content exists) */}
       {hasLeftSidebar && (
         <aside 
-          className={`hidden lg:flex flex-col border-border bg-card/10 h-[calc(100vh-4rem)] sticky top-16 overflow-hidden custom-scrollbar transition-all duration-300 ease-in-out shrink-0
+          className={`hidden lg:flex flex-col border-border bg-card/10 h-[calc(100vh-4rem)] sticky top-16 overflow-hidden custom-scrollbar transition-[width,opacity] duration-300 ease-in-out shrink-0
           ${isLeftCollapsed ? 'w-0 border-r-0 opacity-0' : 'w-[280px] xl:w-[320px] border-r opacity-100'}`}
         >
           <div className="w-[280px] xl:w-[320px]">
@@ -78,9 +86,9 @@ export const WorkspaceLayout = ({ leftPanel, children, navLinks }: WorkspaceLayo
                       <button
                         key={link.id}
                         onClick={() => scrollTo(link.id)}
-                        className={`flex items-center gap-3 text-sm font-medium px-3 py-2.5 rounded-xl transition-all text-left group ${
+                        className={`flex items-center gap-3 text-sm font-medium px-3 py-2.5 rounded-xl transition-colors text-left group ${
                           activeSection === link.id 
-                            ? 'text-primary bg-primary/10' 
+                            ? 'text-primary bg-primary/10 font-bold' 
                             : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
                         }`}
                       >
@@ -112,7 +120,7 @@ export const WorkspaceLayout = ({ leftPanel, children, navLinks }: WorkspaceLayo
       )}
 
       {/* CENTER COLUMN (Flex-1) */}
-      <main className="flex-1 w-full min-w-0 px-4 sm:px-6 md:px-10 lg:px-12 py-8 pb-32 overflow-x-hidden transition-all duration-300">
+      <main className="flex-1 w-full min-w-0 px-4 sm:px-6 md:px-10 lg:px-12 py-8 pb-32 overflow-x-hidden">
         <div className="max-w-[1600px] mx-auto w-full space-y-16">
           {children}
         </div>

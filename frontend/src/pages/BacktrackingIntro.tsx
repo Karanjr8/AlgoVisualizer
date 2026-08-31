@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 
 export const BacktrackingIntro = () => {
   const [demoStep, setDemoStep] = useState(0);
@@ -274,6 +275,9 @@ export const BacktrackingIntro = () => {
             </Link>
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="backtracking" />
 
       </div>
     </WorkspaceLayout>

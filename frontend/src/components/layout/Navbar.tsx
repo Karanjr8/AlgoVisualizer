@@ -29,12 +29,20 @@ export const Navbar = () => {
   const { setIsOpen: setGlobalSearchOpen } = useSearchStore();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // Handle scroll for transparent -> blur background
+  // Handle scroll for transparent -> blur background with passive event listener
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const nextScrolled = window.scrollY > 20;
+          setIsScrolled(prev => (prev !== nextScrolled ? nextScrolled : prev));
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 

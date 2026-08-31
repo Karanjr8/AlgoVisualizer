@@ -22,6 +22,9 @@ model User {
   githubUrl       String?
   linkedinUrl     String?
   leetcodeUrl     String?
+  codeforcesUrl   String?
+  codechefUrl     String?
+  gfgUrl          String?
   portfolioUrl    String?
   
   currentStreak   Int        @default(0)
@@ -35,8 +38,21 @@ model User {
   achievements    UserAchievement[]
   activities      UserActivity[]
   practiceAttempts PracticeAttempt[]
+  events          UserEvent[]
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+}
+
+model UserEvent {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  eventType   String   // LESSON_COMPLETED, PROBLEM_COMPLETED, VISUALIZER_USED, INTERVIEW_COMPLETED, PLAYGROUND_USED
+  topic       String?
+  details     String?
+  timestamp   DateTime @default(now())
+
+  @@index([userId, timestamp])
 }
 
 model UserAchievement {

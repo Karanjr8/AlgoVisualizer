@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { VisualElement } from '../../types/visualizer';
 import { cn } from '../../lib/utils';
@@ -26,7 +26,7 @@ interface Point {
   y: number;
 }
 
-export const LinkedListRenderer = ({ elements, isDoubly = false, isCircular = false }: LinkedListRendererProps) => {
+export const LinkedListRenderer = memo(({ elements, isDoubly = false, isCircular = false }: LinkedListRendererProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [nodePositions, setNodePositions] = useState<Record<string, { rect: DOMRect, cx: number, cy: number }>>({});
@@ -47,15 +47,25 @@ export const LinkedListRenderer = ({ elements, isDoubly = false, isCircular = fa
       }
     });
     setNodePositions(newPositions);
-  }, [elements]);
+  }, []);
 
   useEffect(() => {
     updatePositions();
-    window.addEventListener('resize', updatePositions);
+    let ticking = false;
+    const handleResize = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          updatePositions();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('resize', handleResize, { passive: true });
     // Add a slight delay just in case of layout shifts
     const timer = setTimeout(updatePositions, 50);
     return () => {
-      window.removeEventListener('resize', updatePositions);
+      window.removeEventListener('resize', handleResize);
       clearTimeout(timer);
     };
   }, [elements, updatePositions]);
@@ -291,4 +301,7 @@ export const LinkedListRenderer = ({ elements, isDoubly = false, isCircular = fa
       </div>
     </div>
   );
-};
+});
+
+LinkedListRenderer.displayName = 'LinkedListRenderer';
+

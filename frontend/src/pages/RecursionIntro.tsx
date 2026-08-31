@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 
 export const RecursionIntro = () => {
   const [demoStep, setDemoStep] = useState(0);
@@ -354,6 +355,9 @@ export const RecursionIntro = () => {
             </Link>
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="recursion" />
 
       </div>
     </WorkspaceLayout>

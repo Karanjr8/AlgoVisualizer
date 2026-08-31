@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Layers, RotateCcw, Info } from 'lucide-react';
 import type { VisualizationFrame } from '../../../types/visualizer';
 
@@ -6,7 +6,7 @@ interface Props {
   frame?: VisualizationFrame;
 }
 
-export const BITIntroVisualizer: React.FC<Props> = () => {
+export const BITIntroVisualizer: React.FC<Props> = memo(() => {
   // 1-based indexing data
   const originalArray = [2, 5, 1, 4, 9, 3, 7, 8];
   const bitArray = [2, 7, 1, 12, 9, 12, 7, 39];
@@ -147,4 +147,7 @@ export const BITIntroVisualizer: React.FC<Props> = () => {
 
     </div>
   );
-};
+});
+
+BITIntroVisualizer.displayName = 'BITIntroVisualizer';
+

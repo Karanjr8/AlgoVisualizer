@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Search, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
 import type { VisualizationFrame } from '../../../types/visualizer';
@@ -14,7 +14,7 @@ interface Props {
   frame?: VisualizationFrame;
 }
 
-export const TrieStandardVisualizer: React.FC<Props> = () => {
+export const TrieStandardVisualizer: React.FC<Props> = memo(() => {
   // Demo Initial Trie Data Structure
   const [root, setRoot] = useState<TrieNodeData>({
     id: 'root',
@@ -354,4 +354,7 @@ export const TrieStandardVisualizer: React.FC<Props> = () => {
       </div>
     </div>
   );
-};
+});
+
+TrieStandardVisualizer.displayName = 'TrieStandardVisualizer';
+

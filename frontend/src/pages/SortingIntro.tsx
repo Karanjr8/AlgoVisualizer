@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
+import { sectionStaggerContainer, sectionFadeUp } from '../lib/motion';
 
 const MOCK_ARRAYS = {
   bubble: [
@@ -65,10 +67,10 @@ export const SortingIntro = () => {
 
   return (
     <WorkspaceLayout navLinks={navLinks}>
-      <div className="w-full space-y-16 sm:space-y-20 text-left">
+      <motion.div initial="hidden" animate="visible" variants={sectionStaggerContainer} className="w-full space-y-16 sm:space-y-20 text-left">
         
         {/* HERO BANNER SECTION */}
-        <section className="w-full border border-border/80 bg-gradient-to-r from-card/80 via-card/50 to-purple-500/10 backdrop-blur-xl relative overflow-hidden rounded-3xl p-6 sm:p-10 shadow-lg">
+        <motion.section variants={sectionFadeUp} className="w-full border border-border/80 bg-gradient-to-r from-card/80 via-card/50 to-purple-500/10 backdrop-blur-xl relative overflow-hidden rounded-3xl p-6 sm:p-10 shadow-lg">
           <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-purple-500/20 opacity-15 pointer-events-none" />
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
@@ -131,10 +133,10 @@ export const SortingIntro = () => {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 1: WHAT IS SORTING? */}
-        <section id="what-is-sorting" className="space-y-6 scroll-mt-24">
+        <motion.section variants={sectionFadeUp} id="what-is-sorting" className="space-y-6 scroll-mt-24">
           <div className="flex items-center gap-3 border-b border-border/80 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
               <ArrowDownUp className="w-5 h-5" />
@@ -176,10 +178,10 @@ export const SortingIntro = () => {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 2: WHY DO WE SORT? */}
-        <section id="why-sort" className="space-y-6 scroll-mt-24">
+        <motion.section variants={sectionFadeUp} id="why-sort" className="space-y-6 scroll-mt-24">
           <div className="flex items-center gap-3 border-b border-border/80 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold">
               <Contact className="w-5 h-5" />
@@ -212,10 +214,10 @@ export const SortingIntro = () => {
               <p className="text-xs text-muted-foreground leading-relaxed">B-Trees maintain sorted indices to enable fast SQL queries.</p>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 3: TYPES OF ALGORITHMS */}
-        <section id="types" className="space-y-6 scroll-mt-24">
+        <motion.section variants={sectionFadeUp} id="types" className="space-y-6 scroll-mt-24">
           <div className="flex items-center gap-3 border-b border-border/80 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold">
               <Layers className="w-5 h-5" />
@@ -243,10 +245,10 @@ export const SortingIntro = () => {
               </p>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 4: COMPARISON OVERVIEW */}
-        <section id="comparison" className="space-y-6 scroll-mt-24">
+        <motion.section variants={sectionFadeUp} id="comparison" className="space-y-6 scroll-mt-24">
           <div className="flex items-center gap-3 border-b border-border/80 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">
               <GitMerge className="w-5 h-5" />
@@ -313,10 +315,10 @@ export const SortingIntro = () => {
               </tbody>
             </table>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 5: INTERACTIVE DEMO */}
-        <section id="demo" className="space-y-6 scroll-mt-24">
+        <motion.section variants={sectionFadeUp} id="demo" className="space-y-6 scroll-mt-24">
           <div className="flex items-center gap-3 border-b border-border/80 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
               <ShieldCheck className="w-5 h-5" />
@@ -369,10 +371,10 @@ export const SortingIntro = () => {
               </AnimatePresence>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 6: ALGORITHM VISUALIZERS GRID */}
-        <section id="algorithms-grid" className="space-y-6 scroll-mt-24">
+        <motion.section variants={sectionFadeUp} id="algorithms-grid" className="space-y-6 scroll-mt-24">
           <div className="flex items-center gap-3 border-b border-border/80 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500 font-bold">
               <BarChart2 className="w-5 h-5" />
@@ -406,9 +408,12 @@ export const SortingIntro = () => {
               </Link>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-      </div>
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="sorting" />
+
+      </motion.div>
     </WorkspaceLayout>
   );
 };

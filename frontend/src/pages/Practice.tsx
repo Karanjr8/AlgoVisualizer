@@ -100,9 +100,9 @@ export const Practice = () => {
       <div className="w-full flex flex-col gap-8">
         {/* Progress Dashboard Grid */}
         <motion.div 
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ duration: 0.15 }}
           className="grid grid-cols-2 lg:grid-cols-5 gap-4"
         >
           {/* Attempts */}
@@ -168,15 +168,10 @@ export const Practice = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {PRACTICE_MODES.map((mode, index) => {
+          {PRACTICE_MODES.map((mode) => {
             const Icon = mode.icon;
             return (
-              <motion.div
-                key={mode.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + index * 0.05 }}
-              >
+              <div key={mode.id} className="transform-gpu">
                 <Link 
                   to={`/practice/${mode.id}`}
                   className="block h-full bg-card border border-border/80 rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl group relative overflow-hidden text-left"
@@ -212,7 +207,7 @@ export const Practice = () => {
                     Enter Mode <ChevronRight className="w-4 h-4 ml-1" />
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             );
           })}
         </div>

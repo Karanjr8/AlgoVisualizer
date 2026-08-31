@@ -6,6 +6,7 @@ import {
   TrendingUp, HardDrive, ListFilter, Play, RefreshCw, Scale
 } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 import { SegmentTreeIntroVisualizer } from '../components/visualizer/segmentTree/SegmentTreeIntroVisualizer';
 
 export const SegmentTreeIntro = () => {
@@ -492,6 +493,9 @@ export const SegmentTreeIntro = () => {
             ))}
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="segment-tree" />
 
       </div>
     </WorkspaceLayout>

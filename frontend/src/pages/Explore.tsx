@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, Compass, Layers, CheckCircle2, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,40 +22,53 @@ export const Explore = () => {
     }
   }, [searchParams]);
 
+  // Update search input state immediately, but debounce URL search param updates to prevent router thrashing
   const handleSearchChange = (val: string) => {
     setSearchTerm(val);
-    if (val) {
-      setSearchParams({ q: val });
-    } else {
-      setSearchParams({});
-    }
   };
 
-  const filteredCategories = CATEGORIES.filter(c => {
-    const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          c.desc.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // For now, our dummy data filters. In reality, you'd map category properties.
-    const matchesFilter = activeFilter === 'All' ? true : 
-                          activeFilter === 'Basics' ? ['sorting', 'searching'].includes(c.id) :
-                          activeFilter === 'Trees & Graphs' ? ['trees', 'graphs'].includes(c.id) :
-                          activeFilter === 'Dynamic Programming' ? ['dp'].includes(c.id) : true;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const currentQ = searchParams.get('q') || '';
+      if (searchTerm !== currentQ) {
+        if (searchTerm) {
+          setSearchParams({ q: searchTerm }, { replace: true });
+        } else {
+          setSearchParams({}, { replace: true });
+        }
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm, searchParams, setSearchParams]);
 
-    return matchesSearch && matchesFilter;
-  });
+  const filteredCategories = useMemo(() => {
+    const lowerTerm = searchTerm.toLowerCase();
+    return CATEGORIES.filter(c => {
+      const matchesSearch = !lowerTerm || 
+                            c.title.toLowerCase().includes(lowerTerm) || 
+                            c.desc.toLowerCase().includes(lowerTerm);
+      
+      const matchesFilter = activeFilter === 'All' ? true : 
+                            activeFilter === 'Basics' ? ['sorting', 'searching'].includes(c.id) :
+                            activeFilter === 'Trees & Graphs' ? ['trees', 'graphs'].includes(c.id) :
+                            activeFilter === 'Dynamic Programming' ? ['dp'].includes(c.id) : true;
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [searchTerm, activeFilter]);
 
   const filterOptions = ['All', 'Basics', 'Trees & Graphs', 'Dynamic Programming', 'Advanced'];
 
   const leftPanel = (
     <div>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-primary font-semibold mb-2">
+      <div className="flex items-center gap-2 text-primary font-semibold mb-2">
         <Compass className="w-5 h-5" /> Explore Library
-      </motion.div>
-      <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="type-page-title mb-8">
+      </div>
+      <h1 className="type-page-title mb-8">
         Master every algorithm.
-      </motion.h1>
+      </h1>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="relative mb-8">
+      <div className="relative mb-8">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <input 
           type="text"
@@ -64,9 +77,9 @@ export const Explore = () => {
           onChange={(e) => handleSearchChange(e.target.value)}
           className="w-full bg-card border border-border rounded-2xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-shadow shadow-sm"
         />
-      </motion.div>
+      </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl">
+      <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl">
         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
           <Layers className="w-4 h-4" /> Categories
         </h3>
@@ -86,7 +99,7 @@ export const Explore = () => {
             </button>
           ))}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 
@@ -130,14 +143,13 @@ export const Explore = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               <AnimatePresence mode="popLayout">
-                {filteredCategories.map((cat, i) => (
+                {filteredCategories.map((cat) => (
                   <motion.div
                     key={cat.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
                   >
                     <CategoryCard 
                       id={cat.id}
@@ -146,7 +158,7 @@ export const Explore = () => {
                       description={cat.desc}
                       IconComponent={cat.Icon}
                       colorClass={cat.color}
-                      delay={0} // Stagger removed because AnimatePresence handles dynamic lists better without forced hard delays
+                      delay={0}
                     />
                   </motion.div>
                 ))}

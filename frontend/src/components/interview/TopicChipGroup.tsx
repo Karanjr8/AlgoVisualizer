@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { Check, Sparkles, X } from 'lucide-react';
 
@@ -65,13 +64,11 @@ export const TopicChipGroup = ({
           const isSelected = selectedTopics.includes(topic);
 
           return (
-            <motion.button
+            <button
               key={topic}
               onClick={() => onToggleTopic(topic)}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
               className={cn(
-                'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-2 border cursor-pointer outline-none shadow-xs',
+                'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-2 border cursor-pointer outline-none shadow-xs transform-gpu hover:-translate-y-[1px]',
                 isSelected
                   ? 'bg-primary text-primary-foreground border-primary shadow-xs ring-1 ring-primary/30'
                   : 'bg-secondary/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-card'
@@ -79,7 +76,7 @@ export const TopicChipGroup = ({
             >
               {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
               <span>{topic}</span>
-            </motion.button>
+            </button>
           );
         })}
       </div>

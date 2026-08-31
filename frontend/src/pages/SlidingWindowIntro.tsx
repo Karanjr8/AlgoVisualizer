@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, BoxSelect, Zap, Clock, Maximize, Train, LineChart, Sparkles, BookOpen } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 
 export const SlidingWindowIntro = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -236,6 +237,9 @@ export const SlidingWindowIntro = () => {
             </div>
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="sliding-window" />
 
       </div>
     </WorkspaceLayout>

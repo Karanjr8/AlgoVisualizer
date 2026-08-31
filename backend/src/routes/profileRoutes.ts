@@ -6,7 +6,9 @@ import {
   getUserPracticeStats,
   getUserFeed,
   getUserRecommendations,
-  updateUserProfile
+  updateUserProfile,
+  logUserEvent,
+  getDashboardData
 } from '../controllers/profileController';
 
 const router = Router();
@@ -16,6 +18,8 @@ router.use(requireAuth);
 
 router.get('/', getUserProfile);
 router.put('/', updateUserProfile);
+router.get('/dashboard', getDashboardData);
+router.post('/events', logUserEvent);
 router.get('/progress', getUserProgress);
 router.get('/practice-stats', getUserPracticeStats);
 router.get('/feed', getUserFeed);

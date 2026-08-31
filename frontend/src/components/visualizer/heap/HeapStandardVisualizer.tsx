@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, Plus, Trash2, Sparkles } from 'lucide-react';
 import type { VisualizationFrame } from '../../../types/visualizer';
@@ -8,7 +8,7 @@ interface Props {
   defaultType?: 'max' | 'min';
 }
 
-export const HeapStandardVisualizer: React.FC<Props> = ({ frame, defaultType = 'max' }) => {
+export const HeapStandardVisualizer: React.FC<Props> = memo(({ frame, defaultType = 'max' }) => {
   const [heapType, setHeapType] = useState<'max' | 'min'>(defaultType);
   const [heap, setHeap] = useState<number[]>([50, 30, 40, 10, 20, 35, 15]);
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
@@ -319,4 +319,7 @@ export const HeapStandardVisualizer: React.FC<Props> = ({ frame, defaultType = '
       </div>
     </div>
   );
-};
+});
+
+HeapStandardVisualizer.displayName = 'HeapStandardVisualizer';
+

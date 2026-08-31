@@ -166,9 +166,15 @@ function levenshtein(a: string, b: string): number {
   return matrix[a.length][b.length];
 }
 
+const searchCache = new Map<string, SearchItem[]>();
+
 export const searchContent = (query: string): SearchItem[] => {
   const q = query.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '');
   if (!q) return [];
+  
+  if (searchCache.has(q)) {
+    return searchCache.get(q)!;
+  }
   
   const registry = buildSearchRegistry();
   
@@ -226,8 +232,18 @@ export const searchContent = (query: string): SearchItem[] => {
   });
 
   // Filter out zero scores and sort by score descending
-  return results
+  const finalResults = results
     .filter(res => res.score !== undefined && res.score > 0)
     .sort((a, b) => (b.score || 0) - (a.score || 0))
     .slice(0, 15); // Limit results to top 15
+
+  // Cache query result (limit cache size to 100 queries)
+  if (searchCache.size > 100) {
+    const firstKey = searchCache.keys().next().value;
+    if (firstKey) searchCache.delete(firstKey);
+  }
+  searchCache.set(q, finalResults);
+
+  return finalResults;
 };
+

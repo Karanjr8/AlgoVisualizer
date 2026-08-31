@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { AlgorithmEventType, VisualizationFrame } from '../../types/visualizer';
 import { cn } from '../../lib/utils';
@@ -64,7 +65,7 @@ interface ExplanationPanelProps {
   totalFrames: number;
 }
 
-export const ExplanationPanel = ({ frame, currentIndex, totalFrames }: ExplanationPanelProps) => {
+export const ExplanationPanel = memo(({ frame, currentIndex, totalFrames }: ExplanationPanelProps) => {
   const { mode, algorithm } = useVisualizerStore();
   const event = frame?.event;
   const context = frame?.context;
@@ -124,12 +125,12 @@ export const ExplanationPanel = ({ frame, currentIndex, totalFrames }: Explanati
           {event ? (
             <motion.span
               key={`label-${stepKey}`}
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12, ease: 'easeOut' }}
               className={cn(
-                'inline-flex items-center rounded-xl border px-4 py-2 text-sm font-bold uppercase tracking-wider shadow-sm',
+                'inline-flex items-center rounded-xl border px-4 py-2 text-sm font-bold uppercase tracking-wider shadow-sm transform-gpu',
                 EVENT_COLORS[event.type],
               )}
             >
@@ -140,7 +141,7 @@ export const ExplanationPanel = ({ frame, currentIndex, totalFrames }: Explanati
               key="label-idle"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="inline-flex items-center rounded-xl border border-border bg-background px-4 py-2 text-sm font-bold uppercase tracking-wider text-muted-foreground shadow-sm"
+              className="inline-flex items-center rounded-xl border border-border bg-background px-4 py-2 text-sm font-bold uppercase tracking-wider text-muted-foreground shadow-sm transform-gpu"
             >
               Ready
             </motion.span>
@@ -158,11 +159,11 @@ export const ExplanationPanel = ({ frame, currentIndex, totalFrames }: Explanati
       <AnimatePresence mode="wait">
         <motion.div
           key={stepKey}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="flex-1 flex flex-col gap-6"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.12, ease: 'easeOut' }}
+          className="flex-1 flex flex-col gap-6 transform-gpu"
         >
           {context ? (
             <>
@@ -224,4 +225,7 @@ export const ExplanationPanel = ({ frame, currentIndex, totalFrames }: Explanati
       </AnimatePresence>
     </div>
   );
-};
+});
+
+ExplanationPanel.displayName = 'ExplanationPanel';
+

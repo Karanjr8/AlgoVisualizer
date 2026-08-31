@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { api } from '../lib/api';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
   Trophy, Flame, Clock, BookOpen, ChevronRight, 
@@ -53,18 +52,18 @@ export const Dashboard = () => {
         
         <div className="max-w-7xl mx-auto px-6 pt-12 pb-16 relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-primary font-semibold mb-2">
+            <div className="flex items-center gap-2 text-primary font-semibold mb-2">
               <Sparkles className="w-5 h-5" /> Welcome back
-            </motion.div>
-            <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-4xl md:text-5xl font-black tracking-tight mb-4">
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">
               Hello, {user?.username || 'Student'}
-            </motion.h1>
-            <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-muted-foreground text-lg max-w-xl">
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-xl">
               You're currently in the top 15% of active learners this week. Keep up the great work and tackle your next milestone!
-            </motion.p>
+            </p>
           </div>
           
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }} className="flex items-center gap-4 bg-card border border-border p-4 rounded-3xl shadow-lg">
+          <div className="flex items-center gap-4 bg-card border border-border p-4 rounded-3xl shadow-lg">
             <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-2xl font-black text-white shadow-inner">
               {user?.username?.charAt(0).toUpperCase() || 'U'}
             </div>
@@ -72,7 +71,7 @@ export const Dashboard = () => {
               <div className="font-bold text-lg">Level 4 Scholar</div>
               <div className="text-sm text-primary font-semibold">1,250 XP to Next Level</div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -86,7 +85,7 @@ export const Dashboard = () => {
             subtitle={<><span className="text-green-400">+1</span> since last week</>}
             icon={<Trophy className="w-6 h-6 text-yellow-500" />}
             colorClass="from-yellow-500 to-amber-600"
-            delay={0.1}
+            delay={0}
           />
           <StatCard 
             title="Current Streak" 
@@ -94,7 +93,7 @@ export const Dashboard = () => {
             subtitle="Personal best: 12 days"
             icon={<Flame className="w-6 h-6 text-orange-500" />}
             colorClass="from-orange-500 to-red-500"
-            delay={0.2}
+            delay={0}
           />
           <StatCard 
             title="Time Studied" 
@@ -102,7 +101,7 @@ export const Dashboard = () => {
             subtitle="Top 10% this month"
             icon={<Clock className="w-6 h-6 text-blue-500" />}
             colorClass="from-blue-500 to-cyan-500"
-            delay={0.3}
+            delay={0}
           />
           <StatCard 
             title="Topics Learned" 
@@ -110,7 +109,7 @@ export const Dashboard = () => {
             subtitle="Sorting, Searching"
             icon={<BookOpen className="w-6 h-6 text-purple-500" />}
             colorClass="from-purple-500 to-pink-500"
-            delay={0.4}
+            delay={0}
           />
         </div>
 
@@ -119,7 +118,7 @@ export const Dashboard = () => {
           
           {/* Left Column: Roadmap & Heatmap */}
           <div className="lg:col-span-2 flex flex-col gap-8">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="bg-card backdrop-blur-md border border-border rounded-3xl p-8">
+            <div className="bg-card backdrop-blur-md border border-border rounded-3xl p-8">
               <h2 className="text-2xl font-bold mb-8">Roadmap Progress</h2>
               <div className="flex flex-col md:flex-row items-center gap-12">
                 <AnimatedProgressRing percentage={65} label="Sorting Mastery" colorClass="from-primary to-secondary" />
@@ -131,17 +130,17 @@ export const Dashboard = () => {
                   </Link>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="bg-card backdrop-blur-md border border-border rounded-3xl p-8 overflow-hidden">
+            <div className="bg-card backdrop-blur-md border border-border rounded-3xl p-8 overflow-hidden">
               <h2 className="text-2xl font-bold mb-6">Activity Heatmap</h2>
               <ActivityHeatmap />
-            </motion.div>
+            </div>
           </div>
 
           {/* Right Column: Recommendations & Bookmarks */}
           <div className="flex flex-col gap-8">
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }} className="bg-gradient-to-br from-primary/20 to-card border border-primary/20 rounded-3xl p-8 relative overflow-hidden group">
+            <div className="bg-gradient-to-br from-primary/20 to-card border border-primary/20 rounded-3xl p-8 relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-10">
                 <Compass className="w-24 h-24" />
               </div>
@@ -153,9 +152,9 @@ export const Dashboard = () => {
               <Link to="/explore/sorting-algorithms" className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-bold transition-colors relative z-10">
                 <PlayCircle className="w-5 h-5" /> Start Learning
               </Link>
-            </motion.div>
+            </div>
 
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }} className="bg-card backdrop-blur-md border border-border rounded-3xl p-8 flex-1">
+            <div className="bg-card backdrop-blur-md border border-border rounded-3xl p-8 flex-1">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><Bookmark className="w-5 h-5 text-secondary" /> Bookmarked Topics</h2>
               <div className="space-y-4">
                 {[
@@ -172,20 +171,20 @@ export const Dashboard = () => {
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
 
         </div>
 
         {/* Bottom Section: Recently Viewed */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} className="mt-8">
+        <div className="mt-8">
           <h2 className="text-2xl font-bold mb-6">Recently Viewed Algorithms</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {recentAlgos.map((algo) => (
               <AlgorithmCard key={algo.id} algorithm={algo} colorClass="from-primary to-purple-400" />
             ))}
           </div>
-        </motion.div>
+        </div>
 
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { Play, RotateCcw, Search, AlertCircle, RefreshCw } from 'lucide-react';
 import type { VisualizationFrame } from '../../../types/visualizer';
@@ -18,7 +18,7 @@ interface Props {
   frame?: VisualizationFrame;
 }
 
-export const SegmentTreeIntroVisualizer: React.FC<Props> = () => {
+export const SegmentTreeIntroVisualizer: React.FC<Props> = memo(() => {
   const [array, setArray] = useState<number[]>([2, 5, 1, 4, 9, 3]);
   const [queryL, setQueryL] = useState<number>(1);
   const [queryR, setQueryR] = useState<number>(4);
@@ -435,4 +435,7 @@ export const SegmentTreeIntroVisualizer: React.FC<Props> = () => {
 
     </div>
   );
-};
+});
+
+SegmentTreeIntroVisualizer.displayName = 'SegmentTreeIntroVisualizer';
+

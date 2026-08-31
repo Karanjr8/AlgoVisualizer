@@ -5,6 +5,7 @@ import {
   Zap, Play, Scale, Cpu, Code2, Layers
 } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 import { BITIntroVisualizer } from '../components/visualizer/bit/BITIntroVisualizer';
 
 interface BITTopicDetail {
@@ -535,6 +536,9 @@ export const BinaryIndexedTreeIntro: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="binary-indexed-tree" />
 
       </div>
     </WorkspaceLayout>

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { TrieStandardVisualizer } from '../components/visualizer/trie/TrieStandardVisualizer';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 
 export const TrieIntro: React.FC = () => {
   const navLinks = [
@@ -198,6 +199,9 @@ export const TrieIntro: React.FC = () => {
             ))}
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="trie" />
 
       </div>
     </WorkspaceLayout>

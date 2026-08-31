@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { VisualizationFrame, AlgorithmType, VisualElement } from '../../types/visualizer';
 import { CallStackRenderer } from './CallStackRenderer';
 import { ArrayRenderer } from './ArrayRenderer';
@@ -74,7 +75,7 @@ interface Props {
   initialElements?: VisualElement[];
 }
 
-export const EngineRenderer = ({ algorithm, frame, initialElements }: Props) => {
+export const EngineRenderer = memo(({ algorithm, frame, initialElements }: Props) => {
   const elementsToRender = frame?.elements || initialElements || [];
 
   // Specialized Advanced Patterns Visualizers
@@ -358,4 +359,7 @@ export const EngineRenderer = ({ algorithm, frame, initialElements }: Props) => 
 
   // Default Fallback: Array Renderer
   return <ArrayRenderer elements={elementsToRender} />;
-};
+});
+
+EngineRenderer.displayName = 'EngineRenderer';
+

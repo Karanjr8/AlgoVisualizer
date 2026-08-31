@@ -1,180 +1,275 @@
 import { useState } from 'react';
 import { WorkspaceLayout } from '../../components/layout/WorkspaceLayout';
-import { PenTool, Shuffle, ArrowDownUp, Copy, Save, Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  PenTool, 
+  Copy, 
+  Send, 
+  Network, 
+  FolderTree, 
+  Layers, 
+  Check
+} from 'lucide-react';
 import { useVisualizerStore } from '../../store/useVisualizerStore';
 import { useNavigate } from 'react-router-dom';
 import { generateElements } from '../../lib/utils';
 
+type GeneratorType = 'array' | 'tree' | 'graph';
+
 export const InputStudio = () => {
-  const [array, setArray] = useState<number[]>([50, 20, 80, 10, 90, 30, 70, 40, 60]);
-  const [inputValue, setInputValue] = useState('');
+  const [genType, setGenType] = useState<GeneratorType>('array');
+  const [copied, setCopied] = useState(false);
+  
+  // Array Generator State (Default 10 elements)
+  const [arrayPreset, setArrayPreset] = useState<string>('random');
+  const [arraySize, setArraySize] = useState<number>(10);
+  const [array, setArray] = useState<number[]>([42, 18, 85, 29, 63, 37, 91, 14, 76, 52]);
+
+  // Tree Generator State
+  const [treeType, setTreeType] = useState<string>('balanced');
+  const [treeNodes, setTreeNodes] = useState<number[]>([50, 25, 75, 12, 37, 62, 87]);
+
+  // Graph Generator State
+  const [graphType, setGraphType] = useState<string>('sparse');
+
   const setInitialElements = useVisualizerStore(state => state.setInitialElements);
   const navigate = useNavigate();
 
-  const handleUpdate = (index: number, val: number) => {
-    const newArr = [...array];
-    newArr[index] = val;
-    setArray(newArr);
+  const generateNewArray = (type: string, size: number) => {
+    setArrayPreset(type);
+    let arr: number[] = [];
+    if (type === 'sorted') {
+      arr = Array.from({ length: size }, (_, i) => (i + 1) * 8);
+    } else if (type === 'reverse') {
+      arr = Array.from({ length: size }, (_, i) => (size - i) * 8);
+    } else if (type === 'nearly-sorted') {
+      arr = Array.from({ length: size }, (_, i) => (i + 1) * 8);
+      if (arr.length > 3) {
+        const temp = arr[1];
+        arr[1] = arr[arr.length - 2];
+        arr[arr.length - 2] = temp;
+      }
+    } else if (type === 'duplicate-heavy') {
+      const bases = [12, 28, 55, 80];
+      arr = Array.from({ length: size }, () => bases[Math.floor(Math.random() * bases.length)]);
+    } else {
+      arr = Array.from({ length: size }, () => Math.floor(Math.random() * 85) + 10);
+    }
+    setArray(arr);
   };
 
-  const addValue = () => {
-    const val = parseInt(inputValue, 10);
-    if (!isNaN(val) && array.length < 20) {
-      setArray([...array, val]);
-      setInputValue('');
+  const generateNewTree = (type: string) => {
+    setTreeType(type);
+    if (type === 'skewed') {
+      setTreeNodes([10, 20, 30, 40, 50, 60, 70]);
+    } else if (type === 'random') {
+      setTreeNodes(Array.from({ length: 7 }, () => Math.floor(Math.random() * 90) + 10));
+    } else {
+      setTreeNodes([50, 25, 75, 12, 37, 62, 87]);
     }
   };
 
-  const removeValue = (index: number) => {
-    setArray(array.filter((_, i) => i !== index));
-  };
-
-  const handleShuffle = () => {
-    const newArr = [...array];
-    for (let i = newArr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
-    }
-    setArray(newArr);
-  };
-
-  const handleReverse = () => {
-    setArray([...array].reverse());
-  };
-
-  const handleDuplicate = () => {
-    if (array.length < 20 && array.length > 0) {
-      setArray([...array, array[array.length - 1]]);
-    }
+  const handleCopyJSON = () => {
+    const payload = genType === 'array' ? array : genType === 'tree' ? treeNodes : { type: graphType, nodes: 6 };
+    navigator.clipboard.writeText(JSON.stringify(payload));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleExportToLab = () => {
-    setInitialElements(generateElements(array.length, 'custom', array));
+    const payload = genType === 'array' ? array : treeNodes;
+    setInitialElements(generateElements(payload.length, 'custom', payload));
     navigate('/playground/algorithm-lab');
   };
 
   const maxVal = Math.max(...array, 100);
 
   const navLinks = [
-    { id: 'input', label: 'Input Studio', icon: <PenTool className="w-4 h-4" /> },
+    { id: 'input-studio', label: 'Input Studio', icon: <PenTool className="w-4 h-4" /> },
   ];
 
   return (
     <WorkspaceLayout navLinks={navLinks}>
-      <header className="mb-12">
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Input Studio</h1>
-        <p className="text-muted-foreground text-xl max-w-3xl">Visually construct and manipulate custom datasets. Build your own array visually, then send it to the lab.</p>
-      </header>
-
-      <div className="flex flex-col gap-10">
+      <div className="w-full space-y-8 text-left pb-16">
         
-        {/* Top Controls */}
-        <div className="w-full bg-card border border-border p-6 md:p-8 rounded-3xl shadow-lg flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
-          
-          <div className="flex-1 flex flex-col gap-3">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Add Element (Max 20)</label>
-            <div className="flex gap-2">
-              <input 
-                type="number"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Enter value (1-100)"
-                onKeyDown={(e) => e.key === 'Enter' && addValue()}
-                className="flex-1 bg-background border border-border rounded-xl p-4 outline-none focus:border-primary font-bold text-base shadow-sm"
-              />
-              <button 
-                onClick={addValue} 
-                className="px-6 bg-primary text-primary-foreground rounded-xl font-black shadow-md hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5" /> Add
-              </button>
+        {/* HERO HEADER */}
+        <section className="w-full border border-border/80 bg-gradient-to-r from-card/90 via-card/50 to-emerald-500/10 backdrop-blur-xl relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-lg">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider">
+                <PenTool className="w-3.5 h-3.5" /> Tailored Data Generation Factory
+              </div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-foreground">
+                Input Studio
+              </h1>
+              <p className="text-muted-foreground text-sm sm:text-base max-w-2xl font-medium">
+                Generate custom test cases for Arrays, Trees, and Graphs. Visual preview canvas allows inspecting dataset distributions before exporting directly to visualizers.
+              </p>
             </div>
           </div>
+        </section>
 
-          <div className="flex-[2] flex flex-col gap-3">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Transformations</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <button onClick={handleShuffle} className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground p-4 rounded-xl font-bold hover:bg-secondary/80 transition-colors shadow-sm">
-                <Shuffle className="w-5 h-5" /> Shuffle
-              </button>
-              <button onClick={handleReverse} className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground p-4 rounded-xl font-bold hover:bg-secondary/80 transition-colors shadow-sm">
-                <ArrowDownUp className="w-5 h-5" /> Reverse
-              </button>
-              <button onClick={handleDuplicate} className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground p-4 rounded-xl font-bold hover:bg-secondary/80 transition-colors shadow-sm">
-                <Copy className="w-5 h-5" /> Duplicate
-              </button>
-              <button onClick={handleExportToLab} className="flex items-center justify-center gap-2 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 p-4 rounded-xl font-black hover:bg-green-500/20 transition-all shadow-sm group">
-                <Save className="w-5 h-5 group-hover:scale-110 transition-transform" /> Send to Lab
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* GENERATOR TYPE TABS */}
+        <section className="w-full bg-card/80 border border-border/80 p-1.5 rounded-2xl shadow-md grid grid-cols-3 gap-2">
+          {[
+            { id: 'array', name: 'Array Generator', icon: <Layers className="w-4 h-4" /> },
+            { id: 'tree', name: 'Tree Generator', icon: <FolderTree className="w-4 h-4" /> },
+            { id: 'graph', name: 'Graph Generator', icon: <Network className="w-4 h-4" /> },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setGenType(tab.id as GeneratorType)}
+              className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${genType === tab.id ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+            >
+              {tab.icon} {tab.name}
+            </button>
+          ))}
+        </section>
 
-        {/* Visual Array Editor */}
-        <div className="w-full bg-card rounded-[2rem] border border-border shadow-2xl p-8 md:p-12 min-h-[500px] flex flex-col">
+        {/* CONTROLS & PREVIEW WORKSPACE */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          <div className="flex-1 flex items-end justify-center gap-3 md:gap-4 mb-12 border-b-2 border-border/50 pb-8 min-h-[300px]">
-            <AnimatePresence mode="popLayout">
-              {array.map((val, i) => {
-                const heightPercentage = Math.max((val / maxVal) * 100, 5);
-                return (
-                  <motion.div 
-                    key={`${i}-${val}`} // ensures animation on value change or index change
-                    layout
-                    initial={{ opacity: 0, y: 50, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className="w-12 md:w-16 flex flex-col items-center group relative cursor-pointer"
-                    onClick={() => removeValue(i)}
-                  >
-                    <div className="opacity-0 group-hover:opacity-100 text-xs font-black text-destructive mb-3 absolute -top-8 transition-opacity bg-background px-2 py-1 rounded shadow-sm border border-destructive/20">
-                      Remove
-                    </div>
-                    <motion.div 
-                      layout
-                      className="w-full bg-primary/80 group-hover:bg-primary rounded-t-lg transition-colors shadow-[0_-4px_10px_rgba(var(--primary),0.1)] relative"
-                      style={{ height: `${heightPercentage}%`, minHeight: '30px' }}
-                    >
-                      <div className="absolute inset-x-0 top-0 h-1.5 bg-white/30 rounded-t-lg"></div>
-                    </motion.div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-            {array.length === 0 && (
-              <div className="text-muted-foreground font-medium text-lg pb-10 flex-1 text-center">
-                Your array is empty. Add elements above!
+          {/* Controls Panel */}
+          <div className="lg:col-span-4 bg-card/90 border border-border/80 rounded-3xl p-6 shadow-lg space-y-6">
+            
+            {/* ARRAY GENERATOR */}
+            {genType === 'array' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Array Distribution</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'random', name: 'Random' },
+                      { id: 'sorted', name: 'Sorted' },
+                      { id: 'reverse', name: 'Reverse' },
+                      { id: 'nearly-sorted', name: 'Nearly Sorted' },
+                      { id: 'duplicate-heavy', name: 'Duplicates' },
+                    ].map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => generateNewArray(p.id, arraySize)}
+                        className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${arrayPreset === p.id ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background text-muted-foreground border-border hover:border-primary/50'}`}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-bold text-muted-foreground uppercase">
+                    <span>Array Size N</span>
+                    <span className="text-emerald-400 font-black">{arraySize}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="8" max="12"
+                    value={arraySize}
+                    onChange={(e) => { const s = parseInt(e.target.value); setArraySize(s); generateNewArray(arrayPreset, s); }}
+                    className="w-full cursor-pointer accent-emerald-400 h-2 bg-muted rounded-full appearance-none"
+                  />
+                </div>
               </div>
             )}
+
+            {/* TREE GENERATOR */}
+            {genType === 'tree' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Tree Topology</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      { id: 'balanced', name: 'Balanced BST' },
+                      { id: 'skewed', name: 'Skewed Tree (Worst Case)' },
+                      { id: 'random', name: 'Random BST' },
+                    ].map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => generateNewTree(t.id)}
+                        className={`p-3 rounded-xl text-xs font-bold border transition-all text-left cursor-pointer ${treeType === t.id ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background text-muted-foreground border-border hover:border-primary/50'}`}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* GRAPH GENERATOR */}
+            {genType === 'graph' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Graph Topology</label>
+                  <select value={graphType} onChange={(e) => setGraphType(e.target.value)} className="w-full bg-background border border-border rounded-xl p-3 text-xs font-bold">
+                    <option value="sparse">Sparse Graph (Low Edge Density)</option>
+                    <option value="dense">Dense Graph (High Edge Count)</option>
+                    <option value="dag">DAG (Directed Acyclic Graph)</option>
+                    <option value="weighted">Weighted Network Graph</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Export Actions */}
+            <div className="pt-4 border-t border-border/60 space-y-2">
+              <button onClick={handleExportToLab} className="w-full p-3.5 bg-primary text-primary-foreground font-black rounded-xl text-xs flex items-center justify-center gap-2 shadow-md hover:bg-primary/90 transition-all cursor-pointer">
+                <Send className="w-4 h-4" /> Send to Algorithm Lab
+              </button>
+              <button onClick={handleCopyJSON} className="w-full p-3 bg-secondary text-secondary-foreground font-bold rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-secondary/80 cursor-pointer">
+                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                {copied ? 'Copied JSON!' : 'Copy Raw Data JSON'}
+              </button>
+            </div>
+
           </div>
 
-          <div className="grid grid-cols-5 md:grid-cols-10 gap-3 max-h-64 overflow-y-auto p-2 custom-scrollbar">
-            <AnimatePresence>
-              {array.map((val, i) => (
-                <motion.div
-                  key={`input-${i}`}
-                  layout
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="relative group"
-                >
-                  <span className="absolute -top-2 -left-2 w-5 h-5 bg-muted text-[10px] font-bold flex items-center justify-center rounded-full text-muted-foreground z-10 border border-border">
-                    {i}
-                  </span>
-                  <input
-                    type="number"
-                    value={val}
-                    onChange={(e) => handleUpdate(i, parseInt(e.target.value) || 0)}
-                    className="w-full bg-background border border-border rounded-xl p-3 text-center text-lg font-black outline-none focus:border-primary shadow-sm hover:border-primary/50 transition-colors"
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
+          {/* Live Preview Canvas */}
+          <div className="lg:col-span-8 bg-card/90 border border-border/80 rounded-3xl p-6 sm:p-8 shadow-2xl min-h-[420px] flex flex-col justify-between relative overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Visual Data Distribution Preview</label>
+              <span className="text-xs font-mono font-bold text-emerald-400">
+                {genType === 'array' ? `Length: ${array.length}` : genType === 'tree' ? `Nodes: ${treeNodes.length}` : `Topology: ${graphType}`}
+              </span>
+            </div>
+
+            <div className="flex-1 w-full flex items-end justify-center gap-2.5 p-6 min-h-[300px]">
+              {genType === 'array' && array.map((val, idx) => {
+                const heightPct = (val / maxVal) * 100;
+                return (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
+                    <span className="text-[11px] font-mono font-bold text-foreground">
+                      {val}
+                    </span>
+                    <div 
+                      style={{ height: `${Math.max(heightPct, 15)}%` }} 
+                      className="w-full bg-gradient-to-t from-emerald-500/80 to-teal-400 rounded-t-xl transition-all duration-300 shadow-md group-hover:brightness-125" 
+                    />
+                    <span className="text-[10px] font-mono text-muted-foreground">[{idx}]</span>
+                  </div>
+                );
+              })}
+
+              {genType === 'tree' && (
+                <div className="w-full flex flex-wrap items-center justify-center gap-3 my-auto">
+                  {treeNodes.map((val, idx) => (
+                    <div key={idx} className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 border-2 border-emerald-400 text-foreground font-black text-sm flex items-center justify-center shadow-md">
+                      {val}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {genType === 'graph' && (
+                <div className="w-full flex flex-col items-center justify-center text-center my-auto space-y-2">
+                  <Network className="w-12 h-12 text-emerald-400 animate-pulse" />
+                  <div className="text-xs font-bold text-foreground uppercase">{graphType} Adjacency Matrix Generated</div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+
+        </section>
+
       </div>
     </WorkspaceLayout>
   );

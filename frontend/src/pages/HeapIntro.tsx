@@ -6,6 +6,7 @@ import {
   BookOpen, Sparkles, ListTree, Activity
 } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 import { HeapVisualizer } from '../components/visualizer/HeapVisualizer';
 
 interface TopicDetail {
@@ -531,6 +532,9 @@ export const HeapIntro: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="heap" />
 
       </div>
     </WorkspaceLayout>

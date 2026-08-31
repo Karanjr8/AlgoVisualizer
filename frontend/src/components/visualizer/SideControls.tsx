@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { useVisualizerStore } from '../../store/useVisualizerStore';
 import { Play, Pause, StepForward, StepBack, RotateCcw, Dices } from 'lucide-react';
 import { useSimulation } from '../../hooks/useSimulation';
@@ -10,22 +10,22 @@ interface SideControlsProps {
   algorithm: AlgorithmType;
 }
 
-export const SideControls = ({ simulation }: SideControlsProps) => {
+export const SideControls = memo(({ simulation }: SideControlsProps) => {
   const { speed, setSpeed, setInitialElements, setDatasetType } = useVisualizerStore();
   const { isPlaying, play, pause, nextStep, prevStep, currentIndex, totalFrames, reset } = simulation;
   
   const [customInput, setCustomInput] = useState('');
   const [error, setError] = useState('');
 
-  const handleRandomize = () => {
+  const handleRandomize = useCallback(() => {
     reset();
     setDatasetType('random');
     setInitialElements(generateElements(15, 'random'));
     setCustomInput('');
     setError('');
-  };
+  }, [reset, setDatasetType, setInitialElements]);
 
-  const handleCustomSubmit = () => {
+  const handleCustomSubmit = useCallback(() => {
     const parsed = parseCustomInput(customInput);
     if (!parsed) {
       setError('Invalid input.');
@@ -39,7 +39,7 @@ export const SideControls = ({ simulation }: SideControlsProps) => {
     reset();
     setDatasetType('custom');
     setInitialElements(generateElements(parsed.length, 'custom', parsed));
-  };
+  }, [customInput, reset, setDatasetType, setInitialElements]);
 
   // Speed multiplier logic: 1000ms delay = 1.0x. 
   // Min speed (2000ms delay) = 0.5x
@@ -142,4 +142,7 @@ export const SideControls = ({ simulation }: SideControlsProps) => {
       {error && <p className="text-destructive text-xs font-medium px-2 text-center md:text-left">{error}</p>}
     </div>
   );
-};
+});
+
+SideControls.displayName = 'SideControls';
+

@@ -5,6 +5,7 @@ import {
   Zap, LayoutList, Network, Share2
 } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 
 export const GraphsIntro: React.FC = () => {
   const navLinks = [
@@ -179,6 +180,9 @@ export const GraphsIntro: React.FC = () => {
             ))}
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="graphs" />
 
       </div>
     </WorkspaceLayout>

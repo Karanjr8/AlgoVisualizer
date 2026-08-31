@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { InterviewHero } from '../components/interview/InterviewHero';
 import { RoleCardGroup, ROLES } from '../components/interview/RoleCardGroup';
 import { DifficultySelector } from '../components/interview/DifficultySelector';
@@ -119,17 +118,15 @@ export const InterviewSetup = () => {
             <InterviewTimeline />
 
             {/* START INTERVIEW CTA */}
-            <motion.button
+            <button
               onClick={handleStartInterview}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-primary via-purple-600 to-blue-600 text-white font-black text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all flex items-center justify-center gap-2.5 cursor-pointer relative overflow-hidden group"
+              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-primary via-purple-600 to-blue-600 text-white font-black text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-150 transform-gpu hover:-translate-y-[2px] flex items-center justify-center gap-2.5 cursor-pointer relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
               <Play className="w-5 h-5 fill-current" />
               <span>Start AI Interview</span>
-              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-            </motion.button>
+              <Sparkles className="w-4 h-4 text-amber-300" />
+            </button>
           </div>
         </div>
       </div>

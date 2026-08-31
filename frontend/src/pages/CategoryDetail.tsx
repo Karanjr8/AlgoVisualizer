@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
 import { AlgorithmCard } from '../components/explore/AlgorithmCard';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 
 export const CategoryDetail = () => {
   const { categoryId } = useParams();
@@ -151,6 +152,11 @@ export const CategoryDetail = () => {
             );
           })()
         )}
+      </section>
+
+      {/* Recommended Practice Problems Section */}
+      <section className="max-w-7xl mx-auto px-6 pt-16">
+        <RecommendedPracticeProblems categoryKey={category.id} />
       </section>
     </div>
   );

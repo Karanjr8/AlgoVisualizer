@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { GraduationCap, Code, Layout, Server, Layers, Cpu, Check } from 'lucide-react';
 
@@ -72,13 +71,11 @@ export const RoleCardGroup = ({ selectedRole, onSelectRole }: RoleCardGroupProps
           const Icon = role.icon;
 
           return (
-            <motion.button
+            <button
               key={role.id}
               onClick={() => onSelectRole(role.id)}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
               className={cn(
-                'relative p-4.5 rounded-2xl border text-left transition-all duration-150 flex items-center gap-4 cursor-pointer outline-none group',
+                'relative p-4.5 rounded-2xl border text-left transition-all duration-150 flex items-center gap-4 cursor-pointer outline-none group transform-gpu hover:-translate-y-[2px]',
                 isSelected
                   ? 'bg-card border-primary shadow-md shadow-primary/10 ring-2 ring-primary/30'
                   : 'bg-card/60 border-border/70 hover:border-primary/40 hover:bg-card'
@@ -108,7 +105,7 @@ export const RoleCardGroup = ({ selectedRole, onSelectRole }: RoleCardGroupProps
                   {role.tagline}
                 </p>
               </div>
-            </motion.button>
+            </button>
           );
         })}
       </div>

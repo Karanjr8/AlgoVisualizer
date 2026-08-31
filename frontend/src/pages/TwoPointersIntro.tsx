@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, SplitSquareHorizontal, MoveRight, Rabbit, Target, BookOpen, Key, MoveLeft, Lightbulb, Sparkles } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 
 export const TwoPointersIntro = () => {
   const [learningMode, setLearningMode] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
@@ -263,6 +264,9 @@ export const TwoPointersIntro = () => {
             </div>
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="two-pointers" />
 
       </div>
     </WorkspaceLayout>

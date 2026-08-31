@@ -5,6 +5,7 @@ import {
   LayoutList, Grid, Cpu
 } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 
 export const DPIntro: React.FC = () => {
   const navLinks = [
@@ -176,6 +177,9 @@ export const DPIntro: React.FC = () => {
             ))}
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="dp" />
 
       </div>
     </WorkspaceLayout>

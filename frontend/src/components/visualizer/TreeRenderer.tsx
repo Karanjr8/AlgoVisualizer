@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VisualElement } from '../../types/visualizer';
 import { cn } from '../../lib/utils';
@@ -16,7 +16,7 @@ interface NodePos {
   depth: number;
 }
 
-export const TreeRenderer = ({ elements }: Props) => {
+export const TreeRenderer = memo(({ elements }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [positions, setPositions] = useState<Record<string, NodePos>>({});
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -86,8 +86,17 @@ export const TreeRenderer = ({ elements }: Props) => {
 
   useEffect(() => {
     calculateLayout();
-    const handleResize = () => calculateLayout();
-    window.addEventListener('resize', handleResize);
+    let ticking = false;
+    const handleResize = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          calculateLayout();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('resize', handleResize, { passive: true });
     return () => window.removeEventListener('resize', handleResize);
   }, [calculateLayout]);
 
@@ -214,4 +223,7 @@ export const TreeRenderer = ({ elements }: Props) => {
       </div>
     </div>
   );
-};
+});
+
+TreeRenderer.displayName = 'TreeRenderer';
+

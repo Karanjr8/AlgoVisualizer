@@ -5,6 +5,7 @@ import {
   Zap, LayoutList, Network, FolderTree
 } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 
 export const TreesIntro: React.FC = () => {
   const navLinks = [
@@ -179,6 +180,9 @@ export const TreesIntro: React.FC = () => {
             ))}
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="trees" />
 
       </div>
     </WorkspaceLayout>

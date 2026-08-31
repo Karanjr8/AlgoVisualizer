@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Search, Zap, Clock, Database, Globe, Package, Contact, Sparkles, BookOpen } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
+import { sectionStaggerContainer, sectionFadeUp } from '../lib/motion';
 
 export const SearchingIntro = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -41,10 +43,10 @@ export const SearchingIntro = () => {
 
   return (
     <WorkspaceLayout navLinks={navLinks}>
-      <div className="w-full space-y-16 sm:space-y-20 text-left">
+      <motion.div initial="hidden" animate="visible" variants={sectionStaggerContainer} className="w-full space-y-16 sm:space-y-20 text-left">
         
         {/* HERO BANNER SECTION */}
-        <section className="w-full border border-border/80 bg-gradient-to-r from-card/80 via-card/50 to-blue-500/10 backdrop-blur-xl relative overflow-hidden rounded-3xl p-6 sm:p-10 shadow-lg">
+        <motion.section variants={sectionFadeUp} className="w-full border border-border/80 bg-gradient-to-r from-card/80 via-card/50 to-blue-500/10 backdrop-blur-xl relative overflow-hidden rounded-3xl p-6 sm:p-10 shadow-lg">
           <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/20 opacity-15 pointer-events-none" />
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
@@ -107,10 +109,10 @@ export const SearchingIntro = () => {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 1: WHAT IS SEARCHING? */}
-        <section id="what-is-searching" className="space-y-6 scroll-mt-24">
+        <motion.section variants={sectionFadeUp} id="what-is-searching" className="space-y-6 scroll-mt-24">
           <div className="flex items-center gap-3 border-b border-border/80 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold">
               <Search className="w-5 h-5" />
@@ -147,10 +149,10 @@ export const SearchingIntro = () => {
               <p className="text-xs text-muted-foreground leading-relaxed">Locating an item in an inventory catalog instantly.</p>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 2: INTERACTIVE DEMONSTRATION */}
-        <section id="demo" className="space-y-6 scroll-mt-24">
+        <motion.section variants={sectionFadeUp} id="demo" className="space-y-6 scroll-mt-24">
           <div className="flex items-center gap-3 border-b border-border/80 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
               <Zap className="w-5 h-5" />
@@ -230,10 +232,10 @@ export const SearchingIntro = () => {
               )}
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 3: SEARCHING COMPLEXITY */}
-        <section id="complexity" className="space-y-6 scroll-mt-24">
+        <motion.section variants={sectionFadeUp} id="complexity" className="space-y-6 scroll-mt-24">
           <div className="flex items-center gap-3 border-b border-border/80 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold">
               <Clock className="w-5 h-5" />
@@ -269,9 +271,12 @@ export const SearchingIntro = () => {
               </p>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-      </div>
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="searching" />
+
+      </motion.div>
     </WorkspaceLayout>
   );
 };

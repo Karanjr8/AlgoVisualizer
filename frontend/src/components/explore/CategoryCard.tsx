@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -12,17 +12,17 @@ interface CategoryProps {
   delay?: number;
 }
 
-export const CategoryCard = ({ id, title, count, description, IconComponent, colorClass, delay = 0 }: CategoryProps) => {
+export const CategoryCard = memo(({ id, title, count, description, IconComponent, colorClass, delay = 0 }: CategoryProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.5, type: 'spring' }}
+      transition={{ delay: Math.min(delay, 0.1), duration: 0.15, ease: 'easeOut' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="h-full"
+      className="h-full transform-gpu"
     >
       <Link 
         to={`/explore/${id}`}
@@ -30,7 +30,7 @@ export const CategoryCard = ({ id, title, count, description, IconComponent, col
       >
         <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${colorClass} opacity-20 group-hover:opacity-100 transition-opacity`} />
         
-        <div className={`absolute -top-20 -right-20 w-40 h-40 opacity-0 group-hover:opacity-10 transition-opacity duration-500 ease-in-out rounded-full`} style={{ background: 'radial-gradient(circle, currentColor 0%, transparent 70%)' }} />
+        <div className="absolute -top-20 -right-20 w-40 h-40 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ease-in-out rounded-full" style={{ background: 'radial-gradient(circle, currentColor 0%, transparent 70%)' }} />
         
         <div className="w-14 h-14 mb-6 p-2 rounded-2xl bg-background border border-border shadow-inner relative z-10 flex items-center justify-center">
           <IconComponent isHovered={isHovered} />
@@ -42,4 +42,7 @@ export const CategoryCard = ({ id, title, count, description, IconComponent, col
       </Link>
     </motion.div>
   );
-};
+});
+
+CategoryCard.displayName = 'CategoryCard';
+

@@ -6,6 +6,7 @@ import {
   TrendingUp, HardDrive, ListFilter, Play
 } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 import { GreedyCoinChangeVisualizer } from '../components/visualizer/greedy/GreedyCoinChangeVisualizer';
 
 export const GreedyIntro = () => {
@@ -445,6 +446,9 @@ export const GreedyIntro = () => {
             ))}
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="greedy" />
 
       </div>
     </WorkspaceLayout>

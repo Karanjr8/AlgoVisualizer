@@ -5,6 +5,7 @@ import {
   ListFilter, Play, Layers, Activity, Calculator, Target, Cpu
 } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { RecommendedPracticeProblems } from '../components/practice/RecommendedPracticeProblems';
 import { AdvancedPatternsIntroVisualizer } from '../components/visualizer/advanced/AdvancedPatternsIntroVisualizer';
 
 export const AdvancedPatternsIntro = () => {
@@ -436,6 +437,9 @@ export const AdvancedPatternsIntro = () => {
             ))}
           </div>
         </section>
+
+        {/* RECOMMENDED PRACTICE PROBLEMS ROADMAP */}
+        <RecommendedPracticeProblems categoryKey="advanced-patterns" />
 
       </div>
     </WorkspaceLayout>
