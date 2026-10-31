@@ -10,6 +10,7 @@ router.get('/', profileController_1.getUserProfile);
 router.put('/', profileController_1.updateUserProfile);
 router.get('/dashboard', profileController_1.getDashboardData);
 router.post('/events', profileController_1.logUserEvent);
+router.post('/activity', profileController_1.recordUserActivity);
 router.get('/progress', profileController_1.getUserProgress);
 router.get('/practice-stats', profileController_1.getUserPracticeStats);
 router.get('/feed', profileController_1.getUserFeed);

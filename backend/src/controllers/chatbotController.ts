@@ -15,7 +15,7 @@ export const chat = async (req: Request, res: Response) => {
 
   try {
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         contents: [{ role: 'user', parts: [{ text: userMessage }] }],
       },

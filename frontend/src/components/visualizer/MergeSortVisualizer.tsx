@@ -136,6 +136,94 @@ export const MergeSortVisualizer = ({ frame }: MergeSortVisualizerProps) => {
         </div>
       </div>
 
+      {/* RECURSION SUBARRAY TREE (Divide & Conquer Tree) */}
+      {state?.treeNodes && state.treeNodes.length > 0 && (
+        <div className="w-full bg-card/60 backdrop-blur-md rounded-3xl border border-border/80 p-6 shadow-lg flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+              <Layers className="w-4 h-4" /> Recursive Divide & Conquer Tree
+            </span>
+            <span className="text-xs text-muted-foreground font-mono font-medium">
+              Subproblem Decomposition & Rebuild
+            </span>
+          </div>
+
+          <div className="w-full flex flex-col gap-4 overflow-x-auto py-2">
+            {/* Group nodes by depth */}
+            {Array.from(new Set(state.treeNodes.map(n => n.depth))).sort((a, b) => a - b).map(depth => {
+              const nodesAtDepth = state.treeNodes!.filter(n => n.depth === depth);
+              return (
+                <div key={`depth-${depth}`} className="flex items-center justify-around gap-2 min-w-max border-b border-border/30 pb-3 last:border-b-0 last:pb-0">
+                  <span className="text-[10px] font-mono font-bold text-muted-foreground uppercase px-2 py-0.5 rounded bg-muted/40 shrink-0">
+                    Depth {depth}
+                  </span>
+
+                  <div className="flex items-center justify-center gap-4 flex-1">
+                    {nodesAtDepth.map(node => {
+                      const isActive = node.status === 'active';
+                      const isMerged = node.status === 'merged';
+                      const isBase = node.status === 'base_case';
+                      const isCurrentRange = node.range[0] === activeRange[0] && node.range[1] === activeRange[1] && depth === currentDepth;
+
+                      return (
+                        <motion.div
+                          key={node.id}
+                          layout
+                          animate={{
+                            scale: isCurrentRange ? 1.05 : 1,
+                            y: isCurrentRange ? -2 : 0
+                          }}
+                          className={cn(
+                            "flex flex-col items-center gap-1 p-2.5 rounded-2xl border transition-all shadow-sm",
+                            isCurrentRange ? "bg-primary/10 border-primary ring-2 ring-primary/30 z-10" :
+                            isMerged ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" :
+                            isBase ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
+                            isActive ? "bg-blue-500/10 border-blue-500/30 text-blue-400" :
+                            "bg-background/40 border-border/40 text-muted-foreground opacity-60"
+                          )}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] font-mono font-black uppercase tracking-tight">
+                              [{node.range[0]}..{node.range[1]}]
+                            </span>
+                            <span className={cn(
+                              "text-[9px] font-bold px-1.5 py-0.2 rounded uppercase",
+                              isMerged ? "bg-cyan-500/20 text-cyan-400" :
+                              isBase ? "bg-amber-500/20 text-amber-400" :
+                              isActive ? "bg-blue-500/20 text-blue-400" : "bg-muted text-muted-foreground"
+                            )}>
+                              {node.status.replace('_', ' ')}
+                            </span>
+                          </div>
+
+                          {/* Subarray Elements */}
+                          <div className="flex items-center gap-1 mt-1">
+                            {node.elements.map((el, eIdx) => (
+                              <div
+                                key={`tn-${node.id}-${eIdx}`}
+                                className={cn(
+                                  "w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center border",
+                                  isMerged ? "bg-cyan-500/20 border-cyan-400 text-cyan-300" :
+                                  isBase ? "bg-amber-400 text-slate-950 border-amber-300 font-bold" :
+                                  isCurrentRange ? "bg-primary text-primary-foreground border-primary" :
+                                  "bg-card border-border text-foreground"
+                                )}
+                              >
+                                {el.value}
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* AUXILIARY TEMP ARRAY (O(N) Space) */}
       <div className="w-full bg-emerald-500/5 rounded-3xl border border-emerald-500/20 p-6 shadow-md flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -180,3 +268,4 @@ export const MergeSortVisualizer = ({ frame }: MergeSortVisualizerProps) => {
     </div>
   );
 };
+

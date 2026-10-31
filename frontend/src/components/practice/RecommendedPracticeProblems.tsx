@@ -50,9 +50,21 @@ const DIFFICULTY_COLOR = {
 };
 
 export const RecommendedPracticeProblems = ({ categoryKey, titleOverride }: RecommendedPracticeProblemsProps) => {
-  // Key lookup normalize (e.g., 'trie-intro' -> 'trie', 'sorting-algorithms' -> 'sorting')
-  const normalizedKey = categoryKey.toLowerCase().replace('-intro', '').replace('-algorithms', '');
-  const problems: PracticeProblem[] = RECOMMENDED_PROBLEMS_BY_TOPIC[normalizedKey] || RECOMMENDED_PROBLEMS_BY_TOPIC['trie'];
+  // Key lookup normalize (e.g., 'trie-intro' -> 'trie', 'sorting-algorithms' -> 'sorting', 'binary-indexed-tree' -> 'fenwick-tree')
+  const cleanKey = categoryKey.toLowerCase().trim();
+  const normalizedKey = cleanKey
+    .replace(/-intro$/, '')
+    .replace(/-algorithms$/, '')
+    .replace(/-algorithm$/, '')
+    .replace(/-ds$/, '')
+    .replace(/-data-structure$/, '');
+
+  const problems: PracticeProblem[] =
+    RECOMMENDED_PROBLEMS_BY_TOPIC[cleanKey] ||
+    RECOMMENDED_PROBLEMS_BY_TOPIC[normalizedKey] ||
+    RECOMMENDED_PROBLEMS_BY_TOPIC[normalizedKey.replace(/-/g, '_')] ||
+    RECOMMENDED_PROBLEMS_BY_TOPIC[normalizedKey.replace(/_/g, '-')] ||
+    [];
 
   // Persistent States
   const [completedIds, setCompletedIds] = useState<string[]>(() => {

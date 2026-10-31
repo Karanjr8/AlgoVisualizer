@@ -2,7 +2,7 @@ import { useState, useCallback, memo } from 'react';
 import { useVisualizerStore } from '../../store/useVisualizerStore';
 import { Play, Pause, StepForward, StepBack, RotateCcw, Dices } from 'lucide-react';
 import { useSimulation } from '../../hooks/useSimulation';
-import { generateElements, parseCustomInput } from '../../lib/utils';
+import { generateElements, parseCustomInput, cn } from '../../lib/utils';
 import type { AlgorithmType } from '../../types/visualizer';
 
 interface SideControlsProps {
@@ -14,16 +14,18 @@ export const SideControls = memo(({ simulation }: SideControlsProps) => {
   const { speed, setSpeed, setInitialElements, setDatasetType } = useVisualizerStore();
   const { isPlaying, play, pause, nextStep, prevStep, currentIndex, totalFrames, reset } = simulation;
   
+  const [selectedSize, setSelectedSize] = useState<number>(7);
   const [customInput, setCustomInput] = useState('');
   const [error, setError] = useState('');
 
-  const handleRandomize = useCallback(() => {
+  const handleRandomize = useCallback((size: number = selectedSize) => {
     reset();
+    setSelectedSize(size);
     setDatasetType('random');
-    setInitialElements(generateElements(15, 'random'));
+    setInitialElements(generateElements(size, 'random'));
     setCustomInput('');
     setError('');
-  }, [reset, setDatasetType, setInitialElements]);
+  }, [reset, setDatasetType, setInitialElements, selectedSize]);
 
   const handleCustomSubmit = useCallback(() => {
     const parsed = parseCustomInput(customInput);
@@ -50,28 +52,62 @@ export const SideControls = memo(({ simulation }: SideControlsProps) => {
     <div className="flex flex-col gap-2">
       <div className="bg-card/80 backdrop-blur-md border border-border/60 rounded-2xl p-2 sm:p-3 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 w-full">
         
-        {/* Left: Input / Data Source */}
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        {/* Left: Dataset Size & Custom Input */}
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Dataset Size Presets */}
+          <div className="flex items-center gap-1 bg-secondary/80 p-1 rounded-xl border border-border">
+            <button
+              onClick={() => handleRandomize(7)}
+              className={cn(
+                'px-2.5 py-1 rounded-lg text-xs font-bold transition-all',
+                selectedSize === 7 ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="Small Dataset (7 items - Learning Mode)"
+            >
+              Small (7)
+            </button>
+            <button
+              onClick={() => handleRandomize(12)}
+              className={cn(
+                'px-2.5 py-1 rounded-lg text-xs font-bold transition-all',
+                selectedSize === 12 ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="Medium Dataset (12 items)"
+            >
+              Med (12)
+            </button>
+            <button
+              onClick={() => handleRandomize(18)}
+              className={cn(
+                'px-2.5 py-1 rounded-lg text-xs font-bold transition-all',
+                selectedSize === 18 ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="Large Dataset (18 items)"
+            >
+              Large (18)
+            </button>
+          </div>
+
           <button
-            onClick={handleRandomize}
-            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-sm font-bold hover:opacity-90 flex items-center gap-2 transition-colors shadow-sm"
-            title="Random Array"
+            onClick={() => handleRandomize(selectedSize)}
+            className="p-2 bg-secondary text-secondary-foreground rounded-xl text-xs font-bold hover:opacity-90 flex items-center gap-1.5 transition-colors shadow-sm"
+            title="Randomize Values"
           >
-            <Dices className="w-4 h-4" /> Random
+            <Dices className="w-4 h-4" />
           </button>
           
-          <div className="flex bg-background border border-border rounded-lg overflow-hidden flex-1 md:w-56 focus-within:border-primary transition-colors shadow-sm">
+          <div className="flex bg-background border border-border rounded-xl overflow-hidden flex-1 md:w-44 focus-within:border-primary transition-colors shadow-sm">
             <input
               type="text"
               placeholder="Custom e.g. 5, 2, 8"
               value={customInput}
               onChange={(e) => setCustomInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
-              className="w-full px-3 py-2 text-sm focus:outline-none bg-transparent placeholder:text-muted-foreground/50"
+              className="w-full px-2.5 py-1.5 text-xs focus:outline-none bg-transparent placeholder:text-muted-foreground/50"
             />
             <button
               onClick={handleCustomSubmit}
-              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-colors"
+              className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-colors"
             >
               Load
             </button>

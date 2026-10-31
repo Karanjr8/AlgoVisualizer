@@ -1,28 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Compass, Layers, CheckCircle2, SlidersHorizontal } from 'lucide-react';
+import { Search, Compass } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CategoryCard } from '../components/explore/CategoryCard';
 import { CATEGORIES } from '../data/categories';
-import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 
 export const Explore = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialQuery = searchParams.get('q') || '';
-  
-  const [searchTerm, setSearchTerm] = useState(initialQuery);
-  const [activeFilter, setActiveFilter] = useState("All");
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('q') || '');
 
-  // Update URL when search term changes, or update state if URL changes externally
-  useEffect(() => {
-    const q = searchParams.get('q') || '';
-    if (q !== searchTerm) {
-      setSearchTerm(q);
-    }
-  }, [searchParams]);
-
-  // Update search input state immediately, but debounce URL search param updates to prevent router thrashing
   const handleSearchChange = (val: string) => {
     setSearchTerm(val);
   };
@@ -42,129 +28,85 @@ export const Explore = () => {
   }, [searchTerm, searchParams, setSearchParams]);
 
   const filteredCategories = useMemo(() => {
-    const lowerTerm = searchTerm.toLowerCase();
-    return CATEGORIES.filter(c => {
-      const matchesSearch = !lowerTerm || 
-                            c.title.toLowerCase().includes(lowerTerm) || 
-                            c.desc.toLowerCase().includes(lowerTerm);
-      
-      const matchesFilter = activeFilter === 'All' ? true : 
-                            activeFilter === 'Basics' ? ['sorting', 'searching'].includes(c.id) :
-                            activeFilter === 'Trees & Graphs' ? ['trees', 'graphs'].includes(c.id) :
-                            activeFilter === 'Dynamic Programming' ? ['dp'].includes(c.id) : true;
+    const lowerTerm = searchTerm.toLowerCase().trim();
+    if (!lowerTerm) return CATEGORIES;
 
-      return matchesSearch && matchesFilter;
-    });
-  }, [searchTerm, activeFilter]);
-
-  const filterOptions = ['All', 'Basics', 'Trees & Graphs', 'Dynamic Programming', 'Advanced'];
-
-  const leftPanel = (
-    <div>
-      <div className="flex items-center gap-2 text-primary font-semibold mb-2">
-        <Compass className="w-5 h-5" /> Explore Library
-      </div>
-      <h1 className="type-page-title mb-8">
-        Master every algorithm.
-      </h1>
-
-      <div className="relative mb-8">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <input 
-          type="text"
-          placeholder="Search patterns..."
-          value={searchTerm}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full bg-card border border-border rounded-2xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-shadow shadow-sm"
-        />
-      </div>
-
-      <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-          <Layers className="w-4 h-4" /> Categories
-        </h3>
-        <div className="flex flex-col gap-1">
-          {filterOptions.map(filter => (
-            <button 
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                activeFilter === filter 
-                ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm' 
-                : 'hover:bg-accent text-muted-foreground hover:text-foreground border border-transparent'
-              }`}
-            >
-              <span>{filter}</span>
-              {activeFilter === filter && <CheckCircle2 className="w-4 h-4" />}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+    return CATEGORIES.filter(c =>
+      c.title.toLowerCase().includes(lowerTerm) ||
+      c.desc.toLowerCase().includes(lowerTerm) ||
+      c.algorithms.some(a => a.title.toLowerCase().includes(lowerTerm))
+    );
+  }, [searchTerm]);
 
   return (
-    <WorkspaceLayout leftPanel={leftPanel}>
-        {/* Mobile Filter Toggle */}
-        <div className="lg:hidden w-full flex gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input 
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full bg-card/50 border border-border rounded-2xl py-4 pl-12 pr-6 focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg transition-shadow shadow-sm"
-            />
-          </div>
-          <button 
-            onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
-            className="flex items-center justify-center gap-2 px-6 bg-card border border-border rounded-2xl hover:bg-accent transition-colors font-semibold"
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-          </button>
+    <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 pt-6 sm:pt-8 pb-32 space-y-10">
+      
+      {/* HERO HEADER */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
+          <Compass className="w-5 h-5" /> Explore Library
         </div>
 
-        <div className="flex items-center justify-between mb-8 mt-4">
-            <h2 className="text-2xl font-bold">
-              {activeFilter === 'All' ? 'All Algorithms' : activeFilter}
-            </h2>
-            <span className="px-3 py-1 bg-card border border-border rounded-full text-xs font-bold text-muted-foreground tracking-wider uppercase">
-              {filteredCategories.length} Results
-            </span>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground mb-3">
+              Master Every Algorithm.
+            </h1>
+            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl font-medium">
+              Comprehensive visualizers and interactive guides across all core data structures and algorithmic paradigms.
+            </p>
           </div>
 
-          {filteredCategories.length === 0 ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-24 text-muted-foreground bg-card rounded-3xl border border-border border-dashed">
-              <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
-              <h3 className="text-xl font-semibold mb-2">No categories found</h3>
-              <p>Try adjusting your search terms or filters.</p>
-            </motion.div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              <AnimatePresence mode="popLayout">
-                {filteredCategories.map((cat) => (
-                  <motion.div
-                    key={cat.id}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15, ease: 'easeOut' }}
-                  >
-                    <CategoryCard 
-                      id={cat.id}
-                      title={cat.title}
-                      count={cat.count}
-                      description={cat.desc}
-                      IconComponent={cat.Icon}
-                      colorClass={cat.color}
-                      delay={0}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
-    </WorkspaceLayout>
+          <div className="px-4 py-2 bg-card border border-border rounded-full text-xs font-bold text-muted-foreground uppercase tracking-wider shrink-0 self-start md:self-auto">
+            {filteredCategories.length} Categories
+          </div>
+        </div>
+
+        {/* SEARCH BAR */}
+        <div className="relative max-w-2xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search algorithms, patterns, or data structures (e.g., Dijkstra, Binary Search, Graphs)..."
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="w-full bg-card/80 backdrop-blur-md border border-border rounded-2xl py-4 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm transition-all"
+          />
+        </div>
+      </section>
+
+      {/* UNIFIED CATEGORIES GRID (Wide Screen Layout) */}
+      <section>
+        {filteredCategories.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-24 text-muted-foreground bg-card rounded-3xl border border-border border-dashed p-8"
+          >
+            <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <h3 className="text-xl font-bold mb-2">No categories found</h3>
+            <p className="text-sm">Try adjusting your search query.</p>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <AnimatePresence mode="popLayout">
+              {filteredCategories.map((cat) => (
+                <CategoryCard
+                  key={cat.id}
+                  id={cat.id}
+                  title={cat.title}
+                  count={cat.count}
+                  description={cat.desc}
+                  IconComponent={cat.Icon}
+                  colorClass={cat.color}
+                  delay={0}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </section>
+
+    </div>
   );
 };

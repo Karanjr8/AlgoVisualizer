@@ -1,34 +1,73 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Starting seed for dev user...');
+  console.log('Starting seed for users...');
 
-  // Create a realistic dev user
+  const hashedPassword = await bcrypt.hash('password123', 10);
+  const adminHashedPassword = await bcrypt.hash('admin123', 10);
+
+  // 1. Seed Admin User
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@algovis.io' },
+    update: {
+      role: 'ADMIN',
+      fullName: 'System Administrator',
+      name: 'System Administrator',
+      password: adminHashedPassword,
+      isEmailVerified: true,
+    },
+    create: {
+      email: 'admin@algovis.io',
+      password: adminHashedPassword,
+      fullName: 'System Administrator',
+      name: 'System Administrator',
+      username: 'admin',
+      role: 'ADMIN',
+      isEmailVerified: true,
+      currentStreak: 15,
+      longestStreak: 30,
+      learningHours: 120.0,
+      xp: 5000,
+      level: 10,
+    },
+  });
+  console.log('Admin user created:', admin.email);
+
+  // 2. Seed Regular Dev User
   const user = await prisma.user.upsert({
     where: { email: 'dev@test.com' },
     update: {
       username: 'AlgoMaster99',
+      fullName: 'Developer Profile',
       name: 'Developer Profile',
+      password: hashedPassword,
+      role: 'USER',
       currentStreak: 12,
       learningHours: 45.5,
       xp: 2450,
       level: 5,
+      isEmailVerified: true,
     },
     create: {
       email: 'dev@test.com',
-      password: 'password123',
-      username: 'AlgoMaster99',
+      password: hashedPassword,
+      fullName: 'Developer Profile',
       name: 'Developer Profile',
+      username: 'AlgoMaster99',
+      role: 'USER',
       currentStreak: 12,
+      longestStreak: 20,
       learningHours: 45.5,
       xp: 2450,
       level: 5,
+      isEmailVerified: true,
     },
   });
 
-  console.log('User created:', user.username);
+  console.log('Regular user created:', user.username);
 
   // Add some achievements
   const ach1 = await prisma.achievement.upsert({

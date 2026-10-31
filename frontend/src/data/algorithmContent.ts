@@ -591,8 +591,8 @@ export const algorithmContent: Record<string, AlgorithmContent> = {
       tips: ['Almost never use this in a real interview unless specifically asked.', 'Mention that it is a STABLE sort (does not change relative order of equal elements).']
     },
     practiceProblems: [
-      { title: 'Sort Colors', difficulty: 'Medium', url: '#' },
-      { title: 'Relative Sort Array', difficulty: 'Easy', url: '#' }
+      { title: 'Sort Colors', difficulty: 'Medium', url: 'https://leetcode.com/problems/sort-colors/' },
+      { title: 'Relative Sort Array', difficulty: 'Easy', url: 'https://leetcode.com/problems/relative-sort-array/' }
     ],
     relatedTopics: [
       { title: 'Selection Sort', id: 'selection' },
@@ -681,7 +681,7 @@ export const algorithmContent: Record<string, AlgorithmContent> = {
       tips: ['Highlight that this algorithm minimizes the number of swaps to exactly O(N), which is great for EEPROM or flash memory where writes are expensive.']
     },
     practiceProblems: [
-      { title: 'Third Maximum Number', difficulty: 'Easy', url: '#' }
+      { title: 'Third Maximum Number', difficulty: 'Easy', url: 'https://leetcode.com/problems/third-maximum-number/' }
     ],
     relatedTopics: [
       { title: 'Bubble Sort', id: 'bubble' },
@@ -765,7 +765,7 @@ export const algorithmContent: Record<string, AlgorithmContent> = {
       tips: ['Extremely efficient for small datasets. Native libraries like V8 or Python often switch to Insertion Sort for arrays smaller than 10-20 elements.']
     },
     practiceProblems: [
-      { title: 'Insertion Sort List', difficulty: 'Medium', url: '#' }
+      { title: 'Insertion Sort List', difficulty: 'Medium', url: 'https://leetcode.com/problems/insertion-sort-list/' }
     ],
     relatedTopics: [
       { title: 'Bubble Sort', id: 'bubble' },
@@ -912,9 +912,9 @@ function mergeSort(arr) {
       tips: ['Merge Sort is stable, making it the perfect algorithm for sorting Linked Lists.', 'Unlike Arrays where it takes O(N) space, Merge Sort on a Linked List takes O(1) space!']
     },
     practiceProblems: [
-      { title: 'Merge Intervals', difficulty: 'Medium', url: '#' },
-      { title: 'Sort an Array', difficulty: 'Medium', url: '#' },
-      { title: 'Sort List', difficulty: 'Medium', url: '#' }
+      { title: 'Merge Intervals', difficulty: 'Medium', url: 'https://leetcode.com/problems/merge-intervals/' },
+      { title: 'Sort an Array', difficulty: 'Medium', url: 'https://leetcode.com/problems/sort-an-array/' },
+      { title: 'Sort List', difficulty: 'Medium', url: 'https://leetcode.com/problems/sort-list/' }
     ],
     relatedTopics: [
       { title: 'Quick Sort', id: 'quick' },
@@ -1046,8 +1046,8 @@ def quickSort(arr, low, high):
       tips: ['Mention Randomized Quick Sort to the interviewer as a way to avoid the O(N²) worst-case scenario by picking a random pivot.']
     },
     practiceProblems: [
-      { title: 'Kth Largest Element in an Array', difficulty: 'Medium', url: '#' },
-      { title: 'Sort an Array', difficulty: 'Medium', url: '#' }
+      { title: 'Kth Largest Element in an Array', difficulty: 'Medium', url: 'https://leetcode.com/problems/kth-largest-element-in-an-array/' },
+      { title: 'Sort an Array', difficulty: 'Medium', url: 'https://leetcode.com/problems/sort-an-array/' }
     ],
     relatedTopics: [
       { title: 'Merge Sort', id: 'merge' }
@@ -1115,7 +1115,7 @@ def quickSort(arr, low, high):
       tips: ['Linear search is practically the only option when searching through an unsorted array or a Linked List.']
     },
     practiceProblems: [
-      { title: 'Find Target in Array', difficulty: 'Easy', url: '#' }
+      { title: 'Find Target in Array', difficulty: 'Easy', url: 'https://leetcode.com/problems/binary-search/' }
     ],
     relatedTopics: [
       { title: 'Binary Search', id: 'binary-search' }
@@ -1204,9 +1204,9 @@ def quickSort(arr, low, high):
       tips: ['If an interview problem mentions a "sorted array" and requires an "efficient" solution, Binary Search is almost certainly the answer.']
     },
     practiceProblems: [
-      { title: 'Binary Search', difficulty: 'Easy', url: '#' },
-      { title: 'Search in Rotated Sorted Array', difficulty: 'Medium', url: '#' },
-      { title: 'Find Minimum in Rotated Sorted Array', difficulty: 'Medium', url: '#' }
+      { title: 'Binary Search', difficulty: 'Easy', url: 'https://leetcode.com/problems/binary-search/' },
+      { title: 'Search in Rotated Sorted Array', difficulty: 'Medium', url: 'https://leetcode.com/problems/search-in-rotated-sorted-array/' },
+      { title: 'Find Minimum in Rotated Sorted Array', difficulty: 'Medium', url: 'https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/' }
     ],
     relatedTopics: [
       { title: 'Binary Search Variations', id: 'binary-search-variations' }
@@ -1283,7 +1283,7 @@ def quickSort(arr, low, high):
     return ans`
     },
     interviewNotes: { mistakes: ['Returning immediately upon finding the target.'], edgeCases: ['Target is not in array.', 'All elements are the target.'], tips: ['Always save the index to an `ans` variable before adjusting pointers.'] },
-    practiceProblems: [{ title: 'Find First and Last Position', difficulty: 'Medium', url: '#' }],
+    practiceProblems: [{ title: 'Find First and Last Position', difficulty: 'Medium', url: 'https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/' }],
     relatedTopics: [{ title: 'Last Occurrence', id: 'last-occurrence' }]
   },
   'last-occurrence': {
@@ -1357,7 +1357,7 @@ def quickSort(arr, low, high):
     return ans`
     },
     interviewNotes: { mistakes: [], edgeCases: [], tips: [] },
-    practiceProblems: [{ title: 'Find First and Last Position', difficulty: 'Medium', url: '#' }],
+    practiceProblems: [{ title: 'Find First and Last Position', difficulty: 'Medium', url: 'https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/' }],
     relatedTopics: [{ title: 'First Occurrence', id: 'first-occurrence' }]
   },
   'lower-bound': {
@@ -1419,7 +1419,7 @@ def quickSort(arr, low, high):
     return ans`
     },
     interviewNotes: { mistakes: [], edgeCases: ['Target > all elements. Returns N (length of array).'], tips: ['C++ has `std::lower_bound` built in!'] },
-    practiceProblems: [{ title: 'Search Insert Position', difficulty: 'Easy', url: '#' }],
+    practiceProblems: [{ title: 'Search Insert Position', difficulty: 'Easy', url: 'https://leetcode.com/problems/search-insert-position/' }],
     relatedTopics: [{ title: 'Upper Bound', id: 'upper-bound' }]
   },
   'upper-bound': {
@@ -1667,7 +1667,7 @@ def quickSort(arr, low, high):
     return ans`
     },
     interviewNotes: { mistakes: [], edgeCases: ['Target > all elements. Ans defaults to N.'], tips: ['This is one of the most common introductory Binary Search questions on LeetCode.'] },
-    practiceProblems: [{ title: 'Search Insert Position', difficulty: 'Easy', url: '#' }],
+    practiceProblems: [{ title: 'Search Insert Position', difficulty: 'Easy', url: 'https://leetcode.com/problems/search-insert-position/' }],
     relatedTopics: [{ title: 'Lower Bound', id: 'lower-bound' }]
   },
   'jump-search': {
@@ -1991,7 +1991,7 @@ def jump_search(arr, target):
     return -1`
     },
     interviewNotes: { mistakes: ['Using `arr[low] < arr[mid]` instead of `<=`. When low == mid, the logic fails if equality isn\'t checked.'], edgeCases: ['Array is fully sorted (not rotated).', 'Array has duplicate elements (requires `arr[low] == arr[mid]` special handling).'], tips: ['This is a Top 100 Liked Interview Question. Memorize the pattern.'] },
-    practiceProblems: [{ title: 'Search in Rotated Sorted Array', difficulty: 'Medium', url: '#' }, { title: 'Find Minimum in Rotated Sorted Array', difficulty: 'Medium', url: '#' }],
+    practiceProblems: [{ title: 'Search in Rotated Sorted Array', difficulty: 'Medium', url: 'https://leetcode.com/problems/search-in-rotated-sorted-array/' }, { title: 'Find Minimum in Rotated Sorted Array', difficulty: 'Medium', url: 'https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/' }],
     relatedTopics: []
   },
   'search-on-answer': {
@@ -2094,7 +2094,7 @@ def search_on_answer(arr):
     return ans`
     },
     interviewNotes: { mistakes: ['Incorrectly defining the `low` and `high` bounds.'], edgeCases: [], tips: ['Look for keywords like: "Minimize the Maximum", "Maximize the Minimum", or "Find the smallest integer K such that...". These scream Search on Answer!'] },
-    practiceProblems: [{ title: 'Capacity To Ship Packages Within D Days', difficulty: 'Medium', url: '#' }, { title: 'Koko Eating Bananas', difficulty: 'Medium', url: '#' }, { title: 'Allocate Books', difficulty: 'Hard', url: '#' }],
+    practiceProblems: [{ title: 'Capacity To Ship Packages Within D Days', difficulty: 'Medium', url: 'https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/' }, { title: 'Koko Eating Bananas', difficulty: 'Medium', url: 'https://leetcode.com/problems/koko-eating-bananas/' }, { title: 'Allocate Books', difficulty: 'Hard', url: 'https://www.geeksforgeeks.org/problems/allocate-minimum-number-of-pages0937/1' }],
     relatedTopics: [{ title: 'Monotonic Predicate', id: 'monotonic-predicate' }]
   },
   'monotonic-predicate': {
@@ -2118,7 +2118,7 @@ def search_on_answer(arr):
       python: `# Same implementation as Search on Answer.`
     },
     interviewNotes: { mistakes: ['Failing to prove the function is strictly monotonic. If it evaluates to T, F, T, F... binary search CANNOT be used.'], edgeCases: [], tips: ['In a hard interview, explicitly stating "I will define a monotonic predicate function and binary search the answer space" shows immense maturity.'] },
-    practiceProblems: [{ title: 'Split Array Largest Sum', difficulty: 'Hard', url: '#' }],
+    practiceProblems: [{ title: 'Split Array Largest Sum', difficulty: 'Hard', url: 'https://leetcode.com/problems/split-array-largest-sum/' }],
     relatedTopics: [{ title: 'Search on Answer', id: 'search-on-answer' }]
   },
   'sliding-window-maximum-sum': {
@@ -2202,7 +2202,7 @@ def search_on_answer(arr):
       tips: ['This is the most fundamental sliding window problem. Master this pattern completely before moving to variable-sized windows.']
     },
     practiceProblems: [
-      { title: 'Maximum Average Subarray I', difficulty: 'Easy', url: '#' }
+      { title: 'Maximum Average Subarray I', difficulty: 'Easy', url: 'https://leetcode.com/problems/maximum-average-subarray-i/' }
     ],
     relatedTopics: [
       { title: 'Average of Subarray', id: 'sliding-window-average' }
@@ -2293,7 +2293,7 @@ def search_on_answer(arr):
       tips: ['This is a great warmup problem. It teaches the standard "expand right, if size hit -> record, shrink left" pattern that can be generalized to almost all fixed-size sliding window problems.']
     },
     practiceProblems: [
-      { title: 'Maximum Average Subarray I', difficulty: 'Easy', url: '#' }
+      { title: 'Maximum Average Subarray I', difficulty: 'Easy', url: 'https://leetcode.com/problems/maximum-average-subarray-i/' }
     ],
     relatedTopics: [
       { title: 'Maximum Sum Subarray', id: 'sliding-window-maximum-sum' }
@@ -2387,8 +2387,8 @@ def search_on_answer(arr):
       tips: ['This is one of the most frequently asked interview questions of all time. You can optimize this from O(2N) to O(N) by storing the index of each character in a HashMap and instantly jumping the `left` pointer to `index + 1`.']
     },
     practiceProblems: [
-      { title: 'Longest Substring Without Repeating Characters', difficulty: 'Medium', url: '#' },
-      { title: 'Longest Repeating Character Replacement', difficulty: 'Medium', url: '#' }
+      { title: 'Longest Substring Without Repeating Characters', difficulty: 'Medium', url: 'https://leetcode.com/problems/longest-substring-without-repeating-characters/' },
+      { title: 'Longest Repeating Character Replacement', difficulty: 'Medium', url: 'https://leetcode.com/problems/longest-repeating-character-replacement/' }
     ],
     relatedTopics: [
       { title: 'Minimum Size Subarray Sum', id: 'sliding-window-minimum-sum' }
@@ -2487,8 +2487,8 @@ def search_on_answer(arr):
       tips: ['Variable-sized sliding windows follow a distinct formula: Expand Right -> While (Condition Met) { Update Best -> Shrink Left }. Memorize this template!']
     },
     practiceProblems: [
-      { title: 'Minimum Size Subarray Sum', difficulty: 'Medium', url: '#' },
-      { title: 'Minimum Window Substring', difficulty: 'Hard', url: '#' }
+      { title: 'Minimum Size Subarray Sum', difficulty: 'Medium', url: 'https://leetcode.com/problems/minimum-size-subarray-sum/' },
+      { title: 'Minimum Window Substring', difficulty: 'Hard', url: 'https://leetcode.com/problems/minimum-window-substring/' }
     ],
     relatedTopics: [
       { title: 'Longest Substring Without Repeating', id: 'sliding-window-longest-substring' }
@@ -2531,7 +2531,7 @@ def search_on_answer(arr):
       tips: ['Use this to demonstrate your understanding of the Call Stack.', 'Mention Tail Call Optimization (TCO) to impress the interviewer.']
     },
     practiceProblems: [
-      { title: 'Calculate Factorial', difficulty: 'Easy', url: '#' }
+      { title: 'Calculate Factorial', difficulty: 'Easy', url: 'https://www.geeksforgeeks.org/problems/factorial5739/1' }
     ],
     relatedTopics: [
       { title: 'Fibonacci Sequence', id: 'fibonacci' }
@@ -2575,8 +2575,8 @@ def search_on_answer(arr):
       tips: ['Always mention that this naive approach is just a stepping stone to Dynamic Programming (Top-Down Memoization or Bottom-Up Iteration).']
     },
     practiceProblems: [
-      { title: 'Fibonacci Number', difficulty: 'Easy', url: '#' },
-      { title: 'Climbing Stairs', difficulty: 'Easy', url: '#' }
+      { title: 'Fibonacci Number', difficulty: 'Easy', url: 'https://leetcode.com/problems/fibonacci-number/' },
+      { title: 'Climbing Stairs', difficulty: 'Easy', url: 'https://leetcode.com/problems/climbing-stairs/' }
     ],
     relatedTopics: [
       { title: 'Dynamic Programming', id: 'dp' },

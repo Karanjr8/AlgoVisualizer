@@ -6,6 +6,8 @@ import { TreeRenderer } from './TreeRenderer';
 import { GridRenderer } from './GridRenderer';
 import { LinkedListRenderer } from './LinkedListRenderer';
 import { MergeSortVisualizer } from './MergeSortVisualizer';
+import { GraphRenderer } from './graph/GraphRenderer';
+import { DPVisualizer } from './dp/DPVisualizer';
 
 // Specialized Heap Visualizers
 import { HeapStandardVisualizer } from './heap/HeapStandardVisualizer';
@@ -77,6 +79,23 @@ interface Props {
 
 export const EngineRenderer = memo(({ algorithm, frame, initialElements }: Props) => {
   const elementsToRender = frame?.elements || initialElements || [];
+
+  // Specialized Graph Visualizers (Node/Edge SVG graph rendering)
+  const graphAlgos = [
+    'graph-representation', 'bfs', 'dfs', 'topological-sort', 'cycle-detection',
+    'dijkstra', 'bellman-ford', 'floyd-warshall', 'prim', 'kruskal',
+    'disjoint-set', 'bridges-articulation', 'kosaraju', 'connected-components',
+    'bipartite', 'm-coloring'
+  ];
+  if (graphAlgos.includes(algorithm)) {
+    return <GraphRenderer frame={frame} />;
+  }
+
+  // Specialized Dynamic Programming Visualizers
+  const dpAlgos = ['dp-intro', 'fibonacci-dp', '01-knapsack', 'lcs', 'lis'];
+  if (dpAlgos.includes(algorithm)) {
+    return <DPVisualizer frame={frame} />;
+  }
 
   // Specialized Advanced Patterns Visualizers
   if (algorithm === 'monotonic-stack-pattern' || algorithm === 'monotonic-queue-pattern') {

@@ -8,6 +8,7 @@ import {
   getUserRecommendations,
   updateUserProfile,
   logUserEvent,
+  recordUserActivity,
   getDashboardData
 } from '../controllers/profileController';
 
@@ -20,6 +21,7 @@ router.get('/', getUserProfile);
 router.put('/', updateUserProfile);
 router.get('/dashboard', getDashboardData);
 router.post('/events', logUserEvent);
+router.post('/activity', recordUserActivity);
 router.get('/progress', getUserProgress);
 router.get('/practice-stats', getUserPracticeStats);
 router.get('/feed', getUserFeed);

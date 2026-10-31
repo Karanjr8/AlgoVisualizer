@@ -35,29 +35,28 @@ export function generateSinglyLinkedListFrames(): VisualizationFrame[] {
   const frames: VisualizationFrame[] = [];
   const elements = createNodes([10, 20, 30, 40]);
   
-  pushFrame(frames, elements, 'INIT', 'A Singly Linked List consists of nodes. Let us traverse it.', 'Traverse List', 4);
+  pushFrame(frames, elements, 'INIT', 'A Singly Linked List has a HEAD pointer pointing to the first node and NULL at the end.', 'Traverse List', 4);
   
-  elements[0].label = 'head, curr';
-  pushFrame(frames, elements, 'CHECK_CONDITION', `Initialize curr pointer at head (Node with value ${elements[0].value}).`, 'Traverse List', 4);
+  elements[0].label = 'curr';
+  pushFrame(frames, elements, 'CHECK_CONDITION', `Initialize curr pointer at HEAD (Node 10).`, 'Traverse List', 4);
   
   for (let i = 0; i < elements.length; i++) {
     elements[i].state = 'comparing';
-    pushFrame(frames, elements, 'CHECK_CONDITION', `Visiting node with value ${elements[i].value}.`, 'Traverse List', 4);
+    pushFrame(frames, elements, 'CHECK_CONDITION', `Visiting node ${elements[i].value}.`, 'Traverse List', 4);
     
     if (elements[i].nextId) {
-      elements[i].state = 'visited' as any;
-      elements[i].label = 'head';
+      elements[i].state = 'sorted';
+      elements[i].label = '';
       
       const nextIdx = elements.findIndex(e => e.id === elements[i].nextId);
       elements[nextIdx].label = 'curr';
       elements[nextIdx].state = 'comparing';
-      pushFrame(frames, elements, 'CHECK_CONDITION', `Move curr to curr.next.`, 'Traverse List', 4);
+      pushFrame(frames, elements, 'CHECK_CONDITION', `Move curr pointer to curr.next (${elements[nextIdx].value}).`, 'Traverse List', 4);
     }
   }
   
-  elements[elements.length - 1].state = 'normal';
-  elements[elements.length - 1].label = '';
-  pushFrame(frames, elements, 'COMPLETE', 'curr is now null. Reached the end of the list. Traversal complete.', 'Traverse List', 4);
+  elements.forEach(e => { e.state = 'normal'; e.label = ''; });
+  pushFrame(frames, elements, 'COMPLETE', 'curr reached NULL. Traversal complete.', 'Traverse List', 4);
   return frames;
 }
 
@@ -264,66 +263,80 @@ export function generateLLMiddleNodeFrames(): VisualizationFrame[] {
 // 7. Insertions
 export function generateLLInsertionFrames(): VisualizationFrame[] {
   const frames: VisualizationFrame[] = [];
-  const elements = createNodes([10, 20, 30]);
+  const elements = createNodes([10, 20, 40]);
   
-  pushFrame(frames, elements, 'INIT', 'We will insert a new node into the linked list.', 'Insertion', 3);
+  pushFrame(frames, elements, 'INIT', 'Demonstrating Linked List Insertion: 1) Insert After Node, 2) Insert at HEAD.', 'Insertion', 6);
   
-  // Create detached new node
-  const newNode = { id: 'node-new', value: 25, state: 'selected' as const, displayValue: '25', label: 'newNode', nextId: null as string | null, prevId: null };
+  // --- PART 1: Insert 30 After Node 20 ---
+  const newNode = { id: 'node-30', value: 30, state: 'selected' as const, displayValue: '30', label: 'newNode', nextId: null as string | null, prevId: null };
   elements.push(newNode);
   
-  pushFrame(frames, elements, 'INIT', 'Step 1: Create a new node with value 25.', 'Insertion', 3);
+  pushFrame(frames, elements, 'INSERT', 'Step 1: Allocate new node memory for value 30 (detached newNode).', 'Insertion', 6);
   
-  // Locate position
   elements[1].label = 'curr';
   elements[1].state = 'comparing';
-  pushFrame(frames, elements, 'CHECK_CONDITION', 'Step 2: Traverse to find the insertion point (after 20).', 'Insertion', 3);
+  pushFrame(frames, elements, 'CHECK_CONDITION', 'Step 2: Locate target node curr (Node 20). Disconnect visual flow to prepare link updates.', 'Insertion', 6);
   
-  // Link new node to next
+  // Link newNode to 40
   newNode.nextId = elements[2].id;
-  pushFrame(frames, elements, 'SWAP', 'Step 3: Point newNode.next to curr.next (30).', 'Insertion', 3);
+  newNode.state = 'selected';
+  pushFrame(frames, elements, 'SWAP', 'Step 3: Point newNode.next to curr.next (Node 40).', 'Insertion', 6);
   
-  // Link curr to new node
+  // Link 20 to newNode 30
   elements[1].nextId = newNode.id;
   elements[1].state = 'swapping';
-  pushFrame(frames, elements, 'SWAP', 'Step 4: Update curr.next to point to the newNode.', 'Insertion', 3);
+  pushFrame(frames, elements, 'SWAP', 'Step 4: Reconnect curr.next to point to newNode (Node 30).', 'Insertion', 6);
   
-  // Final
+  // Reorder array logically: [10, 20, 30, 40]
+  const node30 = elements.pop()!;
+  elements.splice(2, 0, node30);
   elements.forEach(e => { e.state = 'normal'; e.label = ''; });
-  pushFrame(frames, elements, 'COMPLETE', 'Insertion complete.', 'Insertion', 3);
-  
+  pushFrame(frames, elements, 'COMPLETE', 'Inserted 30 after 20! Result: 10 → 20 → 30 → 40 → NULL.', 'Insertion', 6);
+
+  // --- PART 2: Insert 5 at HEAD ---
+  const headNode = { id: 'node-5', value: 5, state: 'selected' as const, displayValue: '5', label: 'newNode', nextId: elements[0].id, prevId: null };
+  elements.unshift(headNode);
+  pushFrame(frames, elements, 'INSERT', 'Step 5: Insert at HEAD — Create newNode (5) and set newNode.next to old HEAD (10).', 'Insertion', 6);
+
+  elements.forEach(e => { e.state = 'normal'; e.label = ''; });
+  pushFrame(frames, elements, 'COMPLETE', 'Step 6: HEAD pointer updated to new first node (5). Insertion Complete!', 'Insertion', 6);
+
   return frames;
 }
 
 // 8. Deletions
 export function generateLLDeletionFrames(): VisualizationFrame[] {
   const frames: VisualizationFrame[] = [];
-  const elements = createNodes([10, 20, 30, 40]);
+  const elements = createNodes([5, 10, 20, 30]);
   
-  pushFrame(frames, elements, 'INIT', 'We will delete node 30 from the linked list.', 'Deletion', 4);
+  pushFrame(frames, elements, 'INIT', 'Demonstrating Linked List Deletion: 1) Delete HEAD, 2) Delete Middle Node.', 'Deletion', 5);
   
+  // --- PART 1: Delete HEAD (5) ---
+  elements[0].state = 'swapping';
+  pushFrame(frames, elements, 'SELECT', 'Step 1: Highlight current HEAD node (5) scheduled for deletion.', 'Deletion', 5);
+
+  elements[1].label = 'head';
+  pushFrame(frames, elements, 'SWAP', 'Step 2: Shift HEAD pointer forward to head.next (Node 10).', 'Deletion', 5);
+
+  elements.shift(); // Remove 5
+  elements.forEach(e => { e.state = 'normal'; e.label = ''; });
+  pushFrame(frames, elements, 'COMPLETE', 'Step 3: Unlinked old head node 5 from memory. New list starts at 10.', 'Deletion', 5);
+
+  // --- PART 2: Delete Middle Node 20 ---
   elements[0].label = 'prev';
   elements[1].label = 'curr';
   elements[1].state = 'comparing';
-  pushFrame(frames, elements, 'CHECK_CONDITION', 'Traverse to find the target node (30), keeping track of the previous node.', 'Deletion', 4);
-  
-  elements[0].label = '';
-  elements[1].label = 'prev';
-  elements[2].label = 'curr';
-  elements[2].state = 'comparing';
-  pushFrame(frames, elements, 'CHECK_CONDITION', 'Found target node 30. prev is 20.', 'Deletion', 4);
-  
-  // Bypass
-  elements[1].nextId = elements[3].id;
+  pushFrame(frames, elements, 'CHECK_CONDITION', 'Step 4: Traverse to find target node 20 (curr) and predecessor node 10 (prev).', 'Deletion', 5);
+
+  elements[0].nextId = elements[2].id; // bypass 20 directly to 30
+  elements[0].state = 'swapping';
   elements[1].state = 'swapping';
-  elements[2].state = 'swapping';
-  pushFrame(frames, elements, 'SWAP', 'Update prev.next to point to curr.next (40). This bypasses the target node.', 'Deletion', 4);
-  
-  // Remove
-  elements.splice(2, 1);
+  pushFrame(frames, elements, 'SWAP', 'Step 5: Bypass target node 20 by updating prev.next to point directly to curr.next (30).', 'Deletion', 5);
+
+  elements.splice(1, 1); // Remove 20
   elements.forEach(e => { e.state = 'normal'; e.label = ''; });
-  pushFrame(frames, elements, 'COMPLETE', 'The node has been unlinked and deleted from memory.', 'Deletion', 4);
-  
+  pushFrame(frames, elements, 'COMPLETE', 'Deletion complete! Remaining list: 10 → 30 → NULL.', 'Deletion', 5);
+
   return frames;
 }
 

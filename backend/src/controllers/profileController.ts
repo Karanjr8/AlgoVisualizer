@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middlewares/auth';
+import { logUserActivity } from '../services/activityService';
 
 const prisma = new PrismaClient();
 
@@ -277,65 +278,51 @@ export const getUserRecommendations = async (req: AuthRequest, res: Response) =>
   }
 };
 
+export const recordUserActivity = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { type, topicId, problemId, duration, details } = req.body;
+    if (!type) return res.status(400).json({ error: 'type is required' });
+
+    const result = await logUserActivity({
+      userId,
+      type,
+      topicId,
+      problemId,
+      duration: duration || 0,
+      details,
+    });
+
+    return res.status(201).json(result);
+  } catch (error) {
+    console.error('Error recording activity:', error);
+    return res.status(500).json({ error: 'Failed to log user activity' });
+  }
+};
+
 // Log a real user event (LESSON_COMPLETED, PROBLEM_COMPLETED, VISUALIZER_USED, INTERVIEW_COMPLETED, PLAYGROUND_USED)
 export const logUserEvent = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { eventType, topic, details } = req.body;
+    const { eventType, topic, details, duration } = req.body;
     if (!eventType) return res.status(400).json({ error: 'eventType is required' });
 
-    // Save event
-    const event = await prisma.userEvent.create({
-      data: {
-        userId,
-        eventType,
-        topic: topic || null,
-        details: details || null,
-      }
+    const result = await logUserActivity({
+      userId,
+      type: eventType,
+      topicId: topic,
+      duration: duration || 0,
+      details,
     });
 
-    // Also update User streak & learning hours
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user) {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      let currentStreak = user.currentStreak;
-      let longestStreak = user.longestStreak;
-
-      if (user.lastActiveDate) {
-        const last = new Date(user.lastActiveDate);
-        const lastDay = new Date(last.getFullYear(), last.getMonth(), last.getDate());
-        const diffDays = Math.floor((today.getTime() - lastDay.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 1) {
-          currentStreak += 1;
-        } else if (diffDays > 1) {
-          currentStreak = 1;
-        }
-      } else {
-        currentStreak = 1;
-      }
-
-      longestStreak = Math.max(longestStreak, currentStreak);
-
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          currentStreak,
-          longestStreak,
-          lastActiveDate: now,
-          learningHours: { increment: 0.15 },
-          xp: { increment: eventType === 'PROBLEM_COMPLETED' ? 50 : eventType === 'LESSON_COMPLETED' ? 30 : 15 }
-        }
-      });
-    }
-
-    res.status(201).json(event);
+    return res.status(201).json(result.activity);
   } catch (error) {
     console.error('Error logging user event:', error);
-    res.status(500).json({ error: 'Failed to log event' });
+    return res.status(500).json({ error: 'Failed to log event' });
   }
 };
 

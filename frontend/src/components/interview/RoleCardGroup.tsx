@@ -54,18 +54,18 @@ interface RoleCardGroupProps {
 
 export const RoleCardGroup = ({ selectedRole, onSelectRole }: RoleCardGroupProps) => {
   return (
-    <div className="w-full flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground flex items-center gap-2">
-          1. Select Target Role
+    <div className="w-full flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
+          Target Role
         </h2>
-        <p className="text-sm sm:text-base text-muted-foreground font-medium">
-          Customizes question domain and interviewer focus area.
+        <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+          Select the engineering level or domain to tailor questions and evaluation focus.
         </p>
       </div>
 
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {ROLES.map((role) => {
           const isSelected = selectedRole === role.id;
           const Icon = role.icon;
@@ -75,33 +75,35 @@ export const RoleCardGroup = ({ selectedRole, onSelectRole }: RoleCardGroupProps
               key={role.id}
               onClick={() => onSelectRole(role.id)}
               className={cn(
-                'relative p-4.5 rounded-2xl border text-left transition-all duration-150 flex items-center gap-4 cursor-pointer outline-none group transform-gpu hover:-translate-y-[2px]',
+                'relative p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-150 flex items-start gap-3 cursor-pointer outline-none group transform-gpu hover:-translate-y-[1px]',
                 isSelected
-                  ? 'bg-card border-primary shadow-md shadow-primary/10 ring-2 ring-primary/30'
-                  : 'bg-card/60 border-border/70 hover:border-primary/40 hover:bg-card'
+                  ? 'bg-primary/5 border-primary/60 shadow-xs ring-1 ring-primary/40'
+                  : 'bg-card border-border/80 hover:border-primary/40 hover:bg-card/90'
               )}
             >
               <div
                 className={cn(
-                  'p-3 rounded-xl shrink-0 transition-colors',
-                  isSelected ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-secondary text-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                  'p-2 rounded-xl shrink-0 transition-colors mt-0.5',
+                  isSelected
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'bg-secondary text-muted-foreground group-hover:text-primary transition-colors'
                 )}
               >
-                <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Icon className="w-4.5 h-4.5" />
               </div>
 
               <div className="flex flex-col gap-1 flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-1">
-                  <h3 className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                <div className="flex items-center justify-between gap-1.5">
+                  <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                     {role.name}
                   </h3>
                   {isSelected && (
-                    <span className="w-4.5 h-4.5 rounded-full bg-primary text-white flex items-center justify-center shrink-0">
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                      <Check className="w-2.5 h-2.5 stroke-[3]" />
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground font-semibold truncate">
+                <p className="text-xs text-muted-foreground font-medium leading-snug">
                   {role.tagline}
                 </p>
               </div>

@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { useVisualizerStore } from '../store/useVisualizerStore';
 import { useSimulation } from '../hooks/useSimulation';
-import { generateElements } from '../lib/utils';
+import { generateElements, cn } from '../lib/utils';
 import { generateFrames } from '../lib/algorithms';
 import type { AlgorithmType } from '../types/visualizer';
 import { EngineRenderer } from '../components/visualizer/EngineRenderer';
@@ -12,23 +12,34 @@ import { CodeTabs } from '../components/visualizer/CodeTabs';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import { algorithmContent } from '../data/algorithmContent';
 import { CATEGORIES } from '../data/categories';
+import { ModularVisualizerHost } from '../visualizer-engine';
 import { 
   Clock, HardDrive, AlertCircle, PlayCircle, BookOpen, Search, 
   CheckCircle2, Code2, Link as LinkIcon, Sparkles, AlertTriangle, Lightbulb, Map,
-  ChevronLeft, ChevronRight, FileText
+  ChevronLeft, ChevronRight, FileText, Layers, Play
 } from 'lucide-react';
+
+import { trackActivity } from '../lib/activityTracker';
 
 export const Visualizer = () => {
   const { categoryId, algorithmId } = useParams();
   const { initialElements, setInitialElements, speed, searchTarget, mode } = useVisualizerStore();
+  const [visualizerMode, setVisualizerMode] = useState<'modular' | 'simulation'>('modular');
 
   const algorithm = (algorithmId as AlgorithmType) || 'bubble';
 
   useEffect(() => {
     if (initialElements.length === 0) {
-      setInitialElements(generateElements(15));
+      setInitialElements(generateElements(7));
     }
-  }, [initialElements, setInitialElements]);
+    // Track real visualizer usage activity
+    trackActivity({
+      type: 'VISUALIZER_USED',
+      topicId: algorithm,
+      details: `Explored ${algorithm} visualizer`,
+      duration: 15,
+    });
+  }, [algorithm]);
 
   const frames = useMemo(
     () => generateFrames(algorithm, initialElements, { searchTarget: searchTarget ?? undefined }),
@@ -128,28 +139,71 @@ export const Visualizer = () => {
 
           {/* Visualization Anchor (Centerpiece) */}
           <section id="visualization" className="w-full scroll-mt-24 mb-16 text-left">
-            <div className="w-full bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col relative min-h-[500px] md:min-h-[600px]">
-              <div className="flex-1 w-full flex flex-col items-center justify-center p-4 md:p-8 relative bg-gradient-to-b from-transparent to-background/50">
-                
-                {/* The Animation */}
-                <div className="flex-1 w-full flex items-center justify-center min-h-[300px] z-10">
-                  <EngineRenderer algorithm={algorithm} frame={simulation.currentFrame} initialElements={initialElements} />
+            <div className="w-full bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col relative min-h-[500px]">
+              
+              {/* Header Mode Switcher Bar */}
+              <div className="w-full flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border/80 bg-background/60 backdrop-blur-md">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider hidden sm:inline">Engine View:</span>
+                  <span className="text-xs sm:text-sm font-black text-foreground">
+                    {visualizerMode === 'modular' ? 'Modular DS Visualizer Engine' : 'Step-by-Step Simulation'}
+                  </span>
                 </div>
-
-                {/* Embedded Controls */}
-                <div className="w-full mb-4 z-20">
-                  <SideControls simulation={simulation} algorithm={algorithm} />
-                </div>
-
-                {/* Overlaid Live Explanation Panel */}
-                <div className="w-full bg-background/80 backdrop-blur-md border border-border/60 rounded-2xl p-4 md:p-6 shadow-xl z-20">
-                  <ExplanationPanel
-                    frame={simulation.currentFrame}
-                    currentIndex={simulation.currentIndex}
-                    totalFrames={simulation.totalFrames}
-                  />
+                <div className="flex items-center gap-1 bg-secondary/80 p-1 rounded-xl border border-white/10">
+                  <button
+                    onClick={() => setVisualizerMode('modular')}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer',
+                      visualizerMode === 'modular'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>Interactive Engine</span>
+                  </button>
+                  <button
+                    onClick={() => setVisualizerMode('simulation')}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer',
+                      visualizerMode === 'simulation'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    <span>Step Simulation</span>
+                  </button>
                 </div>
               </div>
+
+              {visualizerMode === 'modular' ? (
+                <div className="w-full p-4 sm:p-6">
+                  <ModularVisualizerHost initialAlgorithm={algorithm} />
+                </div>
+              ) : (
+                <div className="flex-1 w-full flex flex-col items-center justify-center p-4 md:p-8 relative bg-gradient-to-b from-transparent to-background/50">
+                  {/* The Animation */}
+                  <div className="flex-1 w-full flex items-center justify-center min-h-[300px] z-10">
+                    <EngineRenderer algorithm={algorithm} frame={simulation.currentFrame} initialElements={initialElements} />
+                  </div>
+
+                  {/* Embedded Controls */}
+                  <div className="w-full mb-4 z-20">
+                    <SideControls simulation={simulation} algorithm={algorithm} />
+                  </div>
+
+                  {/* Overlaid Live Explanation Panel */}
+                  <div className="w-full bg-background/80 backdrop-blur-md border border-border/60 rounded-2xl p-4 md:p-6 shadow-xl z-20">
+                    <ExplanationPanel
+                      frame={simulation.currentFrame}
+                      currentIndex={simulation.currentIndex}
+                      totalFrames={simulation.totalFrames}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
@@ -343,7 +397,13 @@ export const Visualizer = () => {
             <h2 className="text-2xl font-bold tracking-tight">Practice Problems</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {content.practiceProblems?.map((prob, i) => (
-                <a key={i} href={prob.url} className="flex items-center justify-between p-4 md:p-5 bg-card hover:bg-muted border border-border hover:border-border transition-all rounded-2xl group shadow-sm">
+                <a 
+                  key={i} 
+                  href={prob.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center justify-between p-4 md:p-5 bg-card hover:bg-muted border border-border hover:border-border transition-all rounded-2xl group shadow-sm"
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center group-hover:scale-110 transition-transform">
                       <Code2 className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />

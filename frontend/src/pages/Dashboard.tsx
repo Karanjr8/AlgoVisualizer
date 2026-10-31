@@ -10,6 +10,8 @@ import { StatCard, AnimatedProgressRing, ActivityHeatmap } from '../components/d
 import { AlgorithmCard } from '../components/explore/AlgorithmCard';
 import { CATEGORIES } from '../data/categories';
 
+import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+
 interface Progress {
   algorithmId: string;
   completedAt: string;
@@ -44,7 +46,8 @@ export const Dashboard = () => {
   const recentAlgos = sortingCategory?.algorithms.slice(0, 3) || [];
 
   return (
-    <div className="w-full pb-16 overflow-x-hidden">
+    <WorkspaceLayout>
+      <div className="w-full pb-16 overflow-x-hidden">
       
       {/* Welcome Banner */}
       <section className="w-full border-b border-border bg-card backdrop-blur-xl relative overflow-hidden">
@@ -185,8 +188,8 @@ export const Dashboard = () => {
             ))}
           </div>
         </div>
-
       </div>
     </div>
-  );
+  </WorkspaceLayout>
+);
 };

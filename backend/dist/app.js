@@ -3,6 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
@@ -15,10 +17,13 @@ const achievementRoutes_1 = __importDefault(require("./routes/achievementRoutes"
 const practiceRoutes_1 = __importDefault(require("./routes/practiceRoutes"));
 const profileRoutes_1 = __importDefault(require("./routes/profileRoutes"));
 const searchRoutes_1 = __importDefault(require("./routes/searchRoutes"));
+const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
+const interviewRoutes_1 = __importDefault(require("./routes/interviewRoutes"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use('/api/auth', authRoutes_1.default);
+app.use('/api/admin', adminRoutes_1.default);
 app.use('/api/progress', progressRoutes_1.default);
 app.use('/api/chatbot', chatbotRoutes_1.default);
 app.use('/api/algorithms', algorithmRoutes_1.default);
@@ -28,6 +33,7 @@ app.use('/api/achievements', achievementRoutes_1.default);
 app.use('/api/practice', practiceRoutes_1.default);
 app.use('/api/profile', profileRoutes_1.default);
 app.use('/api/search', searchRoutes_1.default);
+app.use('/api/interviews', interviewRoutes_1.default);
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });

@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 
@@ -11,6 +14,8 @@ import achievementRoutes from './routes/achievementRoutes';
 import practiceRoutes from './routes/practiceRoutes';
 import profileRoutes from './routes/profileRoutes';
 import searchRoutes from './routes/searchRoutes';
+import adminRoutes from './routes/adminRoutes';
+import interviewRoutes from './routes/interviewRoutes';
 
 const app = express();
 
@@ -18,6 +23,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/algorithms', algorithmRoutes);
@@ -27,6 +33,7 @@ app.use('/api/achievements', achievementRoutes);
 app.use('/api/practice', practiceRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/interviews', interviewRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

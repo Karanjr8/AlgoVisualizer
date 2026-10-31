@@ -24,57 +24,66 @@ export const TopicChipGroup = ({
   onSelectMixed,
 }: TopicChipGroupProps) => {
   return (
-    <div className="w-full flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-3">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
-            3. Interview Focus Topics
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground font-medium">
-            Select one or multiple domain topics for your session.
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-foreground">
+              Interview Topics
+            </h2>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border/60">
+              {selectedTopics.length} selected
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+            Choose the algorithmic domains to include in your question pool.
           </p>
         </div>
 
         {/* Quick Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
           <button
+            type="button"
             onClick={onSelectAll}
-            className="px-3 py-1.5 rounded-lg bg-card border border-border text-xs sm:text-sm font-bold hover:border-primary/40 transition-colors"
+            className="px-2.5 py-1 rounded-lg bg-card border border-border/80 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-border transition-colors cursor-pointer"
           >
             All
           </button>
           <button
+            type="button"
             onClick={onSelectMixed}
-            className="px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary text-xs sm:text-sm font-bold hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+            className="px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors flex items-center gap-1 cursor-pointer"
           >
-            <Sparkles className="w-3.5 h-3.5" /> Mixed
+            <Sparkles className="w-3 h-3" /> Mixed
           </button>
           <button
+            type="button"
             onClick={onClearAll}
-            className="px-3 py-1.5 rounded-lg bg-card border border-border text-xs sm:text-sm font-bold text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
+            className="px-2.5 py-1 rounded-lg bg-card border border-border/80 text-xs font-semibold text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors flex items-center gap-1 cursor-pointer"
           >
-            <X className="w-3.5 h-3.5" /> Clear
+            <X className="w-3 h-3" /> Clear
           </button>
         </div>
       </div>
 
       {/* Selectable Chips Grid */}
-      <div className="flex flex-wrap gap-2.5">
+      <div className="flex flex-wrap gap-2 pt-0.5">
         {ALL_TOPICS.map((topic) => {
           const isSelected = selectedTopics.includes(topic);
 
           return (
             <button
+              type="button"
               key={topic}
               onClick={() => onToggleTopic(topic)}
               className={cn(
-                'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-2 border cursor-pointer outline-none shadow-xs transform-gpu hover:-translate-y-[1px]',
+                'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 border cursor-pointer outline-none transform-gpu hover:-translate-y-[1px]',
                 isSelected
-                  ? 'bg-primary text-primary-foreground border-primary shadow-xs ring-1 ring-primary/30'
-                  : 'bg-secondary/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-card'
+                  ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                  : 'bg-card border-border/80 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-card/90'
               )}
             >
-              {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
               <span>{topic}</span>
             </button>
           );

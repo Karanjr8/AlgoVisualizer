@@ -1,8 +1,9 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Layout } from './components/layout/Layout';
 import { PageTransition } from './components/layout/PageTransition';
+import { PageSkeletonLoader } from './components/layout/PageSkeletonLoader';
 import { ScrollToTop } from './components/layout/ScrollToTop';
 import { useAuthStore } from './store/useAuthStore';
 import { ThemeProvider } from './components/theme/ThemeProvider';
@@ -31,9 +32,12 @@ const Visualizer = lazy(() => import('./pages/Visualizer').then(m => ({ default:
 const Playground = lazy(() => import('./pages/Playground').then(m => ({ default: m.Playground })));
 const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
 const Register = lazy(() => import('./pages/Register').then(m => ({ default: m.Register })));
+const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
 const Roadmap = lazy(() => import('./pages/Roadmap').then(m => ({ default: m.Roadmap })));
 const Practice = lazy(() => import('./pages/Practice').then(m => ({ default: m.Practice })));
+const Progress = lazy(() => import('./pages/Progress').then(m => ({ default: m.Progress })));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const TimedChallenges = lazy(() => import('./pages/practice/TimedChallenges').then(m => ({ default: m.TimedChallenges })));
 const AlgorithmLab = lazy(() => import('./pages/playground/AlgorithmLab').then(m => ({ default: m.AlgorithmLab })));
 const DataStructureBuilder = lazy(() => import('./pages/playground/DataStructureBuilder').then(m => ({ default: m.DataStructureBuilder })));
@@ -46,20 +50,45 @@ const Placeholder = lazy(() => import('./pages/Placeholder').then(m => ({ defaul
 const InterviewSetup = lazy(() => import('./pages/InterviewSetup').then(m => ({ default: m.InterviewSetup })));
 const InterviewSession = lazy(() => import('./pages/InterviewSession').then(m => ({ default: m.InterviewSession })));
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = useAuthStore(state => state.token);
-  if (!token) return <Navigate to="/login" replace />;
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
+  const { token, user, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-semibold text-muted-foreground">Authenticating session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && (!user.role || !allowedRoles.includes(user.role))) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
+};
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  return <ProtectedRoute allowedRoles={['ADMIN']}>{children}</ProtectedRoute>;
 };
 
 const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PageSkeletonLoader />}>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
+          
+          {/* Unprotected Explore & Visualizers */}
           <Route path="/explore" element={<PageTransition><Explore /></PageTransition>} />
           <Route path="/explore/sorting-algorithms" element={<PageTransition><SortingIntro /></PageTransition>} />
           <Route path="/explore/sorting-algorithms/intro" element={<PageTransition><SortingIntro /></PageTransition>} />
@@ -110,27 +139,24 @@ const AnimatedRoutes = () => {
           {/* Playground Hub & Modules */}
           <Route path="/playground" element={<PageTransition><Playground /></PageTransition>} />
           <Route path="/playground/algorithm-lab" element={<PageTransition><AlgorithmLab /></PageTransition>} />
+          <Route path="/playground/builder" element={<PageTransition><DataStructureBuilder /></PageTransition>} />
           <Route path="/playground/structure-builder" element={<PageTransition><DataStructureBuilder /></PageTransition>} />
+          <Route path="/playground/arena" element={<PageTransition><AlgorithmArena /></PageTransition>} />
           <Route path="/playground/algorithm-arena" element={<PageTransition><AlgorithmArena /></PageTransition>} />
+          <Route path="/playground/complexity" element={<PageTransition><ComplexityLab /></PageTransition>} />
           <Route path="/playground/complexity-lab" element={<PageTransition><ComplexityLab /></PageTransition>} />
+          <Route path="/playground/studio" element={<PageTransition><InputStudio /></PageTransition>} />
           <Route path="/playground/input-studio" element={<PageTransition><InputStudio /></PageTransition>} />
+          <Route path="/playground/simulator" element={<PageTransition><WhatIfSimulator /></PageTransition>} />
           <Route path="/playground/what-if" element={<PageTransition><WhatIfSimulator /></PageTransition>} />
 
+          {/* Authentication Routes */}
           <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
           <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
+          <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
           
           <Route path="/roadmap" element={<PageTransition><Roadmap /></PageTransition>} />
-          
-          {/* Practice & Interview Simulator Routes */}
-          <Route path="/practice" element={<PageTransition><Practice /></PageTransition>} />
-          <Route path="/practice/timed-challenges" element={<PageTransition><TimedChallenges /></PageTransition>} />
-          <Route path="/practice/interview" element={<PageTransition><InterviewSetup /></PageTransition>} />
-          <Route path="/practice/interview/session" element={<PageTransition><InterviewSession /></PageTransition>} />
-          <Route path="/interview" element={<PageTransition><InterviewSetup /></PageTransition>} />
-          <Route path="/interview/session" element={<PageTransition><InterviewSession /></PageTransition>} />
-          <Route path="/practice/:modeId" element={<PageTransition><Placeholder title="Practice Mode" description="This practice mode is currently under construction. Check back soon to start training!" /></PageTransition>} />
-          <Route path="/progress" element={<PageTransition><Placeholder title="Your Progress" description="Track your learning journey, review past performance, and earn mastery badges." /></PageTransition>} />
-          
+
           {/* Protected Routes */}
           <Route 
             path="/dashboard" 
@@ -141,11 +167,131 @@ const AnimatedRoutes = () => {
             } 
           />
           <Route 
+            path="/progress" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><Progress /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/practice" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><Practice /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/practice/timed-challenges" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><TimedChallenges /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/practice/interview" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><InterviewSetup /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/practice/interview/session" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><InterviewSession /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/practice/interview/session/:sessionId" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><InterviewSession /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/interview" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><InterviewSetup /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/interview/setup" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><InterviewSetup /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/interview/session" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><InterviewSession /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/interview/session/:sessionId" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><InterviewSession /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/interview/timed" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><TimedChallenges /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/interview/practice" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><Practice /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/interview/analytics" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><Progress /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/profile" 
             element={
               <ProtectedRoute>
                 <PageTransition><Profile /></PageTransition>
               </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile/achievements" 
+            element={
+              <ProtectedRoute>
+                <PageTransition><Profile /></PageTransition>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin" 
+            element={
+              <AdminRoute>
+                <PageTransition><AdminDashboard /></PageTransition>
+              </AdminRoute>
             } 
           />
           <Route 
@@ -171,6 +317,12 @@ const AnimatedRoutes = () => {
 };
 
 function App() {
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   return (
     <ThemeProvider>
       <BrowserRouter>
@@ -184,4 +336,3 @@ function App() {
 }
 
 export default App;
-

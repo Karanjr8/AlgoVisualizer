@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 import type { DatasetType } from '../store/useVisualizerStore';
 
-export const generateElements = (count: number, type: DatasetType = 'random', customData?: number[]) => {
+export const generateElements = (count: number = 7, type: DatasetType = 'random', customData?: number[]) => {
   let values: number[] = [];
   
   if (type === 'custom' && customData) {
@@ -18,7 +18,6 @@ export const generateElements = (count: number, type: DatasetType = 'random', cu
     values = Array.from({ length: count }, (_, i) => (count - i) * 10);
   } else if (type === 'nearly-sorted') {
     values = Array.from({ length: count }, (_, i) => (i + 1) * 10);
-    // Swap a few elements to make it nearly sorted
     const swaps = Math.max(1, Math.floor(count * 0.15));
     for (let i = 0; i < swaps; i++) {
       const idx1 = Math.floor(Math.random() * count);
@@ -29,8 +28,12 @@ export const generateElements = (count: number, type: DatasetType = 'random', cu
     const choices = [10, 20, 30, 40, 50];
     values = Array.from({ length: count }, () => choices[Math.floor(Math.random() * choices.length)]);
   } else {
-    // Random
-    values = Array.from({ length: count }, () => Math.floor(Math.random() * 90) + 10);
+    // Smart illustrative default for count === 7 (Learning Mode)
+    if (count === 7) {
+      values = [38, 12, 43, 5, 27, 19, 50];
+    } else {
+      values = Array.from({ length: count }, () => Math.floor(Math.random() * 90) + 10);
+    }
   }
 
   return values.map((val, i) => ({

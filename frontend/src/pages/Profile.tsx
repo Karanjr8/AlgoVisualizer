@@ -3,12 +3,9 @@ import { useAuthStore } from '../store/useAuthStore';
 import { api } from '../lib/api';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import { Skeleton, SkeletonCard } from '../components/ui/Skeleton';
-
-// Streamlined Subcomponents
 import { CompactHeader } from '../components/profile/CompactHeader';
 import { ContributionHeatmap } from '../components/profile/ContributionHeatmap';
 import { LearningProgressRows } from '../components/profile/LearningProgressRows';
-import { ContinueLearningCards } from '../components/profile/ContinueLearningCards';
 import { RecentActivityTimeline } from '../components/profile/RecentActivityTimeline';
 
 export function Profile() {
@@ -16,31 +13,33 @@ export function Profile() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchDashboard = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get('/profile/dashboard');
-        if (isMounted && res.data) {
-          setDashboardData(res.data);
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard data', err);
-      } finally {
-        if (isMounted) setLoading(false);
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/profile/dashboard');
+      if (res.data) {
+        setDashboardData(res.data);
       }
-    };
+    } catch (err) {
+      console.error('Failed to load real profile dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDashboard();
 
-    return () => {
-      isMounted = false;
+    // Listen to real-time live activity events
+    const handleActivityLogged = () => {
+      fetchDashboard();
     };
+
+    window.addEventListener('algovis-activity-logged', handleActivityLogged);
+    return () => window.removeEventListener('algovis-activity-logged', handleActivityLogged);
   }, [user]);
 
-  if (loading) {
+  if (loading && !dashboardData) {
     return (
       <WorkspaceLayout>
         <div className="w-full flex flex-col gap-6 text-left">
@@ -57,50 +56,44 @@ export function Profile() {
     );
   }
 
-  // Fallback state if server data not fetched
+  // 100% Real Database Derived Profile Metrics
   const profile = dashboardData?.profile || {
-    name: user?.username || 'Algorithm Scholar',
-    email: user?.email || 'scholar@algovis.io',
-    avatar: null,
-    createdAt: new Date().toISOString(),
-    algorithmsCompleted: 14,
-    currentStreak: 7,
-    longestStreak: 14,
-    learningHours: 24.5,
+    name: user?.fullName || user?.name || user?.username || 'Algorithm Scholar',
+    email: user?.email || '',
+    avatar: user?.avatar || null,
+    createdAt: user?.createdAt || new Date().toISOString(),
+    algorithmsCompleted: user?.completedTopics?.length || 0,
+    currentStreak: user?.streak || 0,
+    longestStreak: user?.longestStreak || 0,
+    learningHours: user?.learningHours || 0,
   };
 
   const heatmap = dashboardData?.heatmap || {
     dateScores: {},
     currentStreak: profile.currentStreak,
     longestStreak: profile.longestStreak,
-    activeDays: 38,
-    thisMonthActivity: 42,
+    activeDays: profile.currentStreak > 0 ? Math.max(1, profile.currentStreak) : 0,
+    thisMonthActivity: 0,
   };
 
   const learningProgress = dashboardData?.learningProgress || [];
-  const continueLearning = dashboardData?.continueLearning || [];
   const recentActivity = dashboardData?.recentActivity || [];
 
   return (
     <WorkspaceLayout>
       <div className="w-full flex flex-col gap-8 text-left pb-16">
-        {/* ROW 1: COMPACT PROFILE HEADER */}
+        {/* ROW 1: REAL USER PROFILE HEADER */}
         <CompactHeader profile={profile} />
 
-        {/* ROW 2: MAIN CONTRIBUTION HEATMAP (HERO COMPONENT) */}
-        <ContributionHeatmap heatmapData={heatmap} />
+        {/* ROW 2: GITHUB-STYLE CONTRIBUTION HEATMAP & STREAKS */}
+        <ContributionHeatmap heatmapData={heatmap} onRefresh={fetchDashboard} />
 
-        {/* ROW 3: LEARNING PROGRESS & CONTINUE LEARNING (2-COLUMN GRID) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-7">
-            <LearningProgressRows progressItems={learningProgress} />
-          </div>
-          <div className="lg:col-span-5">
-            <ContinueLearningCards items={continueLearning} />
-          </div>
+        {/* ROW 3: REAL TOPIC LEARNING PROGRESS BREAKDOWN */}
+        <div className="w-full">
+          <LearningProgressRows progressItems={learningProgress} />
         </div>
 
-        {/* ROW 4: RECENT ACTIVITY */}
+        {/* ROW 4: REAL RECENT USER ACTIVITY TIMELINE */}
         <RecentActivityTimeline activities={recentActivity} />
       </div>
     </WorkspaceLayout>

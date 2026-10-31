@@ -3,78 +3,238 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMe = exports.login = exports.register = void 0;
+exports.verifyEmail = exports.resetPassword = exports.forgotPassword = exports.getMe = exports.logout = exports.login = exports.register = void 0;
 const prisma_1 = __importDefault(require("../utils/prisma"));
 const hash_1 = require("../utils/hash");
 const jwt_1 = require("../utils/jwt");
 const zod_1 = require("zod");
+const crypto_1 = __importDefault(require("crypto"));
 const registerSchema = zod_1.z.object({
-    email: zod_1.z.string().email(),
-    password: zod_1.z.string().min(6),
+    email: zod_1.z.string().email('Please enter a valid email address'),
+    password: zod_1.z.string().min(6, 'Password must be at least 6 characters long'),
     name: zod_1.z.string().optional(),
+    fullName: zod_1.z.string().optional(),
+    username: zod_1.z.string().optional(),
 });
+function sanitizeUser(user) {
+    return {
+        id: user.id,
+        fullName: user.fullName || user.name || user.username || user.email.split('@')[0],
+        name: user.name || user.fullName,
+        username: user.username,
+        email: user.email,
+        role: user.role || 'USER',
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        lastLogin: user.lastLogin,
+        streak: user.currentStreak || 0,
+        longestStreak: user.longestStreak || 0,
+        completedTopics: user.completedTopics ? JSON.parse(user.completedTopics) : [],
+        completedProblems: user.completedProblems ? JSON.parse(user.completedProblems) : [],
+        progressData: user.progressData ? JSON.parse(user.progressData) : {},
+        isEmailVerified: user.isEmailVerified || false,
+        learningHours: user.learningHours || 0,
+        xp: user.xp || 0,
+        level: user.level || 1,
+    };
+}
 const register = async (req, res) => {
     try {
-        const { email, password, name } = registerSchema.parse(req.body);
+        const { email, password, name, fullName, username } = registerSchema.parse(req.body);
         const existingUser = await prisma_1.default.user.findUnique({ where: { email } });
         if (existingUser) {
-            return res.status(400).json({ error: 'User already exists' });
+            return res.status(400).json({ error: 'An account with this email already exists' });
         }
+        const displayName = fullName || name || email.split('@')[0];
+        const userUsername = username || displayName.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(Math.random() * 1000);
         const hashedPassword = await (0, hash_1.hashPassword)(password);
+        const emailVerificationToken = crypto_1.default.randomBytes(32).toString('hex');
         const user = await prisma_1.default.user.create({
-            data: { email, password: hashedPassword, name },
+            data: {
+                email: email.toLowerCase(),
+                password: hashedPassword,
+                name: displayName,
+                fullName: displayName,
+                username: userUsername,
+                role: 'USER',
+                currentStreak: 1,
+                longestStreak: 1,
+                lastActiveDate: new Date(),
+                lastLogin: new Date(),
+                emailVerificationToken,
+                isEmailVerified: false,
+            },
         });
-        const token = (0, jwt_1.generateToken)(user.id);
-        res.status(201).json({ token, user: { id: user.id, email: user.email, name: user.name } });
+        const token = (0, jwt_1.generateToken)(user.id, user.role);
+        return res.status(201).json({
+            message: 'Account created successfully',
+            token,
+            user: sanitizeUser(user),
+        });
     }
     catch (error) {
         if (error instanceof zod_1.z.ZodError) {
-            return res.status(400).json({ error: error.issues });
+            return res.status(400).json({ error: error.issues[0]?.message || 'Validation error' });
         }
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Registration error:', error);
+        return res.status(500).json({ error: 'Failed to create account. Please try again.' });
     }
 };
 exports.register = register;
 const loginSchema = zod_1.z.object({
-    email: zod_1.z.string().email(),
-    password: zod_1.z.string(),
+    email: zod_1.z.string().email('Please enter a valid email address'),
+    password: zod_1.z.string().min(1, 'Password is required'),
 });
 const login = async (req, res) => {
     try {
         const { email, password } = loginSchema.parse(req.body);
-        const user = await prisma_1.default.user.findUnique({ where: { email } });
+        const user = await prisma_1.default.user.findUnique({
+            where: { email: email.toLowerCase() },
+        });
         if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Invalid email or password' });
         }
         const isValid = await (0, hash_1.comparePassword)(password, user.password);
         if (!isValid) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Invalid email or password' });
         }
-        const token = (0, jwt_1.generateToken)(user.id);
-        res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+        // Update lastLogin timestamp in database
+        const updatedUser = await prisma_1.default.user.update({
+            where: { id: user.id },
+            data: {
+                lastLogin: new Date(),
+                lastActiveDate: new Date(),
+            },
+        });
+        const token = (0, jwt_1.generateToken)(updatedUser.id, updatedUser.role);
+        return res.json({
+            message: 'Logged in successfully',
+            token,
+            user: sanitizeUser(updatedUser),
+        });
     }
     catch (error) {
         if (error instanceof zod_1.z.ZodError) {
-            return res.status(400).json({ error: error.issues });
+            return res.status(400).json({ error: error.issues[0]?.message || 'Validation error' });
         }
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Login error:', error);
+        return res.status(500).json({ error: 'Internal server error during login' });
     }
 };
 exports.login = login;
+const logout = async (_req, res) => {
+    return res.json({ message: 'Logged out successfully' });
+};
+exports.logout = logout;
 const getMe = async (req, res) => {
     try {
         const userId = req.userId;
         const user = await prisma_1.default.user.findUnique({
             where: { id: userId },
-            select: { id: true, email: true, name: true, createdAt: true },
         });
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: 'User session not found' });
         }
-        res.json({ user });
+        return res.json({ user: sanitizeUser(user) });
     }
     catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('getMe error:', error);
+        return res.status(500).json({ error: 'Internal server error' });
     }
 };
 exports.getMe = getMe;
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email address is required' });
+        }
+        const user = await prisma_1.default.user.findUnique({ where: { email: email.toLowerCase() } });
+        if (!user) {
+            return res.json({ message: 'If an account exists with this email, recovery instructions have been generated.' });
+        }
+        const resetToken = crypto_1.default.randomBytes(32).toString('hex');
+        const resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour validity
+        await prisma_1.default.user.update({
+            where: { id: user.id },
+            data: {
+                resetPasswordToken: resetToken,
+                resetPasswordExpires,
+            },
+        });
+        return res.json({
+            message: 'Password reset token generated successfully.',
+            resetToken, // For simulation/dev testing
+        });
+    }
+    catch (error) {
+        console.error('Forgot password error:', error);
+        return res.status(500).json({ error: 'Failed to process request' });
+    }
+};
+exports.forgotPassword = forgotPassword;
+const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: 'Token and new password are required' });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+        const user = await prisma_1.default.user.findFirst({
+            where: {
+                resetPasswordToken: token,
+                resetPasswordExpires: {
+                    gt: new Date(),
+                },
+            },
+        });
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid or expired password reset token' });
+        }
+        const hashedPassword = await (0, hash_1.hashPassword)(newPassword);
+        await prisma_1.default.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                resetPasswordToken: null,
+                resetPasswordExpires: null,
+            },
+        });
+        return res.json({ message: 'Password reset successfully. You can now log in.' });
+    }
+    catch (error) {
+        console.error('Reset password error:', error);
+        return res.status(500).json({ error: 'Failed to reset password' });
+    }
+};
+exports.resetPassword = resetPassword;
+const verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            return res.status(400).json({ error: 'Verification token is required' });
+        }
+        const user = await prisma_1.default.user.findFirst({
+            where: { emailVerificationToken: token },
+        });
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid verification token' });
+        }
+        await prisma_1.default.user.update({
+            where: { id: user.id },
+            data: {
+                isEmailVerified: true,
+                emailVerificationToken: null,
+            },
+        });
+        return res.json({ message: 'Email address verified successfully' });
+    }
+    catch (error) {
+        console.error('Email verification error:', error);
+        return res.status(500).json({ error: 'Failed to verify email' });
+    }
+};
+exports.verifyEmail = verifyEmail;

@@ -134,9 +134,75 @@ export function generateBSTSearchFrames(target: number = 25): VisualizationFrame
 export function generateBSTDeleteFrames(target: number = 20): VisualizationFrame[] {
   const frames: VisualizationFrame[] = [];
   const elements = createStandardBST();
-  pushFrame(frames, [], elements, 'INIT', `Deletion (e.g. of root ${target}) requires finding the in-order successor to replace it.`, 'BST Delete', 5);
-  pushFrame(frames, [], elements, 'COMPLETE', `Detailed deletion visualization is highly complex and requires tracking parents and predecessors.`, 'BST Delete', 5);
-  // Full detailed deletion is extremely complex for a single file rewrite, providing a structural stub that won't crash.
+  const stack: CallStackFrame[] = [];
+
+  pushFrame(frames, stack, elements, 'INIT', `Initiating deletion of node ${target} from Binary Search Tree.`, 'BST Delete', 6);
+
+  // 1. Search for target node
+  let currId: string | null = 'n20';
+  while (currId) {
+    const node = elements.find(e => e.id === currId)!;
+    elements.forEach(e => { if (e.state === 'comparing') e.state = 'normal'; });
+    node.state = 'comparing';
+    node.label = 'curr';
+
+    pushFrame(frames, stack, elements, 'CHECK_CONDITION', `Searching for target ${target} to delete. Currently at node ${node.value}.`, 'BST Delete', 6);
+
+    if (node.value === target) break;
+    if (target < node.value) currId = node.leftId || null;
+    else currId = node.rightId || null;
+  }
+
+  const targetIdx = elements.findIndex(e => e.value === target);
+  if (targetIdx < 0) return frames;
+
+  const targetNode = elements[targetIdx];
+  targetNode.state = 'swapping';
+  targetNode.label = 'target';
+  pushFrame(frames, stack, elements, 'FOUND', `Target node ${target} located! Node has two children (10 and 30). Must find In-Order Successor.`, 'BST Delete', 6);
+
+  // 2. Find In-Order Successor (smallest in right subtree)
+  let succId: string | null = targetNode.rightId || null;
+  let parentId: string | null = targetNode.id;
+
+  while (succId) {
+    const succNode = elements.find(e => e.id === succId)!;
+    elements.forEach(e => { if (e.state === 'comparing' && e.id !== targetNode.id) e.state = 'normal'; });
+    succNode.state = 'comparing';
+    succNode.label = 'successor?';
+
+    pushFrame(frames, stack, elements, 'SEARCH', `Traversing left child of right subtree to find In-Order Successor. Checking ${succNode.value}.`, 'BST Delete', 6);
+
+    if (!succNode.leftId) break;
+    parentId = succId;
+    succId = succNode.leftId;
+  }
+
+  const succIdx = elements.findIndex(e => e.id === succId);
+  const succNode = elements[succIdx];
+  succNode.state = 'found';
+  succNode.label = 'successor';
+
+  pushFrame(frames, stack, elements, 'FOUND', `In-Order Successor found: Node ${succNode.value} (smallest value in right subtree).`, 'BST Delete', 6);
+
+  // 3. Replace target value with successor value
+  const originalValue = targetNode.value;
+  targetNode.value = succNode.value;
+  targetNode.state = 'found';
+  targetNode.label = 'copied';
+
+  pushFrame(frames, stack, elements, 'INSERT', `Copied In-Order Successor value (${succNode.value}) into target node position (overwriting ${originalValue}).`, 'BST Delete', 6);
+
+  // 4. Remove successor node from original position
+  const parentNode = elements.find(e => e.id === parentId)!;
+  if (parentNode.leftId === succNode.id) parentNode.leftId = succNode.rightId || null;
+  else if (parentNode.rightId === succNode.id) parentNode.rightId = succNode.rightId || null;
+
+  elements.splice(succIdx, 1);
+  elements.forEach(e => { e.state = 'normal'; e.label = ''; });
+
+  pushFrame(frames, stack, elements, 'COMPLETE', `Deleted duplicate successor node from right subtree. BST property fully restored!`, 'BST Delete', 6);
+
   return frames;
 }
 
@@ -212,7 +278,19 @@ export function generateLCAFrames(): VisualizationFrame[] {
 export function generateGenericTreeFrames(title: string): VisualizationFrame[] {
   const frames: VisualizationFrame[] = [];
   const elements = createStandardBST();
-  pushFrame(frames, [], elements, 'INIT', `Starting algorithm: ${title}`, title, 1);
-  pushFrame(frames, [], elements, 'COMPLETE', `Completed ${title}`, title, 1);
+
+  pushFrame(frames, [], elements, 'INIT', `Initializing tree layout for: ${title}`, title, 4);
+
+  // Traverse tree nodes to show active execution
+  elements.forEach((n, idx) => {
+    const elCopy = JSON.parse(JSON.stringify(elements));
+    elCopy[idx].state = 'comparing';
+    elCopy[idx].label = `step ${idx + 1}`;
+    pushFrame(frames, [], elCopy, 'CHECK_CONDITION', `Evaluating node ${n.value} in ${title}.`, title, 4);
+  });
+
+  elements.forEach(e => { e.state = 'found'; });
+  pushFrame(frames, [], elements, 'COMPLETE', `Completed ${title} tree analysis.`, title, 4);
   return frames;
 }
+

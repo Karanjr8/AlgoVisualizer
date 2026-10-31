@@ -8,39 +8,52 @@ generator client {
 }
 
 model User {
-  id        String     @id @default(uuid())
-  email     String     @unique
-  password  String     
-  name            String?
-  username        String?    @unique
-  avatar          String?
-  bio             String?
-  college         String?
-  degree          String?
-  graduationYear  Int?
-  currentRole     String?
-  githubUrl       String?
-  linkedinUrl     String?
-  leetcodeUrl     String?
-  codeforcesUrl   String?
-  codechefUrl     String?
-  gfgUrl          String?
-  portfolioUrl    String?
+  id                     String     @id @default(uuid())
+  email                  String     @unique
+  password               String     // bcrypt password hash
+  fullName               String?
+  name                   String?
+  username               String?    @unique
+  role                   String     @default("USER") // USER, ADMIN, MODERATOR, etc.
+  avatar                 String?
+  bio                    String?
+  college                String?
+  degree                 String?
+  graduationYear         Int?
+  currentRole            String?
+  githubUrl              String?
+  linkedinUrl            String?
+  leetcodeUrl            String?
+  codeforcesUrl          String?
+  codechefUrl            String?
+  gfgUrl                 String?
+  portfolioUrl           String?
   
-  currentStreak   Int        @default(0)
-  longestStreak   Int        @default(0)
-  lastActiveDate  DateTime?
+  lastLogin              DateTime?
+  currentStreak          Int        @default(0)
+  longestStreak          Int        @default(0)
+  lastActiveDate         DateTime?
   
-  learningHours   Float      @default(0.0)
-  xp              Int        @default(0)
-  level           Int        @default(1)
-  progress        Progress[]
-  achievements    UserAchievement[]
-  activities      UserActivity[]
-  practiceAttempts PracticeAttempt[]
-  events          UserEvent[]
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  completedTopics        String?    // JSON string array of completed topic IDs
+  completedProblems      String?    // JSON string array of completed problem IDs
+  progressData           String?    // JSON string blob for custom user state
+  
+  isEmailVerified        Boolean    @default(false)
+  emailVerificationToken String?
+  resetPasswordToken     String?
+  resetPasswordExpires   DateTime?
+  
+  learningHours          Float      @default(0.0)
+  xp                     Int        @default(0)
+  level                  Int        @default(1)
+  progress               Progress[]
+  achievements           UserAchievement[]
+  activities             UserActivity[]
+  practiceAttempts       PracticeAttempt[]
+  events                 UserEvent[]
+  interviewSessions      InterviewSession[]
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
 }
 
 model UserEvent {
@@ -70,10 +83,47 @@ model UserActivity {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  action      String
+  action      String   // TOPIC_OPENED, TOPIC_COMPLETED, PROBLEM_OPENED, PROBLEM_COMPLETED, VISUALIZER_USED, PRACTICE_COMPLETED, INTERVIEW_COMPLETED, ROADMAP_MILESTONE, PLAYGROUND_USED
   description String
+  topicId     String?
+  problemId   String?
+  duration    Int      @default(0) // duration in seconds
   timestamp   DateTime @default(now())
+
+  @@index([userId, timestamp])
 }
+
+model UserTopicCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  topicId     String
+  completedAt DateTime @default(now())
+
+  @@unique([userId, topicId])
+}
+
+model UserProblemCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  problemId   String
+  score       Int      @default(0)
+  completedAt DateTime @default(now())
+
+  @@unique([userId, problemId])
+}
+
+model UserStreak {
+  id                  String    @id @default(uuid())
+  userId              String    @unique
+  currentStreak       Int       @default(0)
+  longestStreak       Int       @default(0)
+  activeDaysThisMonth Int       @default(0)
+  activeDaysThisYear  Int       @default(0)
+  totalActiveDays     Int       @default(0)
+  lastActiveDate      DateTime?
+  updatedAt           DateTime  @updatedAt
+}
+
 model Progress {
   id            String   @id @default(uuid())
   userId        String
@@ -159,3 +209,71 @@ model PracticeAttempt {
   
   createdAt       DateTime @default(now())
 }
+
+model InterviewSession {
+  id               String                @id @default(uuid())
+  userId           String?
+  user             User?                 @relation(fields: [userId], references: [id])
+  role             String
+  difficulty       String
+  interviewStyle   String
+  selectedTopics   String                // JSON array of strings
+  enabledFeatures  String                // JSON array of strings
+  status           String                @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ABANDONED
+  turnCount        Int                   @default(0)
+  maxTurns         Int                   @default(8)
+  startedAt        DateTime              @default(now())
+  completedAt      DateTime?
+  messages         InterviewMessage[]
+  evaluations      InterviewEvaluation[]
+  report           InterviewReport?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+model InterviewMessage {
+  id             String           @id @default(uuid())
+  sessionId      String
+  session        InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sequenceNumber Int
+  sender         String           // 'interviewer' | 'candidate' | 'system'
+  content        String
+  questionTopic  String?
+  questionType   String?          // 'conceptual' | 'problem_solving' | 'follow_up' | 'behavioral'
+  createdAt      DateTime         @default(now())
+
+  @@index([sessionId, sequenceNumber])
+}
+
+model InterviewEvaluation {
+  id              String           @id @default(uuid())
+  sessionId       String
+  session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  messageId       String?
+  questionText    String?
+  candidateAnswer String?
+  dimension       String           // 'technicalAccuracy' | 'problemSolving' | 'complexityAnalysis' | 'communication' | 'confidence' | 'behavioral' | 'adaptability'
+  score           Float            // 0 - 5 scale
+  rationale       String
+  evidence        String
+  createdAt       DateTime         @default(now())
+
+  @@index([sessionId, dimension])
+}
+
+model InterviewReport {
+  id               String           @id @default(uuid())
+  sessionId        String           @unique
+  session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  overallScore     Float?
+  summary          String
+  strengths        String           // JSON string array
+  improvementAreas String           // JSON string array
+  dimensionScores  String           // JSON object string
+  questionReviews  String           // JSON array string
+  recommendations  String           // JSON string array
+  createdAt        DateTime         @default(now())
+}
+

@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import {
-  Moon, Sun, Menu, X, Search, User, 
-  LayoutDashboard, LogOut, Home, Compass, 
-  Map, Dumbbell, TrendingUp, Play
+  Moon, Sun, Menu, X, Search, User,
+  LayoutDashboard, LogOut, Home, Compass,
+  Map, Dumbbell, TrendingUp, Play, Sparkles, ShieldCheck
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useSearchStore } from '../../store/useSearchStore';
@@ -19,17 +19,51 @@ const NAV_LINKS = [
   { name: 'Progress', path: '/progress', icon: TrendingUp },
 ];
 
+// Deterministic route matching helper function
+const isRouteActive = (linkPath: string, currentPathname: string): boolean => {
+  const path = currentPathname.toLowerCase();
+
+  if (linkPath === '/') {
+    return path === '/' || path === '';
+  }
+  if (linkPath === '/explore') {
+    return (
+      path.startsWith('/explore') ||
+      path.startsWith('/algorithms') ||
+      path.startsWith('/visualizer')
+    );
+  }
+  if (linkPath === '/playground') {
+    return path.startsWith('/playground');
+  }
+  if (linkPath === '/roadmap') {
+    return path.startsWith('/roadmap');
+  }
+  if (linkPath === '/practice') {
+    return path.startsWith('/practice') || path.startsWith('/interview');
+  }
+  if (linkPath === '/progress') {
+    return (
+      path.startsWith('/progress') ||
+      path.startsWith('/dashboard') ||
+      path.startsWith('/profile') ||
+      path.startsWith('/settings')
+    );
+  }
+  return path.startsWith(linkPath);
+};
+
 export const Navbar = () => {
   const { user, logout } = useAuthStore();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  
+
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { setIsOpen: setGlobalSearchOpen } = useSearchStore();
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // Handle scroll for transparent -> blur background with passive event listener
+  // Scroll listener for density transition
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -46,204 +80,269 @@ export const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu on route change
-  useEffect(() => {
+  // Track location pathname to reset open menus during render transition
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
     setIsMobileMenuOpen(false);
+    setIsProfileOpen(false);
+  }
+
+  // Active route detection memoized
+  const activeLinkPath = useMemo(() => {
+    const matched = NAV_LINKS.find(link => isRouteActive(link.path, location.pathname));
+    return matched ? matched.path : null;
   }, [location.pathname]);
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setGlobalSearchOpen(true);
-    setIsMobileMenuOpen(false);
-  };
-
   return (
     <>
-      <nav 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled ? 'bg-background/80 backdrop-blur-xl border-b border-border py-3 shadow-sm' : 'bg-transparent py-5'
-        }`}
-      >
-        <div className="max-w-[1600px] mx-auto px-6">
-          <div className="flex items-center justify-between gap-8">
-            
-            {/* Left: Logo & Nav Links */}
-            <div className="flex items-center gap-10">
-              <Link to="/" className="flex items-center gap-2 group">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white font-bold text-lg group-hover:shadow-[0_0_15px_rgba(168,85,247,0.5)] transition-all">
-                  A
-                </div>
-                <span className="text-xl font-bold tracking-tight">AlgoVis</span>
-              </Link>
-
-              {/* Desktop Links */}
-              <div className="hidden lg:flex items-center gap-1">
-                {NAV_LINKS.map((link) => {
-                  const isActive = location.pathname === link.path;
-                  return (
-                    <Link 
-                      key={link.path} 
-                      to={link.path}
-                      className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-colors ${isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
-                    >
-                      {isActive && (
-                        <motion.div 
-                          layoutId="navbar-active"
-                          className="absolute inset-0 bg-primary/10 rounded-full border border-primary/20 -z-10"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                      {link.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Center: Global Search (Desktop) */}
-            <div className="hidden md:flex flex-1 max-w-md">
-              <form onSubmit={handleSearch} className="relative w-full group">
-                <div className={`absolute inset-0 bg-primary/20 rounded-full blur-md transition-opacity duration-300 ${isSearchFocused ? 'opacity-100' : 'opacity-0'}`} />
-                <div className="relative bg-background border border-border rounded-full flex items-center px-4 py-2 focus-within:border-primary/50 focus-within:shadow-[0_0_15px_rgba(168,85,247,0.3)] focus-within:bg-card transition-all shadow-sm">
-                  <Search className="w-4 h-4 text-muted-foreground mr-3" />
-                  <input 
-                    type="text" 
-                    placeholder="Search algorithms..." 
-                    onClick={() => setGlobalSearchOpen(true)}
-                    readOnly
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    className="bg-transparent border-none outline-none text-sm w-full placeholder:text-muted-foreground/50 cursor-pointer"
-                  />
-                  <div className="hidden lg:flex items-center justify-center px-2 py-0.5 rounded bg-muted text-[10px] font-bold text-muted-foreground border border-border ml-2">
-                    ⌘K
+      {/* FLOATING GLASS DOCK CONTAINER */}
+      <header className="fixed top-4 left-4 right-4 sm:left-6 sm:right-6 lg:left-8 lg:right-8 z-50 pointer-events-none">
+        <div className="max-w-[1600px] mx-auto pointer-events-auto">
+          <nav
+            className={`w-full rounded-2xl sm:rounded-3xl transition-all duration-300 transform-gpu ${
+              isScrolled
+                ? 'true-frosted-glass-scrolled py-2.5 px-4 sm:px-6'
+                : 'true-frosted-glass py-3 px-4 sm:px-6'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-4 lg:gap-8">
+              
+              {/* LEFT: BRAND LOGO */}
+              <div className="flex items-center gap-8">
+                <Link to="/" className="flex items-center gap-2.5 group">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary via-purple-500 to-cyan-400 flex items-center justify-center text-black font-black text-lg group-hover:scale-105 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all">
+                    A
                   </div>
-                </div>
-              </form>
-            </div>
+                  <div className="flex flex-col">
+                    <span className="text-lg font-black tracking-tight text-foreground leading-none flex items-center gap-1">
+                      AlgoVis <Sparkles className="w-3 h-3 text-primary" />
+                    </span>
+                    <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Visualizer</span>
+                  </div>
+                </Link>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={toggleTheme} 
-                className="p-2.5 rounded-full hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-                aria-label="Toggle theme"
-              >
-                <Moon className="w-5 h-5 hidden dark:block" />
-                <Sun className="w-5 h-5 block dark:hidden" />
-              </button>
-
-              <div className="hidden sm:flex items-center gap-3 ml-2 border-l border-border pl-5">
-                {user ? (
-                  <>
-                    <Link 
-                      to="/dashboard" 
-                      className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-colors ${location.pathname === '/dashboard' ? 'text-primary bg-primary/10 border border-primary/20' : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
-                    >
-                      Dashboard
-                    </Link>
-                    <div className="relative group cursor-pointer">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-secondary to-primary p-[2px]">
-                        <div className="w-full h-full bg-card rounded-full flex items-center justify-center">
-                          <User className="w-4 h-4" />
-                        </div>
-                      </div>
-                      
-                      {/* Dropdown menu */}
-                      <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform origin-top-right scale-95 group-hover:scale-100">
-                        <div className="bg-card border border-border shadow-2xl rounded-2xl p-2 w-48 flex flex-col gap-1">
-                          <div className="px-3 py-2 border-b border-border mb-1">
-                            <p className="text-sm font-bold truncate">{user.username}</p>
-                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                          </div>
-                          <Link to="/profile" className="flex items-center gap-2 px-3 py-2 text-sm rounded-xl hover:bg-accent transition-colors">
-                            <User className="w-4 h-4 text-muted-foreground" /> Profile
-                          </Link>
-                          <Link to="/settings" className="flex items-center gap-2 px-3 py-2 text-sm rounded-xl hover:bg-accent transition-colors">
-                            <LayoutDashboard className="w-4 h-4 text-muted-foreground" /> Settings
-                          </Link>
-                          <button onClick={logout} className="flex items-center gap-2 px-3 py-2 text-sm rounded-xl hover:bg-destructive/10 text-destructive transition-colors w-full text-left">
-                            <LogOut className="w-4 h-4" /> Logout
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/login" className="btn btn-ghost px-5 py-2 text-sm font-semibold rounded-full">
-                      Log in
-                    </Link>
-                    <Link to="/register" className="btn btn-primary px-5 py-2 text-sm font-semibold rounded-full">
-                      Sign up
-                    </Link>
-                  </>
-                )}
+                {/* DESKTOP NAV LINKS (SPRING GLASS SLIDING PILL) */}
+                <LayoutGroup id="navbar">
+                  <div className="hidden lg:flex items-center gap-1.5 bg-background/40 backdrop-blur-md p-1.5 rounded-full border border-white/5 relative">
+                    {NAV_LINKS.map((link) => {
+                      const isActive = activeLinkPath === link.path;
+                      return (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          className={`relative px-4 py-1.5 text-xs font-extrabold rounded-full transition-colors duration-150 select-none ${
+                            isActive
+                              ? 'text-foreground font-black'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                          }`}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="navbar-active-pill"
+                              className="absolute inset-0 bg-primary/20 rounded-full border border-primary/40 shadow-[0_0_15px_rgba(168,85,247,0.35)] -z-10"
+                              transition={{
+                                type: 'spring',
+                                stiffness: 450,
+                                damping: 32,
+                                mass: 0.5
+                              }}
+                            />
+                          )}
+                          {link.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </LayoutGroup>
               </div>
 
-              {/* Mobile Menu Toggle */}
-              <button 
-                className="lg:hidden p-2 text-muted-foreground hover:text-foreground"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      </nav>
-
-      {/* Mobile Navigation Drawer */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <motion.div 
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-              className="fixed top-0 right-0 bottom-0 w-[300px] bg-card border-l border-border z-50 p-6 flex flex-col shadow-2xl lg:hidden"
-            >
-              <div className="flex justify-end mb-8">
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-accent rounded-full text-muted-foreground hover:text-foreground">
-                  <X className="w-5 h-5" />
+              {/* CENTER: GLASS SEARCH BAR BUTTON (DESKTOP/TABLET) */}
+              <div className="hidden md:flex flex-1 max-w-sm">
+                <button
+                  onClick={() => setGlobalSearchOpen(true)}
+                  className="w-full bg-background/50 hover:bg-background/80 border border-white/10 hover:border-primary/40 rounded-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground shadow-inner transition-all group cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Search className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
+                    <span>Search algorithms or topics...</span>
+                  </div>
+                  <kbd className="hidden lg:inline-flex items-center px-2 py-0.5 rounded bg-muted/80 text-[10px] font-mono font-bold text-muted-foreground border border-border">
+                    ⌘K
+                  </kbd>
                 </button>
               </div>
 
-              <form onSubmit={handleSearch} className="mb-8 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input 
-                  type="text" 
-                  placeholder="Search algorithms..." 
-                  onClick={() => setGlobalSearchOpen(true)}
-                  readOnly
-                  className="w-full bg-background border border-border rounded-xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-primary/50 cursor-pointer"
-                />
-              </form>
+              {/* RIGHT: ACTIONS (THEME, PROFILE, MOBILE MENU) */}
+              <div className="flex items-center gap-3">
+                {/* Theme Switcher Button */}
+                <button
+                  onClick={toggleTheme}
+                  className="w-9 h-9 rounded-full bg-background/40 hover:bg-background/80 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all shadow-sm cursor-pointer"
+                  aria-label="Toggle theme"
+                >
+                  <Moon className="w-4 h-4 hidden dark:block text-purple-400" />
+                  <Sun className="w-4 h-4 block dark:hidden text-amber-500" />
+                </button>
 
-              <div className="flex flex-col gap-2 flex-1">
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2">Menu</div>
+                {/* Search Button for Mobile */}
+                <button
+                  onClick={() => setGlobalSearchOpen(true)}
+                  className="md:hidden w-9 h-9 rounded-full bg-background/40 hover:bg-background/80 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                  aria-label="Search"
+                >
+                  <Search className="w-4 h-4 text-primary" />
+                </button>
+
+                {/* USER PROFILE & AUTH */}
+                <div className="hidden sm:flex items-center gap-3 border-l border-white/10 pl-3">
+                  {user ? (
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        className="flex items-center gap-2 p-1 rounded-full bg-background/40 hover:bg-background/80 border border-white/10 transition-all group cursor-pointer"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-purple-500 p-[1.5px] shadow-sm">
+                          <div className="w-full h-full bg-card rounded-full flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                            <User className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* Animated Glass Profile Dropdown */}
+                      <AnimatePresence>
+                        {isProfileOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                            transition={{ duration: 0.15, ease: 'easeOut' }}
+                            className="absolute right-0 top-full mt-3 w-56 p-2 rounded-2xl bg-card/90 backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-1"
+                          >
+                            <div className="px-3 py-2.5 border-b border-border/50 mb-1">
+                              <p className="text-xs font-black text-foreground truncate">{user.username}</p>
+                              <p className="text-[10px] font-bold text-muted-foreground truncate mt-0.5">{user.email}</p>
+                            </div>
+                            
+                            <Link
+                              to="/dashboard"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                            >
+                              <LayoutDashboard className="w-4 h-4 text-primary" /> Dashboard
+                            </Link>
+
+                            {user.role === 'ADMIN' && (
+                              <Link
+                                to="/admin"
+                                onClick={() => setIsProfileOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-xl text-red-400 hover:bg-red-500/10 transition-colors"
+                              >
+                                <ShieldCheck className="w-4 h-4 text-red-400" /> Admin Portal
+                              </Link>
+                            )}
+
+                            <Link
+                              to="/profile"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                            >
+                              <User className="w-4 h-4 text-purple-400" /> Profile
+                            </Link>
+
+                            <button
+                              onClick={() => {
+                                logout();
+                                setIsProfileOpen(false);
+                              }}
+                              className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors w-full text-left cursor-pointer"
+                            >
+                              <LogOut className="w-4 h-4" /> Logout
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to="/login"
+                        className="px-4 py-1.5 text-xs font-extrabold text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-full transition-colors"
+                      >
+                        Log in
+                      </Link>
+                      <Link
+                        to="/register"
+                        className="px-4 py-1.5 text-xs font-black text-black bg-gradient-to-r from-primary via-purple-400 to-cyan-400 hover:brightness-110 rounded-full transition-all shadow-md"
+                      >
+                        Sign up
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* Mobile Drawer Trigger */}
+                <button
+                  className="lg:hidden w-9 h-9 rounded-full bg-background/40 hover:bg-background/80 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  aria-label="Toggle mobile menu"
+                >
+                  {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </button>
+              </div>
+
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      {/* MOBILE FLOATING GLASS DRAWER */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-background/60 backdrop-blur-md z-40 lg:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
+              className="fixed top-4 right-4 bottom-4 w-[310px] bg-card/90 backdrop-blur-2xl border border-white/15 z-50 p-6 rounded-3xl flex flex-col shadow-2xl lg:hidden overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
+                <span className="text-sm font-black text-foreground flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" /> Navigation
+                </span>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 rounded-full bg-background/50 text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Mobile Links */}
+              <div className="flex flex-col gap-1.5 flex-1">
                 {NAV_LINKS.map((link) => {
-                  const isActive = location.pathname === link.path;
+                  const isActive = isRouteActive(link.path, location.pathname);
                   const Icon = link.icon;
                   return (
-                    <Link 
-                      key={link.path} 
+                    <Link
+                      key={link.path}
                       to={link.path}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                        isActive ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:text-foreground hover:bg-accent border border-transparent'
+                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold transition-all ${
+                        isActive
+                          ? 'bg-primary/20 text-primary border border-primary/40 shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent border border-transparent'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -252,27 +351,51 @@ export const Navbar = () => {
                   );
                 })}
 
-                <div className="my-6 border-t border-border" />
+                <div className="my-4 border-t border-border" />
 
                 {user ? (
                   <>
-                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2">Account</div>
-                    <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${location.pathname === '/dashboard' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:text-foreground hover:bg-accent border border-transparent'}`}>
-                      <LayoutDashboard className="w-4 h-4" /> Dashboard
+                    <div className="px-3 py-2 bg-background/50 rounded-2xl border border-white/10 mb-2">
+                      <p className="text-xs font-black text-foreground truncate">{user.username}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground truncate">{user.email}</p>
+                    </div>
+
+                    <Link
+                      to="/dashboard"
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold text-muted-foreground hover:text-foreground hover:bg-accent"
+                    >
+                      <LayoutDashboard className="w-4 h-4 text-primary" /> Dashboard
                     </Link>
-                    <Link to="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-muted-foreground hover:text-foreground hover:bg-accent border border-transparent">
-                      <User className="w-4 h-4" /> Profile
+
+                    <Link
+                      to="/profile"
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold text-muted-foreground hover:text-foreground hover:bg-accent"
+                    >
+                      <User className="w-4 h-4 text-purple-400" /> Profile
                     </Link>
-                    <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-destructive hover:bg-destructive/10 border border-transparent w-full text-left">
+
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold text-rose-400 hover:bg-rose-500/10 w-full text-left cursor-pointer"
+                    >
                       <LogOut className="w-4 h-4" /> Logout
                     </button>
                   </>
                 ) : (
-                  <div className="mt-auto flex flex-col gap-3">
-                    <Link to="/login" className="w-full py-3 rounded-xl border border-border text-center font-semibold hover:bg-accent transition-colors">
+                  <div className="mt-auto flex flex-col gap-2 pt-4">
+                    <Link
+                      to="/login"
+                      className="w-full py-3 rounded-2xl border border-border text-center font-bold text-xs hover:bg-accent transition-colors"
+                    >
                       Log in
                     </Link>
-                    <Link to="/register" className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-center font-bold hover:bg-primary/90 transition-colors">
+                    <Link
+                      to="/register"
+                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-primary to-purple-500 text-black font-black text-xs text-center shadow-lg"
+                    >
                       Sign up
                     </Link>
                   </div>

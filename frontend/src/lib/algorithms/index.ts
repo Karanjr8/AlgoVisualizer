@@ -58,6 +58,24 @@ import {
   generateMinCostConnectRopesFrames,
   generateGreedySchedulingFrames
 } from './greedyGenerators';
+import {
+  generateGraphRepresentationFrames,
+  generateBFSFrames,
+  generateDFSFrames,
+  generateConnectedComponentsFrames,
+  generateCycleDetectionFrames,
+  generateTopologicalSortFrames,
+  generateDijkstraFrames,
+  generateBellmanFordFrames,
+  generateFloydWarshallFrames,
+  generateKruskalFrames,
+  generatePrimFrames,
+  generateDisjointSetFrames,
+  generateBridgesArticulationFrames,
+  generateKosarajuFrames,
+  generateBipartiteFrames,
+  generateGraphColoringFrames
+} from './graphGenerators';
 
 export type AlgorithmGenerator = (
   elements: VisualElement[],
@@ -68,6 +86,22 @@ export const ALGORITHM_REGISTRY: Record<
   AlgorithmType,
   { label: string; generate: AlgorithmGenerator }
 > = {
+  'graph-representation': { label: 'Graph Representation', generate: () => generateGraphRepresentationFrames() },
+  'bfs': { label: 'Breadth-First Search', generate: () => generateBFSFrames() },
+  'dfs': { label: 'Depth-First Search', generate: () => generateDFSFrames() },
+  'topological-sort': { label: 'Topological Sort', generate: () => generateTopologicalSortFrames() },
+  'cycle-detection': { label: 'Cycle Detection', generate: () => generateCycleDetectionFrames() },
+  'dijkstra': { label: 'Dijkstra Algorithm', generate: () => generateDijkstraFrames() },
+  'bellman-ford': { label: 'Bellman-Ford Algorithm', generate: () => generateBellmanFordFrames() },
+  'floyd-warshall': { label: 'Floyd-Warshall Algorithm', generate: () => generateFloydWarshallFrames() },
+  'prim': { label: 'Prim Algorithm', generate: () => generatePrimFrames() },
+  'kruskal': { label: 'Kruskal Algorithm', generate: () => generateKruskalFrames() },
+  'disjoint-set': { label: 'Disjoint Set (Union-Find)', generate: () => generateDisjointSetFrames() },
+  'bridges-articulation': { label: 'Bridges & Articulation Points', generate: () => generateBridgesArticulationFrames() },
+  'kosaraju': { label: 'Strongly Connected Components', generate: () => generateKosarajuFrames() },
+  'connected-components': { label: 'Connected Components', generate: () => generateConnectedComponentsFrames() },
+  'bipartite': { label: 'Bipartite Graph Check', generate: () => generateBipartiteFrames() },
+  'm-coloring': { label: 'M Coloring Problem', generate: () => generateGraphColoringFrames() },
   bubble: { label: 'Bubble Sort', generate: (el: any) => bubbleSort(el) },
   selection: { label: 'Selection Sort', generate: (el: any) => selectionSort(el) },
   insertion: { label: 'Insertion Sort', generate: (el: any) => insertionSort(el) },
@@ -131,7 +165,6 @@ export const ALGORITHM_REGISTRY: Record<
   'letter-combinations': { label: 'Letter Combinations', generate: () => generateLetterCombinationsFrames() },
   'palindrome-partitioning': { label: 'Palindrome Partitioning', generate: () => generateGenericBacktrackingFrames('Palindrome Partitioning') },
   'word-search': { label: 'Word Search', generate: () => generateWordSearchFrames() },
-  'm-coloring': { label: 'M Coloring Problem', generate: () => generateGenericBacktrackingFrames('M Coloring') },
   'restore-ip-addresses': { label: 'Restore IP Addresses', generate: () => generateGenericBacktrackingFrames('Restore IP Addresses') },
   'beautiful-arrangement': { label: 'Beautiful Arrangement', generate: () => generateGenericBacktrackingFrames('Beautiful Arrangement') },
   
@@ -223,8 +256,9 @@ export function generateFrames(
   elements: VisualElement[],
   options?: { searchTarget?: number },
 ): VisualizationFrame[] {
+  const graphAlgos = ['graph-representation', 'bfs', 'dfs', 'topological-sort', 'cycle-detection', 'dijkstra', 'bellman-ford', 'floyd-warshall', 'prim', 'kruskal', 'disjoint-set', 'bridges-articulation', 'kosaraju'];
   const backtrackingAlgos = ['generate-subsets', 'generate-subsequences', 'generate-permutations', 'combination-sum', 'combination-sum-ii', 'letter-combinations', 'palindrome-partitioning', 'word-search', 'm-coloring', 'restore-ip-addresses', 'beautiful-arrangement'];
-  if (elements.length === 0 && !['dfs-tree', 'tree-traversals', 'height-of-tree', 'n-queens', 'rat-in-a-maze', 'sudoku-solver', 'generate-parentheses', ...backtrackingAlgos].includes(algorithm)) return [];
+  if (elements.length === 0 && !['dfs-tree', 'tree-traversals', 'height-of-tree', 'n-queens', 'rat-in-a-maze', 'sudoku-solver', 'generate-parentheses', ...backtrackingAlgos, ...graphAlgos].includes(algorithm)) return [];
   const algo = ALGORITHM_REGISTRY[algorithm];
   if (!algo || !algo.generate) {
     return [{ elements, event: { type: 'BASE_CASE', explanation: 'Visualizer not yet implemented.' } }];

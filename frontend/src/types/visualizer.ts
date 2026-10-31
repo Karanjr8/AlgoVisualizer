@@ -159,6 +159,108 @@ export interface GreedyState {
   ipoProfits?: number[];
 }
 
+export interface GraphNode {
+  id: string;
+  label: string;
+  x?: number;
+  y?: number;
+  state: 'unvisited' | 'visiting' | 'visited' | 'current' | 'queued' | 'mst' | 'cycle' | 'conflict' | 'articulation' | 'component';
+  distance?: number | string;
+  inDegree?: number;
+  discoveryTime?: number;
+  lowValue?: number;
+  bipartiteColor?: 'A' | 'B' | null;
+  colorHex?: string;
+  componentId?: number;
+  parent?: string | null;
+  colorLabel?: string;
+}
+
+export interface GraphEdge {
+  from: string;
+  to: string;
+  weight?: number;
+  isDirected?: boolean;
+  state: 'normal' | 'active' | 'traversed' | 'mst' | 'relaxed' | 'rejected' | 'cycle' | 'bridge' | 'conflict';
+  label?: string;
+}
+
+export interface GraphState {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  visitedNodes: string[];
+  queue?: string[];
+  stack?: string[];
+  priorityQueue?: Array<{ node?: string; edge?: { from: string; to: string; weight?: number }; dist?: number; weight?: number; label?: string }>;
+  distances?: Record<string, number | string>;
+  inDegrees?: Record<string, number>;
+  resultOrder?: string[];
+  mstEdges?: GraphEdge[];
+  currentEdge?: GraphEdge;
+  explanationText?: string;
+  actionText?: string;
+  algorithmName?: string;
+  activePath?: string[];
+  backtrackPath?: string[];
+  cycleNodes?: string[];
+  cycleEdges?: Array<{ from: string; to: string }>;
+  isCycleDetected?: boolean;
+  isBipartite?: boolean | null;
+  bipartiteConflictEdge?: { from: string; to: string };
+  components?: Array<{ id: number; nodes: string[]; color: string }>;
+  totalComponents?: number;
+  componentCount?: number;
+  sortedEdges?: Array<{ from: string; to: string; weight: number; status: 'accepted' | 'rejected' | 'pending' | 'evaluating' }>;
+  disjointSet?: Record<string, { parent: string; rank: number }>;
+  ufTrees?: Array<{ root: string; children: string[] }>;
+  compressedPath?: string[];
+  passNumber?: number;
+  totalPasses?: number;
+  isNegativeCycle?: boolean;
+  floydMatrix?: Array<Array<number | string>>;
+  floydK?: string | number | null;
+  floydI?: string | number | null;
+  floydJ?: string | number | null;
+  bridges?: Array<{ from: string; to: string }>;
+  articulationPoints?: string[];
+  sccList?: Array<{ id: number; nodes: string[]; color: string }>;
+  sccPhase?: 'dfs_stack' | 'transpose' | 'scc_traversal';
+  matrix?: Array<Array<number>>;
+  matrixNodeLabels?: string[];
+  adjList?: Record<string, string[]>;
+  decisionReason?: string;
+  changeSummary?: string;
+}
+
+export interface TrieVisualNode {
+  id: string;
+  char: string;
+  isEnd: boolean;
+  state: 'normal' | 'current' | 'visited' | 'terminal' | 'shared' | 'deleted' | 'failed';
+  depth: number;
+  x?: number;
+  y?: number;
+  parentId?: string;
+}
+
+export interface TrieVisualEdge {
+  from: string;
+  to: string;
+  char: string;
+  state: 'normal' | 'active' | 'shared' | 'deleted';
+}
+
+export interface TrieState {
+  nodes: TrieVisualNode[];
+  edges: TrieVisualEdge[];
+  activePath: string[];
+  currentWord?: string;
+  matchedPrefix?: string;
+  actionText?: string;
+  explanationText?: string;
+  searchResult?: { found: boolean; type: 'exact' | 'prefix' } | null;
+}
+
 export interface VisualizationFrame {
   elements: VisualElement[];
   grid?: VisualElement[][];
@@ -170,9 +272,24 @@ export interface VisualizationFrame {
   mergeSortState?: MergeSortState;
   greedyState?: GreedyState;
   segmentTreeState?: any;
+  graphState?: GraphState;
+  trieState?: TrieState;
 }
 
 export type AlgorithmType =
+  | 'graph-representation'
+  | 'bfs'
+  | 'dfs'
+  | 'topological-sort'
+  | 'cycle-detection'
+  | 'dijkstra'
+  | 'bellman-ford'
+  | 'floyd-warshall'
+  | 'prim'
+  | 'kruskal'
+  | 'disjoint-set'
+  | 'bridges-articulation'
+  | 'kosaraju'
   | 'bubble'
   | 'selection'
   | 'insertion'
