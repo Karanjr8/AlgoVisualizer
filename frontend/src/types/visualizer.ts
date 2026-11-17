@@ -5,6 +5,7 @@ export type ElementState =
   | 'selected'
   | 'sorted'
   | 'found'
+  | 'visited'
   | 'out-of-range';
 
 export interface VisualElement {
@@ -18,6 +19,14 @@ export interface VisualElement {
   prevId?: string | null;
   leftId?: string | null;
   rightId?: string | null;
+  parentId?: string | null;
+  height?: number;
+  balanceFactor?: number;
+  level?: number;
+  hd?: number;
+  role?: string;
+  inDiameter?: boolean;
+  threadToId?: string | null;
 }
 
 export type AlgorithmEventType =
@@ -274,6 +283,16 @@ export interface VisualizationFrame {
   segmentTreeState?: any;
   graphState?: GraphState;
   trieState?: TrieState;
+  treeEdges?: Array<{ from: string; to: string; state: 'normal' | 'active' | 'traversed' | 'thread' | 'path'; label?: string }>;
+  treeMetadata?: {
+    type?: string;
+    views?: { top: number[]; bottom: number[]; left: number[]; right: number[] };
+    serialized?: string;
+    diameter?: number;
+    lca?: { p: number; q: number; ancestor: number };
+    isBalanced?: boolean;
+    traversalOutput?: number[];
+  };
 }
 
 export type AlgorithmType =

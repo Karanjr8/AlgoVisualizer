@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StackQueueVisualizerState } from '../types/ds-states';
-import { AlertCircle, ArrowDown, ArrowRight, ArrowLeftRight } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface Props {

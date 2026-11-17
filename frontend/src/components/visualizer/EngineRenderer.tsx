@@ -70,6 +70,7 @@ import { UnionFindVisualizer } from './advanced/UnionFindVisualizer';
 import { SweepLineVisualizer } from './advanced/SweepLineVisualizer';
 import { DifferenceArrayVisualizer } from './advanced/DifferenceArrayVisualizer';
 import { BSOnAnswerVisualizer } from './advanced/BSOnAnswerVisualizer';
+import { TreeStandardVisualizer } from './tree/TreeStandardVisualizer';
 
 interface Props {
   algorithm: AlgorithmType;
@@ -79,6 +80,26 @@ interface Props {
 
 export const EngineRenderer = memo(({ algorithm, frame, initialElements }: Props) => {
   const elementsToRender = frame?.elements || initialElements || [];
+
+  // Specialized Tree & BST Visualizers (Accurate connected nodes and edges SVG rendering)
+  const treeAlgos = [
+    'binary-tree', 'tree-types', 'bst-search', 'bst-insert', 'bst-delete',
+    'avl-tree', 'morris-traversal', 'lca', 'tree-diameter', 'balanced-tree',
+    'tree-views', 'serialize-tree', 'deserialize-tree',
+    'dfs-tree', 'tree-inorder', 'tree-preorder', 'tree-postorder', 'tree-levelorder', 'height-of-tree', 'bst'
+  ];
+  if (treeAlgos.includes(algorithm)) {
+    return (
+      <div className="w-full flex flex-col gap-6">
+        <TreeStandardVisualizer algorithm={algorithm} frame={frame} />
+        {frame?.callStack && frame.callStack.length > 0 && (
+          <div className="w-full max-w-4xl mx-auto flex-1 overflow-auto min-h-[160px]">
+            <CallStackRenderer callStack={frame.callStack} />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // Specialized Graph Visualizers (Node/Edge SVG graph rendering)
   const graphAlgos = [

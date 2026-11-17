@@ -31,8 +31,19 @@ import {
   generateLLDeletionFrames, generateLLMiddleNodeFrames, generateLLMergeFrames, generateGenericLLFrames
 } from './linkedListGenerators';
 import {
-  generateLCAFrames, generateGenericTreeFrames,
-  generateBSTInsertFrames, generateBSTDeleteFrames, generateBSTSearchFrames
+  generateBinaryTreeFrames,
+  generateTreeTypesFrames,
+  generateBSTInsertFrames,
+  generateBSTDeleteFrames,
+  generateBSTSearchFrames,
+  generateAVLTreeFrames,
+  generateMorrisTraversalFrames,
+  generateLCAFrames,
+  generateTreeDiameterFrames,
+  generateBalancedTreeFrames,
+  generateTreeViewsFrames,
+  generateSerializeTreeFrames,
+  generateDeserializeTreeFrames,
 } from './treeGenerators';
 import { generateGenericHeapFrames } from './heapGenerators';
 import { generateGenericTrieFrames } from './trieGenerators';
@@ -180,19 +191,19 @@ export const ALGORITHM_REGISTRY: Record<
   'll-reverse-k-groups': { label: 'Reverse in K Groups', generate: () => generateGenericLLFrames('Reverse in K Groups') },
   'lru-cache': { label: 'LRU Cache', generate: () => generateGenericLLFrames('LRU Cache') },
 
-  'binary-tree': { label: 'Binary Tree', generate: () => generateGenericTreeFrames('Binary Tree Basics') },
-  'tree-types': { label: 'Tree Types', generate: () => generateGenericTreeFrames('Tree Types') },
-  'bst-search': { label: 'BST Search', generate: () => generateBSTSearchFrames(25) },
-  'bst-insert': { label: 'BST Insert', generate: () => generateBSTInsertFrames(22) },
-  'bst-delete': { label: 'BST Delete', generate: () => generateBSTDeleteFrames(20) },
-  'avl-tree': { label: 'AVL Tree', generate: () => generateGenericTreeFrames('AVL Tree') },
-  'morris-traversal': { label: 'Morris Traversal', generate: () => generateGenericTreeFrames('Morris Traversal') },
+  'binary-tree': { label: 'Binary Tree', generate: () => generateBinaryTreeFrames() },
+  'tree-types': { label: 'Tree Types', generate: () => generateTreeTypesFrames() },
+  'bst-search': { label: 'BST Search', generate: (_: any, options: any) => generateBSTSearchFrames(options?.searchTarget ?? 25) },
+  'bst-insert': { label: 'BST Insert', generate: (_: any, options: any) => generateBSTInsertFrames(options?.searchTarget ?? 22) },
+  'bst-delete': { label: 'BST Delete', generate: (_: any, options: any) => generateBSTDeleteFrames(options?.searchTarget ?? 20) },
+  'avl-tree': { label: 'AVL Tree', generate: () => generateAVLTreeFrames() },
+  'morris-traversal': { label: 'Morris Traversal', generate: () => generateMorrisTraversalFrames() },
   'lca': { label: 'Lowest Common Ancestor', generate: () => generateLCAFrames() },
-  'tree-diameter': { label: 'Diameter of Tree', generate: () => generateGenericTreeFrames('Diameter of Tree') },
-  'balanced-tree': { label: 'Balanced Trees', generate: () => generateGenericTreeFrames('Balanced Trees') },
-  'tree-views': { label: 'Binary Tree Views', generate: () => generateGenericTreeFrames('Binary Tree Views') },
-  'serialize-tree': { label: 'Serialization', generate: () => generateGenericTreeFrames('Serialization') },
-  'deserialize-tree': { label: 'Deserialization', generate: () => generateGenericTreeFrames('Deserialization') },
+  'tree-diameter': { label: 'Diameter of Tree', generate: () => generateTreeDiameterFrames() },
+  'balanced-tree': { label: 'Balanced Trees', generate: () => generateBalancedTreeFrames() },
+  'tree-views': { label: 'Binary Tree Views', generate: () => generateTreeViewsFrames() },
+  'serialize-tree': { label: 'Serialization', generate: () => generateSerializeTreeFrames() },
+  'deserialize-tree': { label: 'Deserialization', generate: () => generateDeserializeTreeFrames() },
 
   'heap-intro': { label: 'Introduction to Heaps', generate: () => generateGenericHeapFrames('Introduction to Heaps') },
   'min-max-heap': { label: 'Min Heap vs Max Heap', generate: () => generateGenericHeapFrames('Min Heap vs Max Heap') },
@@ -258,7 +269,8 @@ export function generateFrames(
 ): VisualizationFrame[] {
   const graphAlgos = ['graph-representation', 'bfs', 'dfs', 'topological-sort', 'cycle-detection', 'dijkstra', 'bellman-ford', 'floyd-warshall', 'prim', 'kruskal', 'disjoint-set', 'bridges-articulation', 'kosaraju'];
   const backtrackingAlgos = ['generate-subsets', 'generate-subsequences', 'generate-permutations', 'combination-sum', 'combination-sum-ii', 'letter-combinations', 'palindrome-partitioning', 'word-search', 'm-coloring', 'restore-ip-addresses', 'beautiful-arrangement'];
-  if (elements.length === 0 && !['dfs-tree', 'tree-traversals', 'height-of-tree', 'n-queens', 'rat-in-a-maze', 'sudoku-solver', 'generate-parentheses', ...backtrackingAlgos, ...graphAlgos].includes(algorithm)) return [];
+  const treeAlgos = ['binary-tree', 'tree-types', 'bst-search', 'bst-insert', 'bst-delete', 'avl-tree', 'morris-traversal', 'lca', 'tree-diameter', 'balanced-tree', 'tree-views', 'serialize-tree', 'deserialize-tree', 'dfs-tree', 'tree-traversals', 'height-of-tree', 'tree-inorder', 'tree-preorder', 'tree-postorder', 'tree-levelorder'];
+  if (elements.length === 0 && !['n-queens', 'rat-in-a-maze', 'sudoku-solver', 'generate-parentheses', ...treeAlgos, ...backtrackingAlgos, ...graphAlgos].includes(algorithm)) return [];
   const algo = ALGORITHM_REGISTRY[algorithm];
   if (!algo || !algo.generate) {
     return [{ elements, event: { type: 'BASE_CASE', explanation: 'Visualizer not yet implemented.' } }];

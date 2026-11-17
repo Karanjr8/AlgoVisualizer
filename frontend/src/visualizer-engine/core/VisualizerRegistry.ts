@@ -81,18 +81,27 @@ class VisualizerRegistry {
 
     // Trees & BST & AVL
     const treeAlgos = [
-      { id: 'tree-types', op: 'inorder' },
-      { id: 'binary-tree', op: 'inorder' },
+      { id: 'binary-tree', op: 'explore-tree' },
+      { id: 'tree-types', op: 'show-types' },
       { id: 'bst', op: 'search' },
       { id: 'bst-search', op: 'search' },
       { id: 'bst-insert', op: 'insert' },
       { id: 'bst-delete', op: 'delete' },
-      { id: 'avl-tree', op: 'rotate-left' },
+      { id: 'avl-tree', op: 'avl-balance' },
+      { id: 'morris-traversal', op: 'morris-traversal' },
+      { id: 'lca', op: 'find-lca' },
+      { id: 'tree-diameter', op: 'tree-diameter' },
+      { id: 'balanced-tree', op: 'check-balance' },
+      { id: 'tree-views', op: 'tree-views' },
+      { id: 'serialize-tree', op: 'serialize' },
+      { id: 'deserialize-tree', op: 'deserialize' },
       { id: 'tree-inorder', op: 'inorder' },
       { id: 'tree-preorder', op: 'preorder' },
       { id: 'tree-postorder', op: 'postorder' },
       { id: 'tree-levelorder', op: 'levelorder' },
       { id: 'tree-traversal', op: 'inorder' },
+      { id: 'dfs-tree', op: 'preorder' },
+      { id: 'height-of-tree', op: 'check-balance' },
     ];
     treeAlgos.forEach((a) => this.algorithmMap.set(a.id, { structure: 'tree', defaultOperation: a.op }));
 

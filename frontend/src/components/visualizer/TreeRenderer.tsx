@@ -25,14 +25,29 @@ export const TreeRenderer = memo(({ elements }: Props) => {
     if (!containerRef.current || elements.length === 0) return;
     const { width, height } = containerRef.current.getBoundingClientRect();
 
+    // Ensure elements have tree links
+    let treeElements = [...elements];
+    const hasAnyChildren = treeElements.some(el => Boolean(el.leftId || el.rightId));
+    if (!hasAnyChildren && treeElements.length > 1) {
+      treeElements = treeElements.map((el, i) => {
+        const leftIdx = 2 * i + 1;
+        const rightIdx = 2 * i + 2;
+        return {
+          ...el,
+          leftId: leftIdx < treeElements.length ? treeElements[leftIdx].id : null,
+          rightId: rightIdx < treeElements.length ? treeElements[rightIdx].id : null,
+        };
+      });
+    }
+
     // Find the root (node that is not a child of any node)
     const childIds = new Set<string>();
-    elements.forEach(el => {
+    treeElements.forEach(el => {
       if (el.leftId) childIds.add(el.leftId);
       if (el.rightId) childIds.add(el.rightId);
     });
 
-    const roots = elements.filter(el => !childIds.has(el.id));
+    const roots = treeElements.filter(el => !childIds.has(el.id));
     if (roots.length === 0) return;
     const root = roots[0];
 
@@ -42,7 +57,7 @@ export const TreeRenderer = memo(({ elements }: Props) => {
     let maxDepth = 0;
 
     const traverse = (id: string, depth: number) => {
-      const node = elements.find(e => e.id === id);
+      const node = treeElements.find(e => e.id === id);
       if (!node) return;
       depths[id] = depth;
       if (depth > maxDepth) maxDepth = depth;
@@ -69,7 +84,7 @@ export const TreeRenderer = memo(({ elements }: Props) => {
     
     const marginX = requiredWidth / (totalRanks + 1);
     
-    elements.forEach(el => {
+    treeElements.forEach(el => {
       if (ranks[el.id] !== undefined) {
         newPositions[el.id] = {
           id: el.id,
@@ -191,7 +206,12 @@ export const TreeRenderer = memo(({ elements }: Props) => {
                   el.state === 'selected' && "bg-primary/20 text-primary border-primary"
                 )}
               >
-                {el.state === 'found' ? <Check className="w-6 h-6" /> : el.value}
+                {el.value}
+                {el.state === 'found' && (
+                  <span className="absolute -bottom-1 -right-1 bg-viz-found text-white rounded-full p-0.5 shadow">
+                    <Check className="w-3 h-3 stroke-[3]" />
+                  </span>
+                )}
                 
                 <AnimatePresence>
                   {el.label && (

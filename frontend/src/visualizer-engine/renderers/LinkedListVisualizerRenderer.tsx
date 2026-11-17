@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const LinkedListVisualizerRenderer: React.FC<Props> = ({ state }) => {
-  const { nodes, kind, headId, tailId } = state;
+  const { nodes, kind } = state;
 
   return (
     <div className="w-full flex flex-col items-center justify-center gap-6 py-6 select-none overflow-x-auto">

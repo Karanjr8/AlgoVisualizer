@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RecursionVisualizerState } from '../types/ds-states';
-import { Layers, ArrowDown } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const RecursionVisualizerRenderer: React.FC<Props> = ({ state }) => {
-  const { callStack, maxDepth, currentResult, grid, activeRow, activeCol } = state;
+  const { callStack, currentResult, grid, activeRow, activeCol } = state;
 
   return (
     <div className="w-full flex flex-col lg:flex-row items-center justify-center gap-8 py-4 select-none">

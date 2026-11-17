@@ -80,6 +80,12 @@ export interface TreeNode {
   level: number;
   x?: number;
   y?: number;
+  role?: string;
+  label?: string;
+  hd?: number;
+  inDiameter?: boolean;
+  viewTag?: string;
+  threadToId?: string | null;
 }
 
 export interface TreeVisualizerState {
@@ -92,8 +98,19 @@ export interface TreeVisualizerState {
     pivotNodeId: string;
     description: string;
   };
-  treeType: 'binary-tree' | 'bst' | 'avl';
+  treeType: 'binary-tree' | 'bst' | 'avl' | 'full' | 'complete' | 'perfect' | 'degenerate';
   message?: string;
+  threadEdges?: Array<{ from: string; to: string; id: string }>;
+  activeEdgeId?: string | null;
+  highlightEdges?: string[];
+  diameterEdges?: string[];
+  lcaEdges?: string[];
+  serializedStream?: string;
+  activeView?: 'top' | 'bottom' | 'left' | 'right' | null;
+  viewNodes?: Record<string, number[]>;
+  queue?: (number | string)[];
+  callStack?: string[];
+  activeComparison?: { value: number; comparedWith: number; result: string };
 }
 
 // ==================== GRAPH ====================

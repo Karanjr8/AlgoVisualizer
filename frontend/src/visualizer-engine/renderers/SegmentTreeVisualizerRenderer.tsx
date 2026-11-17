@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { SegmentTreeVisualizerState, SegmentTreeNode } from '../types/ds-states';
-import { cn } from '../../lib/utils';
 
 interface Props {
   state: SegmentTreeVisualizerState;

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TrieVisualizerState, TrieNode } from '../types/ds-states';
+import { TrieVisualizerState } from '../types/ds-states';
 import { cn } from '../../lib/utils';
 
 interface Props {
