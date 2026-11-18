@@ -1,11 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRoadmapNodes = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = __importDefault(require("../utils/prisma"));
 const getRoadmapNodes = async (req, res) => {
     try {
-        const nodes = await prisma.roadmapNode.findMany({
+        const nodes = await prisma_1.default.roadmapNode.findMany({
             orderBy: { recommendedOrder: 'asc' }
         });
         res.json(nodes);

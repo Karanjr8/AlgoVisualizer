@@ -1,12 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDashboardData = exports.logUserEvent = exports.recordUserActivity = exports.getUserRecommendations = exports.getUserFeed = exports.getUserPracticeStats = exports.getUserProgress = exports.updateUserProfile = exports.getUserProfile = void 0;
-const client_1 = require("@prisma/client");
+const prisma_1 = __importDefault(require("../utils/prisma"));
 const activityService_1 = require("../services/activityService");
-const prisma = new client_1.PrismaClient();
 // Helper to check and update streak
 async function checkAndUpdateStreak(userId) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma_1.default.user.findUnique({ where: { id: userId } });
     if (!user)
         return null;
     let currentStreak = user.currentStreak;
@@ -22,7 +24,7 @@ async function checkAndUpdateStreak(userId) {
         if (diffDays > 1) {
             // Streak broken
             currentStreak = 0;
-            await prisma.user.update({
+            await prisma_1.default.user.update({
                 where: { id: userId },
                 data: { currentStreak: 0 }
             });
@@ -39,7 +41,7 @@ const getUserProfile = async (req, res) => {
         const user = await checkAndUpdateStreak(userId);
         if (!user)
             return res.status(404).json({ error: 'User not found' });
-        const fullUser = await prisma.user.findUnique({
+        const fullUser = await prisma_1.default.user.findUnique({
             where: { id: userId },
             include: {
                 achievements: {
@@ -48,14 +50,14 @@ const getUserProfile = async (req, res) => {
             }
         });
         const { password, ...safeUser } = fullUser;
-        const algorithmsLearned = await prisma.progress.count({
+        const algorithmsLearned = await prisma_1.default.progress.count({
             where: { userId, completed: true }
         });
-        const totalAlgorithms = await prisma.algorithm.count();
-        const practiceSessions = await prisma.practiceAttempt.count({
+        const totalAlgorithms = await prisma_1.default.algorithm.count();
+        const practiceSessions = await prisma_1.default.practiceAttempt.count({
             where: { userId }
         });
-        const questionsSolved = await prisma.practiceAttempt.count({
+        const questionsSolved = await prisma_1.default.practiceAttempt.count({
             where: { userId, score: { gt: 0 } }
         });
         res.json({
@@ -64,7 +66,7 @@ const getUserProfile = async (req, res) => {
                 algorithmsLearned,
                 practiceSessions,
                 questionsSolved,
-                interviewSimulations: await prisma.practiceAttempt.count({
+                interviewSimulations: await prisma_1.default.practiceAttempt.count({
                     where: { userId, mode: 'Interview Simulator' }
                 }),
                 overallProgress: totalAlgorithms > 0 ? Math.round((algorithmsLearned / totalAlgorithms) * 100) : 0,
@@ -84,7 +86,7 @@ const updateUserProfile = async (req, res) => {
         if (!userId)
             return res.status(401).json({ error: 'Unauthorized' });
         const { name, username, avatar, bio, college, degree, graduationYear, currentRole, githubUrl, linkedinUrl, leetcodeUrl, codeforcesUrl, codechefUrl, gfgUrl, portfolioUrl } = req.body;
-        const updatedUser = await prisma.user.update({
+        const updatedUser = await prisma_1.default.user.update({
             where: { id: userId },
             data: {
                 ...(name !== undefined && { name }),
@@ -119,8 +121,8 @@ const getUserProgress = async (req, res) => {
         const userId = req.userId;
         if (!userId)
             return res.status(401).json({ error: 'Unauthorized' });
-        const algorithms = await prisma.algorithm.findMany();
-        const progress = await prisma.progress.findMany({
+        const algorithms = await prisma_1.default.algorithm.findMany();
+        const progress = await prisma_1.default.progress.findMany({
             where: { userId }
         });
         const categoriesMap = {};
@@ -156,7 +158,7 @@ const getUserPracticeStats = async (req, res) => {
         const userId = req.userId;
         if (!userId)
             return res.status(401).json({ error: 'Unauthorized' });
-        const attempts = await prisma.practiceAttempt.findMany({
+        const attempts = await prisma_1.default.practiceAttempt.findMany({
             where: { userId },
             orderBy: { createdAt: 'asc' }
         });
@@ -197,7 +199,7 @@ const getUserFeed = async (req, res) => {
         const userId = req.userId;
         if (!userId)
             return res.status(401).json({ error: 'Unauthorized' });
-        const activities = await prisma.userActivity.findMany({
+        const activities = await prisma_1.default.userActivity.findMany({
             where: { userId },
             orderBy: { timestamp: 'desc' },
             take: 15
@@ -216,7 +218,7 @@ const getUserRecommendations = async (req, res) => {
         if (!userId)
             return res.status(401).json({ error: 'Unauthorized' });
         // Find weak areas based on practice attempts with low accuracy
-        const weakAttempts = await prisma.practiceAttempt.findMany({
+        const weakAttempts = await prisma_1.default.practiceAttempt.findMany({
             where: { userId, accuracy: { lt: 50 } },
             orderBy: { createdAt: 'desc' },
             take: 5
@@ -224,8 +226,8 @@ const getUserRecommendations = async (req, res) => {
         const weakModes = Array.from(new Set(weakAttempts.map(a => a.mode)));
         const weakAreas = weakModes.length > 0 ? weakModes : ['Keep practicing to uncover weak areas!'];
         // Suggest incomplete topics
-        const algorithms = await prisma.algorithm.findMany();
-        const progress = await prisma.progress.findMany({ where: { userId } });
+        const algorithms = await prisma_1.default.algorithm.findMany();
+        const progress = await prisma_1.default.progress.findMany({ where: { userId } });
         const incomplete = algorithms.filter(algo => {
             const p = progress.find(pr => pr.algorithmId === algo.id);
             return !p || !p.completed;
@@ -314,18 +316,18 @@ const getDashboardData = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         // Fetch user progress & events
         const [progressItems, userEvents, userActivities, algorithms] = await Promise.all([
-            prisma.progress.findMany({ where: { userId } }),
-            prisma.userEvent.findMany({
+            prisma_1.default.progress.findMany({ where: { userId } }),
+            prisma_1.default.userEvent.findMany({
                 where: { userId },
                 orderBy: { timestamp: 'desc' },
                 take: 100
             }),
-            prisma.userActivity.findMany({
+            prisma_1.default.userActivity.findMany({
                 where: { userId },
                 orderBy: { timestamp: 'desc' },
                 take: 50
             }),
-            prisma.algorithm.findMany()
+            prisma_1.default.algorithm.findMany()
         ]);
         const algorithmsCompleted = progressItems.filter(p => p.completed).length;
         // Build 365 days contribution heatmap data from real events & activities

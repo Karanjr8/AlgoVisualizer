@@ -1,12 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.savePracticeAttempt = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = __importDefault(require("../utils/prisma"));
 const savePracticeAttempt = async (req, res) => {
     try {
         const { userId, mode, difficulty, score, accuracy, completionTime } = req.body;
-        const attempt = await prisma.practiceAttempt.create({
+        const attempt = await prisma_1.default.practiceAttempt.create({
             data: {
                 userId,
                 mode,

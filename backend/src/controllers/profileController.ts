@@ -1,9 +1,7 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/prisma';
 import { AuthRequest } from '../middlewares/auth';
 import { logUserActivity } from '../services/activityService';
-
-const prisma = new PrismaClient();
 
 // Helper to check and update streak
 async function checkAndUpdateStreak(userId: string) {

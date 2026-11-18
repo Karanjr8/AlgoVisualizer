@@ -1,7 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../utils/prisma';
 
 const SYNONYMS: Record<string, string> = {
   'dp': 'dynamic programming',
@@ -74,12 +72,12 @@ export const globalSearch = async (req: Request, res: Response) => {
 
     const searchTerms = expandQuery(query);
     
-    // Build an OR condition for all expanded terms
+    // Build an OR condition for all expanded terms (using PostgreSQL insensitive mode)
     const buildOr = (fields: string[]) => {
       return {
         OR: searchTerms.map(term => ({
           OR: fields.map(field => ({
-            [field]: { contains: term } // SQLite doesn't support insensitive easily without Prisma raw, but contains in Prisma SQLite is case-insensitive by default in newer versions
+            [field]: { contains: term, mode: 'insensitive' as const }
           }))
         }))
       };

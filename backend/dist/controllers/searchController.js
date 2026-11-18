@@ -1,8 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.globalSearch = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = __importDefault(require("../utils/prisma"));
 const SYNONYMS = {
     'dp': 'dynamic programming',
     'bs': 'binary search',
@@ -66,27 +68,27 @@ const globalSearch = async (req, res) => {
             return res.json([]);
         }
         const searchTerms = expandQuery(query);
-        // Build an OR condition for all expanded terms
+        // Build an OR condition for all expanded terms (using PostgreSQL insensitive mode)
         const buildOr = (fields) => {
             return {
                 OR: searchTerms.map(term => ({
                     OR: fields.map(field => ({
-                        [field]: { contains: term } // SQLite doesn't support insensitive easily without Prisma raw, but contains in Prisma SQLite is case-insensitive by default in newer versions
+                        [field]: { contains: term, mode: 'insensitive' }
                     }))
                 }))
             };
         };
         // Execute queries in parallel
-        const [algorithms, questions, roadmapNodes] = await prisma.$transaction([
-            prisma.algorithm.findMany({
+        const [algorithms, questions, roadmapNodes] = await prisma_1.default.$transaction([
+            prisma_1.default.algorithm.findMany({
                 where: buildOr(['name', 'category', 'relatedTopics', 'difficulty']),
                 take: 10
             }),
-            prisma.question.findMany({
+            prisma_1.default.question.findMany({
                 where: buildOr(['title', 'topic', 'pattern', 'tags', 'difficulty']),
                 take: 10
             }),
-            prisma.roadmapNode.findMany({
+            prisma_1.default.roadmapNode.findMany({
                 where: buildOr(['title', 'category', 'difficulty']),
                 take: 10
             })

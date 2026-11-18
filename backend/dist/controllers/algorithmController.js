@@ -1,11 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAlgorithmBySlug = exports.getAllAlgorithms = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = __importDefault(require("../utils/prisma"));
 const getAllAlgorithms = async (req, res) => {
     try {
-        const algorithms = await prisma.algorithm.findMany();
+        const algorithms = await prisma_1.default.algorithm.findMany();
         res.json(algorithms);
     }
     catch (error) {
@@ -16,7 +18,7 @@ exports.getAllAlgorithms = getAllAlgorithms;
 const getAlgorithmBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
-        const algorithm = await prisma.algorithm.findUnique({
+        const algorithm = await prisma_1.default.algorithm.findUnique({
             where: { slug: slug }
         });
         if (!algorithm)

@@ -350,14 +350,53 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
+# 🐘 PostgreSQL Database Setup
+
+AlgoVis is powered by **PostgreSQL** for enterprise-grade concurrency, relational integrity, and high-performance querying.
+
+### Option A: Using Docker Compose (Recommended)
+Start a local PostgreSQL 16 container with persistent storage:
+```bash
+docker compose up -d
+```
+
+### Option B: Using an Independently Installed PostgreSQL Server
+Ensure PostgreSQL is running locally on port 5432, then create the database:
+```sql
+CREATE DATABASE algovis;
+```
+
+### Database Commands (Backend)
+Navigate to the `backend/` directory:
+
+1. **Deploy Migrations**:
+   ```bash
+   npm run prisma:migrate
+   ```
+2. **Transfer Existing SQLite Data to PostgreSQL**:
+   ```bash
+   npm run db:migrate-data
+   ```
+3. **Seed Database (Algorithms, Questions, Achievements, Demo Users)**:
+   ```bash
+   npm run db:seed
+   ```
+4. **Generate Prisma Client**:
+   ```bash
+   npm run prisma:generate
+   ```
+
+---
+
 # 🛠 Environment Variables
 
 | Variable | Description |
 |-----------|-------------|
-| PORT | Backend Port |
-| DATABASE_URL | SQLite Database |
-| JWT_SECRET | Secret key used for JWT |
-| GEMINI_API_KEY | Google Gemini API Key |
+| PORT | Backend Port (default: 5000) |
+| DATABASE_URL | PostgreSQL Connection URI: `postgresql://USER:PASSWORD@HOST:5432/algovis?schema=public` |
+| JWT_SECRET | Secret key used for JWT signing and verification |
+| GEMINI_API_KEY | Google Gemini API Key from Google AI Studio |
+| GEMINI_MODEL | Configured Gemini Model (default: `gemini-3.8-flash`) |
 
 ---
 

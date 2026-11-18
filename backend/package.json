@@ -5,7 +5,13 @@
   "scripts": {
     "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "db:migrate-data": "node scripts/migrate-sqlite-to-postgres.js",
+    "db:dump-sqlite": "node scripts/dump-sqlite-data.js",
+    "db:seed": "ts-node prisma/seed.ts && ts-node prisma/seed-user.ts"
   },
   "keywords": [],
   "author": "",
