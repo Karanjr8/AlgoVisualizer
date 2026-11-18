@@ -10,5 +10,6 @@ router.get('/', auth_1.optionalAuth, interviewController_1.listUserInterviews);
 router.get('/:id', auth_1.optionalAuth, interviewController_1.getInterview);
 router.post('/:id/answers', auth_1.optionalAuth, interviewController_1.submitAnswer);
 router.post('/:id/end', auth_1.optionalAuth, interviewController_1.endInterview);
+router.post('/:id/retry-report', auth_1.optionalAuth, interviewController_1.retryReport);
 router.get('/:id/report', auth_1.optionalAuth, interviewController_1.getInterviewReport);
 exports.default = router;

@@ -1,5 +1,15 @@
 import { cn } from '../../lib/utils';
-import { GraduationCap, Code, Layout, Server, Layers, Cpu, Check } from 'lucide-react';
+import {
+  GraduationCap,
+  Code,
+  Layout,
+  Server,
+  Layers,
+  Cpu,
+  Database,
+  Terminal,
+  Check,
+} from 'lucide-react';
 
 export interface RoleOption {
   id: string;
@@ -10,40 +20,52 @@ export interface RoleOption {
 
 export const ROLES: RoleOption[] = [
   {
-    id: 'sde-intern',
-    name: 'SDE Intern',
-    tagline: 'Algorithms • Data Structures • CS Basics',
-    icon: GraduationCap,
-  },
-  {
-    id: 'sde-1',
-    name: 'SDE 1',
-    tagline: 'Core Coding • Problem Solving • Edge Cases',
+    id: 'sde',
+    name: 'Software Development Engineer',
+    tagline: 'Algorithms • OOP • Problem Solving • System Design',
     icon: Code,
   },
   {
-    id: 'frontend-engineer',
-    name: 'Frontend Engineer',
-    tagline: 'React • JavaScript • UI Architecture',
+    id: 'software-engineer',
+    name: 'Software Engineer',
+    tagline: 'Full Engineering Lifecycle • Clean Architecture',
+    icon: Terminal,
+  },
+  {
+    id: 'frontend-dev',
+    name: 'Frontend Developer',
+    tagline: 'JavaScript • React.js • Browser Internals • CSS/UI',
     icon: Layout,
   },
   {
-    id: 'backend-engineer',
-    name: 'Backend Engineer',
-    tagline: 'APIs • Databases • Scalability',
+    id: 'backend-dev',
+    name: 'Backend Developer',
+    tagline: 'APIs • Node.js • DBMS • Concurrency • Distributed Systems',
     icon: Server,
   },
   {
-    id: 'fullstack-engineer',
-    name: 'Full Stack Engineer',
-    tagline: 'Frontend + Backend Systems',
+    id: 'fullstack-dev',
+    name: 'Full Stack Developer',
+    tagline: 'End-to-End Client & Server • Database Architecture',
     icon: Layers,
   },
   {
-    id: 'ds-specialist',
-    name: 'Data Structures Specialist',
-    tagline: 'Trees • Graphs • Dynamic Programming',
+    id: 'database-dev',
+    name: 'Database Developer',
+    tagline: 'SQL • Indexing • ACID • Query Optimization • NoSQL',
+    icon: Database,
+  },
+  {
+    id: 'dsa-specialist',
+    name: 'Data Structures and Algorithms',
+    tagline: 'Trees • Graphs • Dynamic Programming • Asymptotic Proofs',
     icon: Cpu,
+  },
+  {
+    id: 'sde-intern',
+    name: 'SDE Intern',
+    tagline: 'CS Fundamentals • Arrays • Strings • Problem Solving',
+    icon: GraduationCap,
   },
 ];
 
@@ -60,12 +82,12 @@ export const RoleCardGroup = ({ selectedRole, onSelectRole }: RoleCardGroupProps
           Target Role
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-          Select the engineering level or domain to tailor questions and evaluation focus.
+          Select your target engineering profile. Questions will strictly align with this technical domain.
         </p>
       </div>
 
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         {ROLES.map((role) => {
           const isSelected = selectedRole === role.id;
           const Icon = role.icon;
@@ -94,16 +116,17 @@ export const RoleCardGroup = ({ selectedRole, onSelectRole }: RoleCardGroupProps
 
               <div className="flex flex-col gap-1 flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1.5">
-                  <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                  <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
                     {role.name}
                   </h3>
                   {isSelected && (
-                    <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
-                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                    <span className="w-4 h-4 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <Check className="w-2.5 h-2.5 text-primary-foreground stroke-[3]" />
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground font-medium leading-snug">
+
+                <p className="text-xs text-muted-foreground font-medium line-clamp-2">
                   {role.tagline}
                 </p>
               </div>

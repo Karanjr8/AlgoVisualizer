@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import {
   Bot,
@@ -18,9 +18,21 @@ import {
   ChevronUp,
   BrainCircuit,
   MessageSquare,
+  Printer,
+  Sparkles,
+  Zap,
+  TrendingUp,
+  BookOpen,
+  Check,
+  XCircle,
+  AlertTriangle,
+  Lightbulb,
+  ExternalLink,
+  RotateCcw,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { cn } from '../lib/utils';
 
 interface Message {
   id: string;
@@ -30,10 +42,14 @@ interface Message {
   content: string;
   questionTopic?: string | null;
   questionType?: string | null;
+  timeSpentSeconds?: number | null;
+  timedOut?: boolean;
   createdAt?: string;
   evaluationSnippet?: {
     overallScore?: number;
     feedback?: string;
+    strengths?: string;
+    weaknesses?: string;
   };
 }
 
@@ -44,23 +60,50 @@ interface DimensionScore {
 }
 
 interface QuestionReview {
+  questionNumber: number;
   question: string;
   topic: string;
   candidateAnswer: string;
   score: number;
-  feedback: string;
-  improvement: string;
+  correctness: 'Correct' | 'Partially Correct' | 'Incorrect' | 'Unanswered';
+  whatExplainedWell: string;
+  whatWasMissing: string;
+  suggestedIdealAnswer: string;
+  conceptsToRevise: string[];
+  answeredOnTime: boolean;
+  timeSpentSeconds?: number;
+}
+
+interface TopicPerformance {
+  topic: string;
+  questionsCount: number;
+  averageScore: number;
+  strongAreas: string[];
+  weakAreas: string[];
+  conceptsToImprove: string[];
+}
+
+interface ActionablePlanItem {
+  priority: 'High' | 'Medium' | 'Low';
+  topic: string;
+  concept: string;
+  recommendedAction: string;
+  suggestedPractice: string;
 }
 
 interface ReportData {
   id?: string;
   overallScore: number | null;
+  performanceGrade?: 'Excellent' | 'Very Good' | 'Good' | 'Average' | 'Needs Improvement' | null;
   summary: string;
   strengths: string[];
   improvementAreas: string[];
   dimensionScores: Record<string, DimensionScore>;
+  topicScores?: Record<string, TopicPerformance>;
   questionReviews: QuestionReview[];
   recommendations: string[];
+  actionablePlan?: ActionablePlanItem[];
+  interviewerFeedback?: string;
 }
 
 interface SessionData {
@@ -74,6 +117,7 @@ interface SessionData {
   status: 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
   turnCount: number;
   maxTurns: number;
+  timeLimitPerQuestion?: number;
   startedAt: string;
   completedAt?: string | null;
   messages?: Message[];
@@ -92,13 +136,19 @@ export const InterviewSession: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isRetryingReport, setIsRetryingReport] = useState(false);
+  const [error, setError] = useState<{ message: string; canRetry?: boolean; lastAction?: 'submit' | 'report' } | null>(null);
+  const [lastAttemptedAnswer, setLastAttemptedAnswer] = useState<string>('');
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const [missingConfigNotice, setMissingConfigNotice] = useState<string | null>(null);
   const [report, setReport] = useState<ReportData | null>(null);
   const [showEndModal, setShowEndModal] = useState(false);
   const [showTranscriptInReport, setShowTranscriptInReport] = useState(false);
+  const [expandedQuestionReview, setExpandedQuestionReview] = useState<number | null>(1);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Time Pressure Countdown State
+  const [questionTimeRemaining, setQuestionTimeRemaining] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -112,7 +162,7 @@ export const InterviewSession: React.FC = () => {
     scrollToBottom();
   }, [messages, isSubmitting]);
 
-  // Elapsed timer
+  // Overall session elapsed timer
   useEffect(() => {
     if (session?.status !== 'IN_PROGRESS') return;
 
@@ -128,6 +178,10 @@ export const InterviewSession: React.FC = () => {
     const secs = totalSecs % 60;
     return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
+
+  // Helper to determine active question sequence
+  const latestInterviewerMsg = [...messages].reverse().find((m) => m.sender === 'interviewer');
+  const currentQuestionSeq = latestInterviewerMsg ? latestInterviewerMsg.sequenceNumber : 1;
 
   // Initialize or fetch session
   useEffect(() => {
@@ -179,72 +233,146 @@ export const InterviewSession: React.FC = () => {
           }
         } catch (err: any) {
           console.error('Failed to load session:', err);
-          setError(err?.response?.data?.error || 'Unable to retrieve interview session.');
+          setError({
+            message: err?.response?.data?.error || 'Unable to retrieve interview session.',
+            canRetry: true,
+          });
         } finally {
           setIsLoadingSession(false);
         }
         return;
       }
 
-      // If no session passed and no ID in params, redirect to setup
       navigate('/practice/interview', { replace: true });
     };
 
     initSession();
   }, [location.state, paramSessionId, navigate]);
 
-  // Submit Answer
+  // Submit Answer handler
+  const doSubmitAnswer = useCallback(
+    async (forcedAnswer?: string, isTimeout: boolean = false) => {
+      if (!session || isSubmitting) return;
+
+      const answerText = forcedAnswer !== undefined ? forcedAnswer : candidateInput.trim();
+      if (!answerText && !isTimeout) return;
+
+      setLastAttemptedAnswer(answerText);
+      setError(null);
+      setIsSubmitting(true);
+
+      const limit = session.timeLimitPerQuestion || 0;
+      const spent = limit > 0 && questionTimeRemaining !== null ? Math.max(1, limit - questionTimeRemaining) : undefined;
+
+      try {
+        const res = await api.post(`/interviews/${session.id}/answers`, {
+          answer: answerText || (isTimeout ? '[Time Expired - No response submitted]' : '[No response submitted]'),
+          modality: 'text',
+          timeSpentSeconds: spent,
+          timedOut: isTimeout,
+        });
+
+        const { candidateMessage, interviewerMessage, evaluation, isComplete, turnCount, report: finalReport } = res.data;
+
+        // Append messages
+        setMessages((prev) => [
+          ...prev,
+          candidateMessage,
+          {
+            ...interviewerMessage,
+            evaluationSnippet: evaluation
+              ? {
+                  overallScore: evaluation.overallScore,
+                  feedback: evaluation.evaluationExplanation || evaluation.feedback,
+                  strengths: evaluation.whatExplainedCorrectly || evaluation.strengths,
+                  weaknesses: evaluation.areasForImprovement || evaluation.weaknesses,
+                }
+              : undefined,
+          },
+        ]);
+
+        // Clear input
+        setCandidateInput('');
+
+        // Update session turn count
+        setSession((prev) => (prev ? { ...prev, turnCount } : prev));
+
+        // Reset timer storage for new question
+        if (session.timeLimitPerQuestion && session.timeLimitPerQuestion > 0) {
+          sessionStorage.removeItem(`interview_q_timer_${session.id}_${currentQuestionSeq}`);
+        }
+
+        // Handle completion
+        if (isComplete) {
+          setSession((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev));
+          if (finalReport) {
+            setReport(finalReport);
+          }
+        }
+      } catch (err: any) {
+        console.error('Failed to submit answer:', err);
+        setError({
+          message: err?.response?.data?.error || 'Live AI evaluation failed. Your answer is preserved. Please click Retry.',
+          canRetry: true,
+          lastAction: 'submit',
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [session, isSubmitting, candidateInput, questionTimeRemaining, currentQuestionSeq]
+  );
+
+  // Time Pressure Mode Countdown Timer Logic with anti-refresh reset
+  useEffect(() => {
+    if (session?.status !== 'IN_PROGRESS' || !session.timeLimitPerQuestion || session.timeLimitPerQuestion <= 0) {
+      setQuestionTimeRemaining(null);
+      return;
+    }
+
+    if (isSubmitting) return;
+
+    const timeLimit = session.timeLimitPerQuestion;
+    const storageKey = `interview_q_timer_${session.id}_${currentQuestionSeq}`;
+
+    let startTimestamp = parseInt(sessionStorage.getItem(storageKey) || '0', 10);
+    const now = Date.now();
+
+    if (!startTimestamp || isNaN(startTimestamp)) {
+      startTimestamp = now;
+      sessionStorage.setItem(storageKey, startTimestamp.toString());
+    }
+
+    const elapsed = Math.floor((now - startTimestamp) / 1000);
+    const initialRemaining = Math.max(0, timeLimit - elapsed);
+    setQuestionTimeRemaining(initialRemaining);
+
+    if (initialRemaining <= 0) {
+      doSubmitAnswer(candidateInput.trim(), true);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setQuestionTimeRemaining((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(timer);
+          doSubmitAnswer(candidateInput.trim(), true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [session?.id, session?.status, session?.timeLimitPerQuestion, currentQuestionSeq, isSubmitting, doSubmitAnswer]);
+
   const handleSubmitAnswer = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!session || !candidateInput.trim() || isSubmitting) return;
-
-    const answerText = candidateInput.trim();
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      const res = await api.post(`/interviews/${session.id}/answers`, {
-        answer: answerText,
-        modality: 'text',
-      });
-
-      const { candidateMessage, interviewerMessage, evaluation, isComplete, turnCount, report: finalReport } = res.data;
-
-      // Append messages
-      setMessages((prev) => [
-        ...prev,
-        candidateMessage,
-        {
-          ...interviewerMessage,
-          evaluationSnippet: evaluation
-            ? {
-                overallScore: evaluation.overallScore,
-                feedback: evaluation.feedback,
-              }
-            : undefined,
-        },
-      ]);
-
-      // Clear input
-      setCandidateInput('');
-
-      // Update session turn count
-      setSession((prev) => (prev ? { ...prev, turnCount } : prev));
-
-      // Handle completion if interview concluded
-      if (isComplete && finalReport) {
-        setSession((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev));
-        setReport(finalReport);
-      }
-    } catch (err: any) {
-      console.error('Failed to submit answer:', err);
-      setError(err?.response?.data?.error || 'Failed to submit response. Please retry.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    if (!candidateInput.trim()) return;
+    await doSubmitAnswer(candidateInput.trim(), false);
   };
 
-  // Handle Ctrl+Enter to submit
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
@@ -252,8 +380,8 @@ export const InterviewSession: React.FC = () => {
     }
   };
 
-  // End Interview manually
-  const handleEndInterview = async () => {
+  // End Interview Early
+  const handleConfirmEndInterview = async () => {
     if (!session || isEnding) return;
     setIsEnding(true);
     setShowEndModal(false);
@@ -261,162 +389,513 @@ export const InterviewSession: React.FC = () => {
 
     try {
       const res = await api.post(`/interviews/${session.id}/end`);
-      const { report: finalReport } = res.data;
-      setSession((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev));
-      setReport(finalReport);
+      if (res.data?.report) {
+        setSession((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev));
+        setReport(res.data.report);
+      }
     } catch (err: any) {
-      console.error('Failed to conclude interview:', err);
-      setError(err?.response?.data?.error || 'Unable to conclude interview session.');
+      console.error('Failed to end interview:', err);
+      setError({
+        message: err?.response?.data?.error || 'Failed to generate live assessment report. Please click Retry Report.',
+        canRetry: true,
+        lastAction: 'report',
+      });
     } finally {
       setIsEnding(false);
     }
   };
 
-  // Loading Screen
+  // Retry generating report
+  const handleRetryReport = async () => {
+    if (!session || isRetryingReport) return;
+    setIsRetryingReport(true);
+    setError(null);
+
+    try {
+      const res = await api.post(`/interviews/${session.id}/retry-report`);
+      if (res.data?.report) {
+        setReport(res.data.report);
+        setSession((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev));
+      }
+    } catch (err: any) {
+      console.error('Retry report generation failed:', err);
+      setError({
+        message: err?.response?.data?.error || 'AI assessment report generation failed. Please check Gemini API configuration.',
+        canRetry: true,
+        lastAction: 'report',
+      });
+    } finally {
+      setIsRetryingReport(false);
+    }
+  };
+
+  const getGradeStyle = (grade?: string | null, score?: number | null) => {
+    const s = score || 0;
+    if (s >= 90 || grade === 'Excellent') {
+      return {
+        bg: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+        text: 'text-emerald-500',
+        border: 'border-emerald-500/30',
+        label: 'Excellent',
+      };
+    }
+    if (s >= 80 || grade === 'Very Good') {
+      return {
+        bg: 'bg-primary/10 text-primary border-primary/20',
+        text: 'text-primary',
+        border: 'border-primary/30',
+        label: 'Very Good',
+      };
+    }
+    if (s >= 70 || grade === 'Good') {
+      return {
+        bg: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+        text: 'text-blue-500',
+        border: 'border-blue-500/30',
+        label: 'Good',
+      };
+    }
+    if (s >= 55 || grade === 'Average') {
+      return {
+        bg: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+        text: 'text-amber-500',
+        border: 'border-amber-500/30',
+        label: 'Average',
+      };
+    }
+    return {
+      bg: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+      text: 'text-rose-500',
+      border: 'border-rose-500/30',
+      label: 'Needs Improvement',
+    };
+  };
+
+  // ==========================================
+  // LOADING STATE
+  // ==========================================
   if (isLoadingSession) {
     return (
       <WorkspaceLayout>
-        <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3">
-          <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-semibold text-muted-foreground">Loading interview session...</p>
+        <div className="w-full min-h-[60vh] flex flex-col items-center justify-center gap-4 text-foreground">
+          <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+          <h2 className="text-xl font-bold">Initializing Live Gemini Interview Session...</h2>
+          <p className="text-sm text-muted-foreground font-medium">
+            Contacting AI model and preparing tailored questions.
+          </p>
         </div>
       </WorkspaceLayout>
     );
   }
 
   // ==========================================
-  // RENDER REPORT VIEW (When session is complete)
+  // COMPLETED SESSION - REPORT PENDING STATE
   // ==========================================
-  if (session?.status === 'COMPLETED' && report) {
+  if (session?.status === 'COMPLETED' && !report) {
     return (
       <WorkspaceLayout>
-        <div className="w-full flex flex-col gap-8 pb-16 text-left">
-          {/* REPORT TOP BAR */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => navigate('/practice/interview')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-border/80 text-xs font-bold hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to Setup
-              </button>
+        <div className="w-full flex flex-col items-center justify-center min-h-[60vh] gap-6 text-left max-w-2xl mx-auto p-6 bg-card border border-border/80 rounded-3xl shadow-xl">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center">
+            <Award className="w-8 h-8" />
+          </div>
 
-              <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Completed Session
-              </span>
+          <div className="space-y-2 text-center">
+            <h2 className="text-2xl font-black text-foreground">Interview Concluded</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Your interview responses have been recorded. Click below to generate your complete, evidence-based diagnostic assessment report using live Gemini AI.
+            </p>
+          </div>
+
+          {error && (
+            <div className="w-full p-4 rounded-2xl bg-destructive/15 border border-destructive/30 text-destructive text-xs font-semibold flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{error.message}</span>
             </div>
+          )}
 
-            <div className="flex items-center gap-2">
-              <Link
-                to="/practice"
-                className="px-3.5 py-1.5 rounded-xl bg-secondary text-foreground text-xs font-bold hover:bg-secondary/80 transition-colors"
-              >
-                Practice Arena
-              </Link>
+          <button
+            type="button"
+            onClick={handleRetryReport}
+            disabled={isRetryingReport}
+            className="w-full py-3.5 px-6 rounded-2xl bg-primary text-primary-foreground font-black text-sm shadow-md hover:bg-primary/95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            {isRetryingReport ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Generating Comprehensive AI Assessment Report...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                <span>Generate Diagnostic Assessment Report</span>
+              </>
+            )}
+          </button>
+        </div>
+      </WorkspaceLayout>
+    );
+  }
+
+  // ==========================================
+  // COMPREHENSIVE AI ASSESSMENT REPORT VIEW
+  // ==========================================
+  if (session?.status === 'COMPLETED' && report) {
+    const gradeStyle = getGradeStyle(report.performanceGrade, report.overallScore);
+    const completedDate = session.completedAt
+      ? new Date(session.completedAt).toLocaleDateString(undefined, {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : new Date().toLocaleDateString();
+
+    const attemptedCount = messages.filter((m) => m.sender === 'candidate').length;
+
+    return (
+      <WorkspaceLayout>
+        <div className="w-full flex flex-col gap-8 pb-20 text-left max-w-6xl mx-auto print:max-w-full">
+          {/* TOP ACTION BAR */}
+          <div className="flex items-center justify-between gap-4 border-b border-border/80 pb-4 print:hidden">
+            <button
+              type="button"
+              onClick={() => navigate('/practice/interview')}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-secondary text-xs sm:text-sm font-bold hover:bg-secondary/80 text-foreground transition-all cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" /> Start New Interview
+            </button>
+
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                onClick={() => navigate('/practice/interview')}
-                className="px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:brightness-110 shadow-xs transition-all cursor-pointer"
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs sm:text-sm font-bold transition-all cursor-pointer"
               >
-                Start New Interview
+                <Printer className="w-4 h-4" /> Download / Print Report
               </button>
             </div>
           </div>
 
-          {/* REPORT HEADER SUMMARY CARD */}
-          <div className="bg-card border border-border/80 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-            <div className="space-y-2 max-w-2xl">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                  Diagnostic Performance Report
-                </span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {session.role} ({session.difficulty})
-                </span>
+          {/* SECTION A: INTERVIEW OVERVIEW BANNER */}
+          <div className="w-full bg-gradient-to-r from-card/90 via-card/50 to-primary/10 border border-border/80 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-bold uppercase tracking-wider">
+                  <Award className="w-3.5 h-3.5" /> Live AI Diagnostic Assessment Report
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
+                  {session.role} Technical Assessment
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+                  Conducted on {completedDate} &bull; Difficulty: <strong className="text-foreground">{session.difficulty}</strong> &bull; Format: <strong className="text-foreground">{session.interviewStyle}</strong>
+                </p>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {session.selectedTopics.map((t) => (
+                    <span key={t} className="px-2.5 py-0.5 rounded-lg bg-secondary text-[11px] font-semibold text-foreground border border-border/60">
+                      {t}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
-                Interview <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-400 to-blue-500">Evaluation</span>
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">
+
+              {/* OVERVIEW STATS BADGES */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 self-stretch lg:self-auto">
+                <div className="p-3 bg-card/80 border border-border/80 rounded-2xl text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    Questions
+                  </span>
+                  <span className="font-mono font-black text-lg text-foreground">
+                    {attemptedCount} / {session.maxTurns}
+                  </span>
+                </div>
+                <div className="p-3 bg-card/80 border border-border/80 rounded-2xl text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    Total Time
+                  </span>
+                  <span className="font-mono font-black text-lg text-foreground">
+                    {formatTimer(elapsedSeconds)}
+                  </span>
+                </div>
+                <div className="p-3 bg-card/80 border border-border/80 rounded-2xl text-center col-span-2 sm:col-span-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    Mode
+                  </span>
+                  <span className="font-mono font-bold text-xs text-foreground block mt-1">
+                    {session.timeLimitPerQuestion ? `${session.timeLimitPerQuestion}s Timed` : 'Untimed'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION B: OVERALL PERFORMANCE SCORE CARD */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* SCORE HERO CARD */}
+            <div className="lg:col-span-5 bg-card/90 border border-border/80 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col justify-between gap-6 relative overflow-hidden backdrop-blur-md">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                  Overall Performance Score
+                </span>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-5xl sm:text-6xl font-black font-mono text-foreground tracking-tight">
+                    {report.overallScore || 0}
+                  </span>
+                  <span className="text-xl font-bold text-muted-foreground">/ 100</span>
+                </div>
+
+                <div className="mt-3">
+                  <span className={cn('inline-block px-3 py-1 rounded-xl border text-xs sm:text-sm font-black uppercase tracking-wider', gradeStyle.bg)}>
+                    Rating: {report.performanceGrade || gradeStyle.label}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-background/60 border border-border/70 text-xs sm:text-sm font-medium text-foreground/90 leading-relaxed">
                 {report.summary}
-              </p>
+              </div>
+
+              <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Evaluation Engine</span>
+                <span className="font-bold text-foreground">Google Gemini Semantic Rubric</span>
+              </div>
             </div>
 
-            {/* Overall Score Badge */}
-            <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-primary/5 border border-primary/20 shrink-0 min-w-[150px]">
-              <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1">
-                Overall Score
-              </span>
-              <div className="flex items-baseline gap-1 text-primary">
-                <span className="text-4xl font-black">{report.overallScore ?? 'N/A'}</span>
-                <span className="text-xs font-bold text-muted-foreground">/ 5.0</span>
+            {/* SECTION C: PARAMETER-WISE ASSESSMENT METERS */}
+            <div className="lg:col-span-7 bg-card/90 border border-border/80 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col justify-between gap-4 backdrop-blur-md">
+              <div className="border-b border-border/60 pb-3">
+                <h3 className="font-black text-lg text-foreground flex items-center gap-2">
+                  <Target className="w-5 h-5 text-primary" /> Evaluation Dimensions (/10)
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Scores across core parameters generated dynamically by Gemini from candidate answers.
+                </p>
               </div>
-              <span className="text-[11px] font-semibold text-emerald-500 mt-1 flex items-center gap-1">
-                <Trophy className="w-3 h-3" />
-                {(report.overallScore || 0) >= 4 ? 'Interview Ready' : 'Proficient'}
-              </span>
+
+              <div className="space-y-3.5">
+                {Object.entries(report.dimensionScores || {}).map(([key, dim]) => {
+                  const scoreVal = dim.score || 0;
+                  const pct = Math.min(100, Math.max(0, scoreVal * 10));
+
+                  return (
+                    <div key={key} className="space-y-1">
+                      <div className="flex justify-between items-center text-xs font-bold">
+                        <span className="text-foreground">{dim.label}</span>
+                        <span className="font-mono text-primary font-black">
+                          {scoreVal.toFixed(1)} / 10
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      {dim.feedback && (
+                        <p className="text-[11px] text-muted-foreground leading-tight">
+                          {dim.feedback}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* DIMENSIONS PERFORMANCE BREAKDOWN */}
-          {report.dimensionScores && Object.keys(report.dimensionScores).length > 0 && (
-            <div className="flex flex-col gap-3">
-              <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-                <Target className="w-4 h-4 text-primary" /> Evaluation Dimension Breakdown
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                {Object.entries(report.dimensionScores).map(([key, dim]) => (
-                  <div key={key} className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-foreground">{dim.label}</span>
-                      <span className="text-xs font-black text-primary px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
-                        {dim.score} / 5.0
+          {/* SECTION D: TOPIC-WISE PERFORMANCE */}
+          {report.topicScores && Object.keys(report.topicScores).length > 0 && (
+            <div className="w-full bg-card/90 border border-border/80 rounded-3xl p-6 sm:p-8 shadow-xl space-y-5 backdrop-blur-md">
+              <div className="border-b border-border/60 pb-3">
+                <h3 className="font-black text-lg text-foreground flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-primary" /> Topic-wise Performance
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Performance across candidate's selected domains with identified strengths and revision needs.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.values(report.topicScores).map((tp) => (
+                  <div key={tp.topic} className="p-4 rounded-2xl bg-background/60 border border-border/70 space-y-3">
+                    <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                      <span className="font-bold text-sm text-foreground truncate">{tp.topic}</span>
+                      <span className="font-mono font-black text-xs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                        {tp.averageScore.toFixed(1)} / 10
                       </span>
                     </div>
-                    {/* Progress Bar */}
-                    <div className="w-full h-1.5 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-primary to-blue-500 rounded-full"
-                        style={{ width: `${Math.min(100, (dim.score / 5) * 100)}%` }}
-                      />
+
+                    <div className="space-y-1.5 text-xs">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-emerald-500 block">Strong Areas:</span>
+                        <p className="text-muted-foreground font-medium">{tp.strongAreas.join(', ')}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-rose-500 block">Topics to Revise:</span>
+                        <p className="text-muted-foreground font-medium">{tp.weakAreas.join(', ')}</p>
+                      </div>
                     </div>
-                    <p className="text-[11px] text-muted-foreground font-medium leading-snug">
-                      {dim.feedback}
-                    </p>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* STRENGTHS & AREAS FOR IMPROVEMENT */}
+          {/* SECTION E: QUESTION-BY-QUESTION REVIEW */}
+          <div className="w-full bg-card/90 border border-border/80 rounded-3xl p-6 sm:p-8 shadow-xl space-y-5 backdrop-blur-md">
+            <div className="border-b border-border/60 pb-3">
+              <h3 className="font-black text-lg text-foreground flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" /> Question-by-Question Evaluation & Ideal Answers
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Semantic analysis of each question, submitted candidate reasoning, weaknesses identified, and ideal answers.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {report.questionReviews.map((qr) => {
+                const isOpen = expandedQuestionReview === qr.questionNumber;
+                const isCorrect = qr.correctness === 'Correct';
+                const isUnanswered = qr.correctness === 'Unanswered';
+
+                return (
+                  <div
+                    key={qr.questionNumber}
+                    className="border border-border/80 rounded-2xl bg-background/60 overflow-hidden transition-all shadow-xs"
+                  >
+                    <div
+                      onClick={() => setExpandedQuestionReview(isOpen ? null : qr.questionNumber)}
+                      className="p-4 flex items-start sm:items-center justify-between gap-3 cursor-pointer hover:bg-muted/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-7 h-7 rounded-xl bg-primary/10 text-primary font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                          Q{qr.questionNumber}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-secondary text-foreground">
+                              {qr.topic}
+                            </span>
+                            <span
+                              className={cn(
+                                'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border',
+                                isCorrect
+                                  ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                  : isUnanswered
+                                  ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                                  : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                              )}
+                            >
+                              {qr.correctness}
+                            </span>
+                          </div>
+                          <p className="text-xs sm:text-sm font-bold text-foreground mt-1 truncate">
+                            {qr.question}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="font-mono font-black text-sm text-foreground">
+                          {qr.score}/10
+                        </span>
+                        {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                      </div>
+                    </div>
+
+                    {isOpen && (
+                      <div className="p-4 sm:p-6 border-t border-border/60 space-y-4 text-xs sm:text-sm bg-card/40">
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
+                            Interviewer Question:
+                          </span>
+                          <p className="p-3 rounded-xl bg-background border border-border/70 font-semibold text-foreground">
+                            {qr.question}
+                          </p>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
+                            Candidate's Submitted Answer:
+                          </span>
+                          <p className="p-3 rounded-xl bg-background border border-border/70 font-medium text-foreground whitespace-pre-wrap">
+                            {qr.candidateAnswer}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-1">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> What Was Handled Well
+                            </span>
+                            <p className="text-xs text-foreground/90 font-medium">
+                              {qr.whatExplainedWell}
+                            </p>
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/20 space-y-1">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-500 flex items-center gap-1">
+                              <AlertCircle className="w-3.5 h-3.5" /> Missing Concepts & Flaws
+                            </span>
+                            <p className="text-xs text-foreground/90 font-medium">
+                              {qr.whatWasMissing}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 space-y-1.5">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-primary flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5" /> Suggested Ideal Answer
+                          </span>
+                          <p className="text-xs text-foreground font-medium leading-relaxed">
+                            {qr.suggestedIdealAnswer}
+                          </p>
+                        </div>
+
+                        {qr.conceptsToRevise && qr.conceptsToRevise.length > 0 && (
+                          <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border/40">
+                            <span className="text-[11px] font-bold text-muted-foreground uppercase">
+                              Revision Concepts:
+                            </span>
+                            {qr.conceptsToRevise.map((c) => (
+                              <span key={c} className="px-2 py-0.5 rounded-md bg-secondary text-[11px] font-mono font-medium text-foreground border border-border/60">
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SECTIONS F & G: STRENGTHS & WEAKNESSES */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Strengths */}
-            <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm flex flex-col gap-3">
-              <div className="flex items-center gap-2 text-emerald-500 font-bold text-sm">
-                <CheckCircle2 className="w-4 h-4" /> Key Strengths
+            <div className="bg-card/90 border border-border/80 rounded-3xl p-6 shadow-xl space-y-4 backdrop-blur-md">
+              <div className="flex items-center gap-2 text-emerald-500 border-b border-border/60 pb-3">
+                <CheckCircle2 className="w-5 h-5" />
+                <h3 className="font-black text-lg text-foreground">Demonstrated Strengths</h3>
               </div>
-              <ul className="space-y-2">
+              <ul className="space-y-2.5 text-xs sm:text-sm font-medium text-foreground/90">
                 {report.strengths.map((str, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-foreground/90 font-medium">
-                    <span className="text-emerald-500 font-bold shrink-0">&bull;</span>
+                  <li key={idx} className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-2" />
                     <span>{str}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Improvement Areas */}
-            <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm flex flex-col gap-3">
-              <div className="flex items-center gap-2 text-amber-500 font-bold text-sm">
-                <HelpCircle className="w-4 h-4" /> Areas for Improvement
+            <div className="bg-card/90 border border-border/80 rounded-3xl p-6 shadow-xl space-y-4 backdrop-blur-md">
+              <div className="flex items-center gap-2 text-rose-500 border-b border-border/60 pb-3">
+                <AlertCircle className="w-5 h-5" />
+                <h3 className="font-black text-lg text-foreground">Areas for Improvement</h3>
               </div>
-              <ul className="space-y-2">
+              <ul className="space-y-2.5 text-xs sm:text-sm font-medium text-foreground/90">
                 {report.improvementAreas.map((imp, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-foreground/90 font-medium">
-                    <span className="text-amber-500 font-bold shrink-0">&bull;</span>
+                  <li key={idx} className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 mt-2" />
                     <span>{imp}</span>
                   </li>
                 ))}
@@ -424,86 +903,77 @@ export const InterviewSession: React.FC = () => {
             </div>
           </div>
 
-          {/* QUESTION-BY-QUESTION REVIEW */}
-          {report.questionReviews && report.questionReviews.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-                <Award className="w-4 h-4 text-primary" /> Question-by-Question Review
-              </h2>
-              <div className="space-y-3">
-                {report.questionReviews.map((rev, idx) => (
-                  <div key={idx} className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col gap-2.5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-black text-primary">Q{idx + 1}.</span>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-secondary text-muted-foreground border border-border/60">
-                          {rev.topic}
-                        </span>
+          {/* SECTION H: ACTIONABLE PLAN */}
+          {report.actionablePlan && report.actionablePlan.length > 0 && (
+            <div className="w-full bg-card/90 border border-border/80 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4 backdrop-blur-md">
+              <div className="border-b border-border/60 pb-3">
+                <h3 className="font-black text-lg text-foreground flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" /> Personalized Actionable Improvement Plan
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Targeted roadmap of concepts to revise prioritized by Gemini from your weakest responses.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {report.actionablePlan.map((item, idx) => {
+                  const priorityColor =
+                    item.priority === 'High'
+                      ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                      : item.priority === 'Medium'
+                      ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                      : 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+
+                  return (
+                    <div key={idx} className="p-4 rounded-2xl bg-background/60 border border-border/70 space-y-2 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className={cn('text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border', priorityColor)}>
+                            {item.priority} Priority
+                          </span>
+                          <span className="text-[11px] font-semibold text-muted-foreground">{item.topic}</span>
+                        </div>
+                        <h4 className="font-black text-sm text-foreground">{item.concept}</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{item.recommendedAction}</p>
                       </div>
-                      <span className="text-xs font-black text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded shrink-0">
-                        Score: {rev.score}/5
-                      </span>
-                    </div>
 
-                    <p className="text-xs sm:text-sm font-semibold text-foreground">
-                      {rev.question}
-                    </p>
-
-                    <div className="p-3 rounded-xl bg-secondary/50 border border-border/50 text-xs text-muted-foreground font-mono leading-relaxed">
-                      <span className="font-sans font-bold text-foreground block mb-0.5">Your Response:</span>
-                      {rev.candidateAnswer}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-1">
-                      <div className="p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-emerald-400">
-                        <span className="font-bold block mb-0.5">What Went Well:</span>
-                        {rev.feedback}
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20 text-amber-400">
-                        <span className="font-bold block mb-0.5">Recommended Adjustment:</span>
-                        {rev.improvement}
+                      <div className="pt-2 border-t border-border/40 text-[11px] text-primary font-medium">
+                        <strong>Practice:</strong> {item.suggestedPractice}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* RECOMMENDATIONS & NEXT STEPS */}
-          {report.recommendations && report.recommendations.length > 0 && (
-            <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm flex flex-col gap-3">
-              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                <BrainCircuit className="w-4 h-4 text-purple-400" /> Actionable Next Steps & Concepts to Revise
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {report.recommendations.map((rec, idx) => (
-                  <div key={idx} className="p-3.5 rounded-xl bg-secondary/50 border border-border/60 text-xs font-medium text-foreground flex items-start gap-2">
-                    <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 text-[10px]">
-                      {idx + 1}
-                    </span>
-                    <span>{rec}</span>
-                  </div>
-                ))}
-              </div>
+          {/* SECTION I: SENIOR INTERVIEWER FEEDBACK */}
+          {report.interviewerFeedback && (
+            <div className="w-full bg-muted/40 border border-border/80 rounded-3xl p-6 sm:p-8 shadow-lg space-y-3">
+              <h4 className="font-black text-base text-foreground flex items-center gap-2">
+                <Bot className="w-5 h-5 text-primary" /> Senior Interviewer Concluding Remarks
+              </h4>
+              <p className="text-xs sm:text-sm text-foreground/90 font-medium leading-relaxed whitespace-pre-wrap">
+                {report.interviewerFeedback}
+              </p>
             </div>
           )}
 
-          {/* TOGGLE FULL TRANSCRIPT */}
-          <div className="pt-2">
+          {/* TRANSCRIPT TOGGLE */}
+          <div className="pt-2 border-t border-border/60 print:hidden">
             <button
               type="button"
               onClick={() => setShowTranscriptInReport(!showTranscriptInReport)}
-              className="flex items-center gap-2 text-xs font-bold text-primary hover:underline cursor-pointer"
+              className="text-xs font-bold text-muted-foreground hover:text-foreground flex items-center gap-1.5 cursor-pointer"
             >
               {showTranscriptInReport ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               <span>{showTranscriptInReport ? 'Hide Complete Conversation Transcript' : 'View Complete Conversation Transcript'}</span>
             </button>
 
             {showTranscriptInReport && (
-              <div className="mt-4 p-4 rounded-2xl bg-card border border-border/80 space-y-3">
+              <div className="mt-4 p-5 rounded-2xl bg-card border border-border/80 space-y-4">
                 {messages.map((m) => (
-                  <div key={m.id} className="text-xs space-y-1 border-b border-border/40 pb-2.5 last:border-0">
+                  <div key={m.id} className="text-xs space-y-1 border-b border-border/40 pb-3 last:border-0">
                     <span className="font-bold uppercase tracking-wider text-primary">
                       {m.sender === 'interviewer' ? 'AlgoVis Interviewer' : 'Candidate'}:
                     </span>
@@ -519,11 +989,15 @@ export const InterviewSession: React.FC = () => {
   }
 
   // ==========================================
-  // RENDER ACTIVE INTERVIEW SESSION
+  // ACTIVE INTERVIEW SESSION VIEW
   // ==========================================
+  const isTimePressureActive = (session?.timeLimitPerQuestion || 0) > 0;
+  const isLowTime = questionTimeRemaining !== null && questionTimeRemaining <= 15;
+  const isUrgentTime = questionTimeRemaining !== null && questionTimeRemaining <= 5;
+
   return (
     <WorkspaceLayout>
-      <div className="w-full flex flex-col gap-5 pb-16 text-left">
+      <div className="w-full flex flex-col gap-5 pb-16 text-left max-w-5xl mx-auto">
         {/* TOP STATUS BAR */}
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-wrap">
@@ -542,7 +1016,7 @@ export const InterviewSession: React.FC = () => {
               </span>
               <span className="text-xs text-muted-foreground hidden sm:inline">&bull;</span>
               <span className="text-xs text-muted-foreground hidden sm:inline">
-                {session?.selectedTopics.join(', ')}
+                {session?.selectedTopics.slice(0, 3).join(', ')}
               </span>
             </div>
           </div>
@@ -551,12 +1025,30 @@ export const InterviewSession: React.FC = () => {
             {/* Turn Count Indicator */}
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-secondary text-xs font-bold text-muted-foreground">
               <Layers className="w-3.5 h-3.5 text-primary" />
-              <span>Turn {session?.turnCount || 1} of {session?.maxTurns || 8}</span>
+              <span>Question {Math.min(session?.turnCount ? session.turnCount + 1 : 1, session?.maxTurns || 8)} of {session?.maxTurns || 8}</span>
             </div>
 
-            {/* Elapsed Timer */}
+            {/* Time Pressure Countdown Timer */}
+            {isTimePressureActive && questionTimeRemaining !== null && (
+              <div
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-black border transition-colors',
+                  isUrgentTime
+                    ? 'bg-rose-500/20 text-rose-500 border-rose-500/40 animate-pulse'
+                    : isLowTime
+                    ? 'bg-amber-500/20 text-amber-500 border-amber-500/40'
+                    : 'bg-primary/10 text-primary border-primary/20'
+                )}
+                title="Time remaining for current question"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>{questionTimeRemaining}s</span>
+              </div>
+            )}
+
+            {/* Overall Elapsed Timer */}
             <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-secondary text-xs font-mono font-bold text-foreground">
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
               <span>{formatTimer(elapsedSeconds)}</span>
             </div>
 
@@ -567,110 +1059,114 @@ export const InterviewSession: React.FC = () => {
               className="flex items-center gap-1 px-3 py-1 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>End Interview</span>
+              <span>End</span>
             </button>
           </div>
         </div>
 
-        {/* NOTICES */}
-        {voiceNotice && (
-          <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold flex items-center justify-between gap-2">
-            <span>{voiceNotice}</span>
-            <button
-              type="button"
-              onClick={() => setVoiceNotice(null)}
-              className="text-xs underline cursor-pointer"
-            >
-              Dismiss
-            </button>
+        {/* TIME PRESSURE NOTICE */}
+        {isTimePressureActive && (
+          <div className="px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-medium flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5" /> Time Pressure Mode: {session.timeLimitPerQuestion}s per question. Answers auto-submit when the countdown hits zero.
+            </span>
           </div>
         )}
 
-        {missingConfigNotice && (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium flex items-center justify-between gap-2">
-            <span>{missingConfigNotice}</span>
-            <button
-              type="button"
-              onClick={() => setMissingConfigNotice(null)}
-              className="text-xs underline cursor-pointer"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
-
+        {/* ERROR WITH RETRY BUTTON */}
         {error && (
-          <div className="p-3.5 rounded-xl bg-destructive/15 border border-destructive/30 text-destructive text-xs font-semibold flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <span>{error}</span>
+          <div className="p-4 rounded-2xl bg-destructive/15 border border-destructive/30 text-destructive text-xs font-semibold flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-start gap-2 min-w-0">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="leading-relaxed">{error.message}</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setError(null)}
-              className="text-xs underline shrink-0 cursor-pointer"
-            >
-              Dismiss
-            </button>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {error.canRetry && error.lastAction === 'submit' && (
+                <button
+                  type="button"
+                  onClick={() => doSubmitAnswer(lastAttemptedAnswer || candidateInput.trim(), false)}
+                  className="px-3 py-1.5 rounded-xl bg-destructive text-destructive-foreground text-xs font-bold hover:bg-destructive/90 transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Retry Evaluation</span>
+                </button>
+              )}
+              {error.canRetry && error.lastAction === 'report' && (
+                <button
+                  type="button"
+                  onClick={handleRetryReport}
+                  className="px-3 py-1.5 rounded-xl bg-destructive text-destructive-foreground text-xs font-bold hover:bg-destructive/90 transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Retry Report</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="text-xs underline text-destructive hover:opacity-80 cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         )}
 
         {/* CONVERSATION HISTORY CONTAINER */}
-        <div className="bg-card/60 border border-border/80 rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col gap-4 min-h-[420px] max-h-[600px] overflow-y-auto">
+        <div className="bg-card/60 border border-border/80 rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col gap-4 min-h-[420px] max-h-[620px] overflow-y-auto">
           {messages.map((m) => {
             const isInterviewer = m.sender === 'interviewer';
 
             return (
               <div
                 key={m.id}
-                className={`flex gap-3 max-w-[90%] sm:max-w-[82%] ${
+                className={`flex gap-3 max-w-[92%] sm:max-w-[85%] ${
                   isInterviewer ? 'self-start' : 'self-end flex-row-reverse'
                 }`}
               >
-                {/* Avatar */}
                 <div
                   className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
                     isInterviewer
                       ? 'bg-primary/10 text-primary border border-primary/20'
-                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                   }`}
                 >
                   {isInterviewer ? <Bot className="w-4 h-4" /> : 'You'}
                 </div>
 
-                {/* Message Bubble */}
                 <div
                   className={`p-4 rounded-2xl text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-wrap ${
                     isInterviewer
-                      ? 'bg-card border border-border/80 text-foreground'
+                      ? 'bg-card border border-border/80 text-foreground shadow-xs'
                       : 'bg-primary/10 border border-primary/25 text-foreground'
                   }`}
                 >
-                  {/* Topic Tag if question */}
                   {isInterviewer && m.questionTopic && (
-                    <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-border/40">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                        Topic: {m.questionTopic}
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-md bg-secondary text-[10px] font-bold uppercase tracking-wider text-primary border border-border/60">
+                        {m.questionTopic}
                       </span>
-                      {m.questionType && (
-                        <span className="text-[10px] font-semibold text-muted-foreground">
-                          &bull; {m.questionType === 'follow_up' ? 'Follow-up' : m.questionType}
+                      {m.questionType === 'follow_up' && (
+                        <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-[10px] font-bold uppercase tracking-wider text-amber-500 border border-amber-500/20">
+                          Context-Aware Follow-up
                         </span>
                       )}
                     </div>
                   )}
 
-                  {m.content}
+                  <p>{m.content}</p>
 
-                  {/* Evaluation Snippet Pill if present */}
+                  {/* Immediate turn evaluation snippet from Gemini */}
                   {m.evaluationSnippet && (
-                    <div className="mt-3 pt-2 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground gap-2">
-                      <span className="text-emerald-400 font-bold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Turn Evaluated
-                      </span>
-                      <span className="font-bold text-foreground">
-                        Score: {m.evaluationSnippet.overallScore}/5
-                      </span>
+                    <div className="mt-3 pt-2.5 border-t border-border/40 text-[11px] flex flex-col gap-1 text-muted-foreground font-sans">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-foreground">Gemini Evaluator:</span>
+                        <span className="font-mono font-black text-primary">
+                          {m.evaluationSnippet.overallScore !== undefined ? `${m.evaluationSnippet.overallScore}/10` : ''}
+                        </span>
+                      </div>
+                      <p className="italic text-foreground/80">{m.evaluationSnippet.feedback}</p>
                     </div>
                   )}
                 </div>
@@ -678,15 +1174,15 @@ export const InterviewSession: React.FC = () => {
             );
           })}
 
-          {/* Thinking / Evaluating Indicator */}
+          {/* Loading Indicator while Gemini evaluates & prepares next question */}
           {isSubmitting && (
-            <div className="flex items-center gap-3 self-start max-w-[80%]">
+            <div className="flex gap-3 max-w-[85%] self-start items-center">
               <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-                <Bot className="w-4 h-4 animate-pulse" />
+                <Bot className="w-4 h-4 animate-spin" />
               </div>
-              <div className="p-3.5 rounded-2xl bg-card border border-border text-xs text-muted-foreground flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
-                <span>Interviewer is evaluating response & formulating next question...</span>
+              <div className="p-3.5 rounded-2xl bg-card border border-border/80 text-xs font-semibold text-muted-foreground flex items-center gap-2 shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
+                <span>Gemini AI is analyzing your response and formulating the next question...</span>
               </div>
             </div>
           )}
@@ -694,105 +1190,69 @@ export const InterviewSession: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* CANDIDATE INPUT AREA */}
-        <form onSubmit={handleSubmitAnswer} className="bg-card border border-border/80 rounded-2xl p-3.5 shadow-sm flex flex-col gap-2.5">
-          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-            <span className="font-semibold flex items-center gap-1">
-              <MessageSquare className="w-3.5 h-3.5 text-primary" />
-              Your Solution / Explanation
-            </span>
-            <span className="text-[11px] hidden sm:inline">
-              Press <kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono text-[10px]">Ctrl + Enter</kbd> to submit
-            </span>
+        {/* CANDIDATE ANSWER INPUT FORM */}
+        <form onSubmit={handleSubmitAnswer} className="flex flex-col gap-2">
+          <div className="relative">
+            <textarea
+              ref={textareaRef}
+              rows={4}
+              value={candidateInput}
+              onChange={(e) => setCandidateInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isSubmitting}
+              placeholder={
+                isSubmitting
+                  ? 'Gemini AI is currently evaluating your answer...'
+                  : 'Type your technical response here. Walk through your approach, key concepts, trade-offs, and complexity... (Ctrl + Enter to submit)'
+              }
+              className="w-full p-4 rounded-2xl bg-card border border-border/80 text-foreground text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground/60 resize-y shadow-xs disabled:opacity-50"
+            />
           </div>
 
-          <textarea
-            ref={textareaRef}
-            rows={4}
-            value={candidateInput}
-            onChange={(e) => setCandidateInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isSubmitting || session?.status === 'COMPLETED'}
-            placeholder="Type your algorithmic approach, code explanation, edge case handling, and time/space complexity here..."
-            className="w-full p-3 rounded-xl bg-background border border-border/70 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 text-xs sm:text-sm font-mono leading-relaxed resize-y transition-all"
-          />
-
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-[11px] text-muted-foreground font-medium">
-              {candidateInput.length} characters
-            </span>
-
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              {candidateInput.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setCandidateInput('')}
-                  disabled={isSubmitting}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
-
-              <button
-                type="submit"
-                disabled={!candidateInput.trim() || isSubmitting || session?.status === 'COMPLETED'}
-                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs sm:text-sm shadow-sm hover:brightness-110 active:scale-[0.98] disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer"
-              >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Evaluating...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Submit Answer</span>
-                  </>
-                )}
-              </button>
+              <span className="hidden sm:inline">Press <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border font-mono text-[10px]">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border font-mono text-[10px]">Enter</kbd> to submit</span>
+              <span>{candidateInput.length} characters</span>
             </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting || !candidateInput.trim()}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-xs sm:text-sm shadow-md hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Submit Answer</span>
+            </button>
           </div>
         </form>
 
-        {/* CONFIRMATION MODAL TO END INTERVIEW */}
+        {/* END INTERVIEW CONFIRMATION MODAL */}
         {showEndModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-2xl max-w-md w-full flex flex-col gap-4 text-left animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center gap-2.5 text-foreground">
-                <div className="p-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/20">
-                  <LogOut className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-bold">End Interview Session?</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <div className="bg-card border border-border/90 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 text-left">
+              <div className="flex items-center gap-3 text-destructive">
+                <AlertCircle className="w-6 h-6" />
+                <h3 className="font-black text-lg text-foreground">Conclude Interview Early?</h3>
               </div>
-
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Ending the interview now will finalize your session and generate your post-interview evaluation report based on the answers you have provided so far.
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-medium">
+                Are you sure you want to conclude the interview now? The session will end, and Gemini AI will generate a complete diagnostic assessment report based on your submitted answers.
               </p>
-
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border/50">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowEndModal(false)}
-                  disabled={isEnding}
-                  className="px-3.5 py-2 rounded-xl bg-secondary text-xs font-bold text-foreground hover:bg-secondary/80 transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-secondary text-xs font-bold text-foreground hover:bg-secondary/80 cursor-pointer"
                 >
                   Continue Interview
                 </button>
                 <button
                   type="button"
-                  onClick={handleEndInterview}
+                  onClick={handleConfirmEndInterview}
                   disabled={isEnding}
-                  className="px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-xs font-bold hover:brightness-110 transition-all cursor-pointer flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-xs font-bold hover:bg-destructive/90 cursor-pointer flex items-center gap-1.5"
                 >
-                  {isEnding ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Generating Report...</span>
-                    </>
-                  ) : (
-                    <span>End & View Report</span>
-                  )}
+                  {isEnding ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
+                  <span>Conclude & Generate Report</span>
                 </button>
               </div>
             </div>

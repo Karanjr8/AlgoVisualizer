@@ -3,27 +3,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.listUserInterviews = exports.getInterviewReport = exports.endInterview = exports.submitAnswer = exports.getInterview = exports.createInterview = void 0;
+exports.listUserInterviews = exports.getInterviewReport = exports.retryReport = exports.endInterview = exports.submitAnswer = exports.getInterview = exports.createInterview = void 0;
 const prisma_1 = __importDefault(require("../utils/prisma"));
 const zod_1 = require("zod");
 const aiInterviewService_1 = require("../services/aiInterviewService");
+const geminiService_1 = require("../services/geminiService");
 const CreateInterviewSchema = zod_1.z.object({
-    role: zod_1.z.string().default('SDE 1'),
+    role: zod_1.z.string().default('Software Engineer'),
     difficulty: zod_1.z.enum(['Easy', 'Medium', 'Hard']).default('Medium'),
-    topics: zod_1.z.array(zod_1.z.string()).default(['Arrays', 'Trees']),
+    topics: zod_1.z.array(zod_1.z.string()).default(['Data Structures and Algorithms']),
     style: zod_1.z.string().default('mock-company'),
     features: zod_1.z.array(zod_1.z.string()).default(['Follow-up Questions', 'Technical Accuracy', 'AI Feedback Report']),
+    timeLimitPerQuestion: zod_1.z.number().min(0).max(300).default(0), // 0 = untimed
 });
 const SubmitAnswerSchema = zod_1.z.object({
-    answer: zod_1.z.string().min(1, 'Answer cannot be empty'),
+    answer: zod_1.z.string().default(''),
     modality: zod_1.z.enum(['text', 'voice']).default('text'),
+    timeSpentSeconds: zod_1.z.number().optional(),
+    timedOut: zod_1.z.boolean().default(false),
 });
 function getParamId(param) {
     if (Array.isArray(param))
         return param[0] || '';
     return param || '';
 }
-// Helper to determine maximum turns based on interview style
 function getMaxTurnsForStyle(style) {
     switch (style) {
         case 'rapid-fire':
@@ -40,15 +43,18 @@ function getMaxTurnsForStyle(style) {
 }
 /**
  * POST /api/interviews
- * Create a new interview session and generate the opening question.
+ * Create a new interview session and generate the opening question live using Gemini API.
  */
 const createInterview = async (req, res) => {
     try {
         const parseResult = CreateInterviewSchema.safeParse(req.body);
         if (!parseResult.success) {
-            return res.status(400).json({ error: 'Invalid configuration parameters', details: parseResult.error.format() });
+            return res.status(400).json({
+                error: 'Invalid configuration parameters',
+                details: parseResult.error.format(),
+            });
         }
-        const { role, difficulty, topics, style, features } = parseResult.data;
+        const { role, difficulty, topics, style, features, timeLimitPerQuestion } = parseResult.data;
         const userId = req.userId || null;
         const maxTurns = getMaxTurnsForStyle(style);
         const sessionConfig = {
@@ -57,8 +63,9 @@ const createInterview = async (req, res) => {
             topics,
             style,
             features,
+            timeLimitPerQuestion,
         };
-        // 1. Generate opening question from AI service
+        // 1. Generate opening question live using Gemini API
         const openingResult = await aiInterviewService_1.AiInterviewService.generateOpeningQuestion(sessionConfig);
         // 2. Persist session and first message in database
         const session = await prisma_1.default.interviewSession.create({
@@ -72,6 +79,7 @@ const createInterview = async (req, res) => {
                 status: 'IN_PROGRESS',
                 turnCount: 0,
                 maxTurns,
+                timeLimitPerQuestion,
                 messages: {
                     create: {
                         sequenceNumber: 1,
@@ -86,10 +94,6 @@ const createInterview = async (req, res) => {
                 messages: true,
             },
         });
-        // Notice if voice interview was checked
-        const voiceNotice = features.includes('Voice Interview')
-            ? 'Voice Interview mode is currently in preview. Proceeding with seamless text input.'
-            : undefined;
         return res.status(201).json({
             session: {
                 ...session,
@@ -97,14 +101,19 @@ const createInterview = async (req, res) => {
                 enabledFeatures: features,
             },
             firstMessage: session.messages[0],
-            aiProvider: openingResult.aiProvider,
-            missingConfigNotice: openingResult.missingConfigNotice,
-            voiceNotice,
+            aiProvider: 'gemini',
         });
     }
     catch (error) {
         console.error('Error creating interview session:', error);
-        return res.status(500).json({ error: 'Failed to create interview session' });
+        const statusCode = error instanceof geminiService_1.GeminiApiError ? error.statusCode : 500;
+        const message = error.message || 'Failed to create interview session using AI';
+        const canRetry = error instanceof geminiService_1.GeminiApiError ? error.canRetry : true;
+        return res.status(statusCode).json({
+            error: message,
+            canRetry,
+            code: 'AI_QUESTION_GENERATION_FAILED',
+        });
     }
 };
 exports.createInterview = createInterview;
@@ -131,11 +140,9 @@ const getInterview = async (req, res) => {
         if (!session) {
             return res.status(404).json({ error: 'Interview session not found' });
         }
-        // Ownership verification for authenticated sessions
         if (session.userId && req.userId && session.userId !== req.userId) {
             return res.status(403).json({ error: 'Forbidden: You do not have permission to view this session' });
         }
-        // Safe parse JSON fields
         let topics = [];
         let features = [];
         try {
@@ -146,11 +153,30 @@ const getInterview = async (req, res) => {
             topics = [session.selectedTopics];
             features = [session.enabledFeatures];
         }
+        let parsedReport = null;
+        if (session.report) {
+            try {
+                parsedReport = {
+                    ...session.report,
+                    strengths: JSON.parse(session.report.strengths),
+                    improvementAreas: JSON.parse(session.report.improvementAreas),
+                    dimensionScores: JSON.parse(session.report.dimensionScores),
+                    topicScores: session.report.topicScores ? JSON.parse(session.report.topicScores) : {},
+                    questionReviews: JSON.parse(session.report.questionReviews),
+                    recommendations: JSON.parse(session.report.recommendations),
+                    actionablePlan: session.report.actionablePlan ? JSON.parse(session.report.actionablePlan) : [],
+                };
+            }
+            catch (e) {
+                console.error('Failed to parse report fields:', e);
+            }
+        }
         return res.json({
             session: {
                 ...session,
                 selectedTopics: topics,
                 enabledFeatures: features,
+                report: parsedReport,
             },
         });
     }
@@ -162,7 +188,7 @@ const getInterview = async (req, res) => {
 exports.getInterview = getInterview;
 /**
  * POST /api/interviews/:id/answers
- * Submit candidate answer, evaluate, generate next question or follow-up, and persist.
+ * Submit candidate answer, evaluate semantically with Gemini, generate next question or follow-up, and persist.
  */
 const submitAnswer = async (req, res) => {
     try {
@@ -174,7 +200,7 @@ const submitAnswer = async (req, res) => {
         if (!parseResult.success) {
             return res.status(400).json({ error: 'Invalid answer payload', details: parseResult.error.format() });
         }
-        const { answer } = parseResult.data;
+        const { answer, timeSpentSeconds, timedOut } = parseResult.data;
         // 1. Verify session exists and is active
         const session = await prisma_1.default.interviewSession.findUnique({
             where: { id },
@@ -194,7 +220,6 @@ const submitAnswer = async (req, res) => {
                 error: `Session is already ${session.status.toLowerCase()}. Further answers cannot be submitted.`,
             });
         }
-        // Parse topics and features
         let topics = [];
         let features = [];
         try {
@@ -211,19 +236,27 @@ const submitAnswer = async (req, res) => {
             topics,
             style: session.interviewStyle,
             features,
+            timeLimitPerQuestion: session.timeLimitPerQuestion,
         };
         const nextTurnCount = session.turnCount + 1;
         const lastSeq = session.messages.length > 0 ? session.messages[session.messages.length - 1].sequenceNumber : 0;
-        // 2. Persist Candidate Response
+        const finalAnswerText = answer.trim() || (timedOut ? '[Time Expired - No response submitted]' : '[No response submitted]');
+        // Find the question being answered
+        const questionMsg = [...session.messages].reverse().find((m) => m.sender === 'interviewer');
+        const currentQuestionText = questionMsg?.content || 'Interview Question';
+        const currentQuestionTopic = questionMsg?.questionTopic || sessionConfig.topics[0] || 'Technical';
+        // 2. Persist Candidate Response with time metrics
         const candidateMsg = await prisma_1.default.interviewMessage.create({
             data: {
                 sessionId: id,
                 sequenceNumber: lastSeq + 1,
                 sender: 'candidate',
-                content: answer,
+                content: finalAnswerText,
+                timeSpentSeconds: timeSpentSeconds || null,
+                timedOut: timedOut || false,
             },
         });
-        // 3. Invoke AI Interviewer for Evaluation and Next Turn
+        // 3. Invoke Live Gemini AI for Semantic Answer Evaluation & Next Turn
         const previousMessagesForAi = [
             ...session.messages.map((m) => ({
                 sender: m.sender,
@@ -231,49 +264,60 @@ const submitAnswer = async (req, res) => {
                 questionTopic: m.questionTopic,
                 questionType: m.questionType,
             })),
-            { sender: 'candidate', content: answer },
+            { sender: 'candidate', content: finalAnswerText },
         ];
-        const turnResult = await aiInterviewService_1.AiInterviewService.evaluateAndAdvance({
-            sessionConfig,
-            candidateAnswer: answer,
-            previousMessages: previousMessagesForAi,
-            turnCount: nextTurnCount,
-            maxTurns: session.maxTurns,
-        });
-        // 4. Persist Evaluation records if provided
+        let turnResult;
+        try {
+            turnResult = await aiInterviewService_1.AiInterviewService.evaluateAndAdvance({
+                sessionConfig,
+                currentQuestion: currentQuestionText,
+                questionTopic: currentQuestionTopic,
+                candidateAnswer: finalAnswerText,
+                previousMessages: previousMessagesForAi,
+                turnCount: nextTurnCount,
+                maxTurns: session.maxTurns,
+                timeSpentSeconds,
+                timedOut,
+            });
+        }
+        catch (aiErr) {
+            console.error('Gemini answer evaluation failed:', aiErr);
+            const statusCode = aiErr instanceof geminiService_1.GeminiApiError ? aiErr.statusCode : 502;
+            return res.status(statusCode).json({
+                error: aiErr.message || 'Gemini AI answer evaluation failed. Please click retry.',
+                canRetry: true,
+                code: 'AI_EVALUATION_FAILED',
+                candidateMessage: candidateMsg,
+            });
+        }
+        // 4. Persist 10-point Evaluation records in database
         if (turnResult.evaluation) {
-            const dims = turnResult.evaluation.dimensions;
-            const questionMsg = [...session.messages].reverse().find((m) => m.sender === 'interviewer');
-            const evaluationEntries = [];
-            if (dims.technicalAccuracy !== undefined) {
-                evaluationEntries.push({ dimension: 'technicalAccuracy', score: dims.technicalAccuracy });
+            const evalData = turnResult.evaluation;
+            const evaluationEntries = [
+                { dimension: 'technicalAccuracy', score: evalData.technicalAccuracy },
+                { dimension: 'conceptualUnderstanding', score: evalData.conceptualUnderstanding },
+                { dimension: 'completeness', score: evalData.completeness },
+                { dimension: 'communicationClarity', score: evalData.communicationClarity },
+                { dimension: 'problemSolving', score: evalData.problemSolving },
+                { dimension: 'practicalApplication', score: evalData.practicalApplication },
+            ];
+            if (evalData.confidence !== undefined) {
+                evaluationEntries.push({ dimension: 'confidence', score: evalData.confidence });
             }
-            if (dims.problemSolving !== undefined) {
-                evaluationEntries.push({ dimension: 'problemSolving', score: dims.problemSolving });
-            }
-            if (dims.complexityAnalysis !== undefined) {
-                evaluationEntries.push({ dimension: 'complexityAnalysis', score: dims.complexityAnalysis });
-            }
-            if (dims.communication !== undefined) {
-                evaluationEntries.push({ dimension: 'communication', score: dims.communication });
-            }
-            if (dims.confidence !== undefined) {
-                evaluationEntries.push({ dimension: 'confidence', score: dims.confidence });
-            }
-            if (dims.behavioral !== undefined) {
-                evaluationEntries.push({ dimension: 'behavioral', score: dims.behavioral });
+            if (evalData.timeManagement !== undefined) {
+                evaluationEntries.push({ dimension: 'timeManagement', score: evalData.timeManagement });
             }
             for (const entry of evaluationEntries) {
                 await prisma_1.default.interviewEvaluation.create({
                     data: {
                         sessionId: id,
                         messageId: candidateMsg.id,
-                        questionText: questionMsg?.content || null,
-                        candidateAnswer: answer,
+                        questionText: currentQuestionText,
+                        candidateAnswer: finalAnswerText,
                         dimension: entry.dimension,
                         score: entry.score,
-                        rationale: turnResult.evaluation.feedback,
-                        evidence: turnResult.evaluation.evidence,
+                        rationale: evalData.evaluationExplanation,
+                        evidence: evalData.evidenceFromAnswer,
                     },
                 });
             }
@@ -284,14 +328,15 @@ const submitAnswer = async (req, res) => {
                 sessionId: id,
                 sequenceNumber: lastSeq + 2,
                 sender: 'interviewer',
-                content: turnResult.interviewerMessage,
-                questionTopic: turnResult.questionTopic,
-                questionType: turnResult.questionType,
+                content: turnResult.nextInterviewerMessage,
+                questionTopic: turnResult.nextQuestionTopic,
+                questionType: turnResult.nextQuestionType,
             },
         });
         // 6. Handle Completion if indicated or turn budget reached
         let reportData = null;
-        if (turnResult.isComplete || nextTurnCount >= session.maxTurns) {
+        const isCompleted = turnResult.isComplete || nextTurnCount >= session.maxTurns;
+        if (isCompleted) {
             await prisma_1.default.interviewSession.update({
                 where: { id },
                 data: {
@@ -300,7 +345,6 @@ const submitAnswer = async (req, res) => {
                     turnCount: nextTurnCount,
                 },
             });
-            // Generate Final Report
             const allMessages = await prisma_1.default.interviewMessage.findMany({
                 where: { sessionId: id },
                 orderBy: { sequenceNumber: 'asc' },
@@ -308,36 +352,49 @@ const submitAnswer = async (req, res) => {
             const allEvals = await prisma_1.default.interviewEvaluation.findMany({
                 where: { sessionId: id },
             });
-            reportData = await aiInterviewService_1.AiInterviewService.generateFinalReport({
-                sessionConfig,
-                messages: allMessages,
-                evaluations: allEvals,
-            });
-            await prisma_1.default.interviewReport.upsert({
-                where: { sessionId: id },
-                create: {
-                    sessionId: id,
-                    overallScore: reportData.overallScore,
-                    summary: reportData.summary,
-                    strengths: JSON.stringify(reportData.strengths),
-                    improvementAreas: JSON.stringify(reportData.improvementAreas),
-                    dimensionScores: JSON.stringify(reportData.dimensionScores),
-                    questionReviews: JSON.stringify(reportData.questionReviews),
-                    recommendations: JSON.stringify(reportData.recommendations),
-                },
-                update: {
-                    overallScore: reportData.overallScore,
-                    summary: reportData.summary,
-                    strengths: JSON.stringify(reportData.strengths),
-                    improvementAreas: JSON.stringify(reportData.improvementAreas),
-                    dimensionScores: JSON.stringify(reportData.dimensionScores),
-                    questionReviews: JSON.stringify(reportData.questionReviews),
-                    recommendations: JSON.stringify(reportData.recommendations),
-                },
-            });
+            try {
+                reportData = await aiInterviewService_1.AiInterviewService.generateFinalReport({
+                    sessionConfig,
+                    messages: allMessages,
+                    evaluations: allEvals,
+                });
+                await prisma_1.default.interviewReport.upsert({
+                    where: { sessionId: id },
+                    create: {
+                        sessionId: id,
+                        overallScore: reportData.overallScore,
+                        performanceGrade: reportData.performanceGrade,
+                        summary: reportData.summary,
+                        strengths: JSON.stringify(reportData.strengths),
+                        improvementAreas: JSON.stringify(reportData.improvementAreas),
+                        dimensionScores: JSON.stringify(reportData.dimensionScores),
+                        topicScores: JSON.stringify(reportData.topicScores),
+                        questionReviews: JSON.stringify(reportData.questionReviews),
+                        recommendations: JSON.stringify(reportData.recommendations),
+                        actionablePlan: JSON.stringify(reportData.actionablePlan),
+                        interviewerFeedback: reportData.interviewerFeedback,
+                    },
+                    update: {
+                        overallScore: reportData.overallScore,
+                        performanceGrade: reportData.performanceGrade,
+                        summary: reportData.summary,
+                        strengths: JSON.stringify(reportData.strengths),
+                        improvementAreas: JSON.stringify(reportData.improvementAreas),
+                        dimensionScores: JSON.stringify(reportData.dimensionScores),
+                        topicScores: JSON.stringify(reportData.topicScores),
+                        questionReviews: JSON.stringify(reportData.questionReviews),
+                        recommendations: JSON.stringify(reportData.recommendations),
+                        actionablePlan: JSON.stringify(reportData.actionablePlan),
+                        interviewerFeedback: reportData.interviewerFeedback,
+                    },
+                });
+            }
+            catch (repErr) {
+                console.error('Failed to generate final report via Gemini:', repErr);
+                // Do not crash turn submission; candidate can retry generating report
+            }
         }
         else {
-            // Just update turn count
             await prisma_1.default.interviewSession.update({
                 where: { id },
                 data: { turnCount: nextTurnCount },
@@ -347,23 +404,27 @@ const submitAnswer = async (req, res) => {
             candidateMessage: candidateMsg,
             interviewerMessage: interviewerMsg,
             evaluation: turnResult.evaluation,
-            isComplete: turnResult.isComplete || nextTurnCount >= session.maxTurns,
+            isComplete: isCompleted,
             turnCount: nextTurnCount,
             maxTurns: session.maxTurns,
             report: reportData,
-            aiProvider: turnResult.aiProvider,
-            missingConfigNotice: turnResult.missingConfigNotice,
+            aiProvider: 'gemini',
         });
     }
     catch (error) {
         console.error('Error submitting answer to interview:', error);
-        return res.status(500).json({ error: 'Failed to process answer submission' });
+        const statusCode = error instanceof geminiService_1.GeminiApiError ? error.statusCode : 500;
+        return res.status(statusCode).json({
+            error: error.message || 'Failed to process answer submission',
+            canRetry: true,
+            code: 'SUBMIT_ANSWER_FAILED',
+        });
     }
 };
 exports.submitAnswer = submitAnswer;
 /**
  * POST /api/interviews/:id/end
- * Conclude an active interview session early and generate the final diagnostic report.
+ * Conclude an active interview session and generate the final report live using Gemini API.
  */
 const endInterview = async (req, res) => {
     try {
@@ -392,8 +453,10 @@ const endInterview = async (req, res) => {
                     strengths: JSON.parse(session.report.strengths),
                     improvementAreas: JSON.parse(session.report.improvementAreas),
                     dimensionScores: JSON.parse(session.report.dimensionScores),
+                    topicScores: session.report.topicScores ? JSON.parse(session.report.topicScores) : {},
                     questionReviews: JSON.parse(session.report.questionReviews),
                     recommendations: JSON.parse(session.report.recommendations),
+                    actionablePlan: session.report.actionablePlan ? JSON.parse(session.report.actionablePlan) : [],
                 },
             });
         }
@@ -405,7 +468,6 @@ const endInterview = async (req, res) => {
                 completedAt: new Date(),
             },
         });
-        // Parse configuration
         let topics = [];
         let features = [];
         try {
@@ -422,6 +484,7 @@ const endInterview = async (req, res) => {
             topics,
             style: session.interviewStyle,
             features,
+            timeLimitPerQuestion: session.timeLimitPerQuestion,
         };
         const messages = await prisma_1.default.interviewMessage.findMany({
             where: { sessionId: id },
@@ -430,6 +493,7 @@ const endInterview = async (req, res) => {
         const evaluations = await prisma_1.default.interviewEvaluation.findMany({
             where: { sessionId: id },
         });
+        // Generate Final Report LIVE using Gemini API from actual evaluations
         const reportData = await aiInterviewService_1.AiInterviewService.generateFinalReport({
             sessionConfig,
             messages,
@@ -439,12 +503,16 @@ const endInterview = async (req, res) => {
             data: {
                 sessionId: id,
                 overallScore: reportData.overallScore,
+                performanceGrade: reportData.performanceGrade,
                 summary: reportData.summary,
                 strengths: JSON.stringify(reportData.strengths),
                 improvementAreas: JSON.stringify(reportData.improvementAreas),
                 dimensionScores: JSON.stringify(reportData.dimensionScores),
+                topicScores: JSON.stringify(reportData.topicScores),
                 questionReviews: JSON.stringify(reportData.questionReviews),
                 recommendations: JSON.stringify(reportData.recommendations),
+                actionablePlan: JSON.stringify(reportData.actionablePlan),
+                interviewerFeedback: reportData.interviewerFeedback,
             },
         });
         return res.json({
@@ -454,17 +522,33 @@ const endInterview = async (req, res) => {
                 strengths: reportData.strengths,
                 improvementAreas: reportData.improvementAreas,
                 dimensionScores: reportData.dimensionScores,
+                topicScores: reportData.topicScores,
                 questionReviews: reportData.questionReviews,
                 recommendations: reportData.recommendations,
+                actionablePlan: reportData.actionablePlan,
+                interviewerFeedback: reportData.interviewerFeedback,
             },
         });
     }
     catch (error) {
         console.error('Error ending interview:', error);
-        return res.status(500).json({ error: 'Failed to conclude interview session' });
+        const statusCode = error instanceof geminiService_1.GeminiApiError ? error.statusCode : 502;
+        return res.status(statusCode).json({
+            error: error.message || 'Failed to generate AI assessment report. Please click retry.',
+            canRetry: true,
+            code: 'REPORT_GENERATION_FAILED',
+        });
     }
 };
 exports.endInterview = endInterview;
+/**
+ * POST /api/interviews/:id/retry-report
+ * Dedicated retry mechanism if report generation previously failed
+ */
+const retryReport = async (req, res) => {
+    return (0, exports.endInterview)(req, res);
+};
+exports.retryReport = retryReport;
 /**
  * GET /api/interviews/:id/report
  * Retrieve the final report for a completed session.
@@ -493,8 +577,10 @@ const getInterviewReport = async (req, res) => {
                 strengths: JSON.parse(report.strengths),
                 improvementAreas: JSON.parse(report.improvementAreas),
                 dimensionScores: JSON.parse(report.dimensionScores),
+                topicScores: report.topicScores ? JSON.parse(report.topicScores) : {},
                 questionReviews: JSON.parse(report.questionReviews),
                 recommendations: JSON.parse(report.recommendations),
+                actionablePlan: report.actionablePlan ? JSON.parse(report.actionablePlan) : [],
             },
         });
     }
@@ -515,30 +601,43 @@ const listUserInterviews = async (req, res) => {
         const sessions = await prisma_1.default.interviewSession.findMany({
             where: whereClause,
             orderBy: { createdAt: 'desc' },
-            take: 20,
+            take: 25,
             include: {
                 report: {
                     select: {
                         overallScore: true,
+                        performanceGrade: true,
                         summary: true,
                         createdAt: true,
                     },
                 },
             },
         });
-        const formatted = sessions.map((s) => ({
-            id: s.id,
-            role: s.role,
-            difficulty: s.difficulty,
-            interviewStyle: s.interviewStyle,
-            status: s.status,
-            turnCount: s.turnCount,
-            maxTurns: s.maxTurns,
-            startedAt: s.startedAt,
-            completedAt: s.completedAt,
-            overallScore: s.report?.overallScore || null,
-            summary: s.report?.summary || null,
-        }));
+        const formatted = sessions.map((s) => {
+            let topics = [];
+            try {
+                topics = JSON.parse(s.selectedTopics);
+            }
+            catch {
+                topics = [s.selectedTopics];
+            }
+            return {
+                id: s.id,
+                role: s.role,
+                difficulty: s.difficulty,
+                interviewStyle: s.interviewStyle,
+                topics,
+                status: s.status,
+                turnCount: s.turnCount,
+                maxTurns: s.maxTurns,
+                timeLimitPerQuestion: s.timeLimitPerQuestion,
+                startedAt: s.startedAt,
+                completedAt: s.completedAt,
+                overallScore: s.report?.overallScore || null,
+                performanceGrade: s.report?.performanceGrade || null,
+                summary: s.report?.summary || null,
+            };
+        });
         return res.json({ sessions: formatted });
     }
     catch (error) {

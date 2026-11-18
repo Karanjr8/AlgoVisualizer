@@ -211,38 +211,41 @@ model PracticeAttempt {
 }
 
 model InterviewSession {
-  id               String                @id @default(uuid())
-  userId           String?
-  user             User?                 @relation(fields: [userId], references: [id])
-  role             String
-  difficulty       String
-  interviewStyle   String
-  selectedTopics   String                // JSON array of strings
-  enabledFeatures  String                // JSON array of strings
-  status           String                @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ABANDONED
-  turnCount        Int                   @default(0)
-  maxTurns         Int                   @default(8)
-  startedAt        DateTime              @default(now())
-  completedAt      DateTime?
-  messages         InterviewMessage[]
-  evaluations      InterviewEvaluation[]
-  report           InterviewReport?
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+  id                   String                @id @default(uuid())
+  userId               String?
+  user                 User?                 @relation(fields: [userId], references: [id])
+  role                 String
+  difficulty           String
+  interviewStyle       String
+  selectedTopics       String                // JSON array of strings
+  enabledFeatures      String                // JSON array of strings
+  status               String                @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ABANDONED
+  turnCount            Int                   @default(0)
+  maxTurns             Int                   @default(8)
+  timeLimitPerQuestion Int                   @default(0) // seconds per question (0 = untimed)
+  startedAt            DateTime              @default(now())
+  completedAt          DateTime?
+  messages             InterviewMessage[]
+  evaluations          InterviewEvaluation[]
+  report               InterviewReport?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@index([userId, createdAt])
 }
 
 model InterviewMessage {
-  id             String           @id @default(uuid())
-  sessionId      String
-  session        InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  sequenceNumber Int
-  sender         String           // 'interviewer' | 'candidate' | 'system'
-  content        String
-  questionTopic  String?
-  questionType   String?          // 'conceptual' | 'problem_solving' | 'follow_up' | 'behavioral'
-  createdAt      DateTime         @default(now())
+  id               String           @id @default(uuid())
+  sessionId        String
+  session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sequenceNumber   Int
+  sender           String           // 'interviewer' | 'candidate' | 'system'
+  content          String
+  questionTopic    String?
+  questionType     String?          // 'conceptual' | 'problem_solving' | 'follow_up' | 'behavioral'
+  timeSpentSeconds Int?             // seconds candidate took to submit
+  timedOut         Boolean          @default(false)
+  createdAt        DateTime         @default(now())
 
   @@index([sessionId, sequenceNumber])
 }
@@ -254,8 +257,8 @@ model InterviewEvaluation {
   messageId       String?
   questionText    String?
   candidateAnswer String?
-  dimension       String           // 'technicalAccuracy' | 'problemSolving' | 'complexityAnalysis' | 'communication' | 'confidence' | 'behavioral' | 'adaptability'
-  score           Float            // 0 - 5 scale
+  dimension       String           // 'technicalAccuracy' | 'conceptualUnderstanding' | 'completeness' | 'communication' | 'problemSolving' | 'practicalApplication' | 'confidence' | 'timeManagement'
+  score           Float            // 0 - 10 scale
   rationale       String
   evidence        String
   createdAt       DateTime         @default(now())
@@ -264,16 +267,20 @@ model InterviewEvaluation {
 }
 
 model InterviewReport {
-  id               String           @id @default(uuid())
-  sessionId        String           @unique
-  session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  overallScore     Float?
-  summary          String
-  strengths        String           // JSON string array
-  improvementAreas String           // JSON string array
-  dimensionScores  String           // JSON object string
-  questionReviews  String           // JSON array string
-  recommendations  String           // JSON string array
-  createdAt        DateTime         @default(now())
+  id                  String           @id @default(uuid())
+  sessionId           String           @unique
+  session             InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  overallScore        Float?           // score out of 100
+  performanceGrade    String?          // 'Excellent' | 'Very Good' | 'Good' | 'Average' | 'Needs Improvement'
+  summary             String
+  strengths           String           // JSON string array
+  improvementAreas    String           // JSON string array
+  dimensionScores     String           // JSON object string with 10-point scale parameters
+  topicScores         String?          // JSON object string for topic-wise breakdowns
+  questionReviews     String           // JSON array string
+  recommendations     String           // JSON string array
+  actionablePlan      String?          // JSON array string with priority levels
+  interviewerFeedback String?          // Final professional interviewer remarks
+  createdAt           DateTime         @default(now())
 }
 

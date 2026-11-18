@@ -1,4 +1,4 @@
-import { Sparkles, Bot, Clock, Briefcase, Gauge, Layers, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Bot, Clock, Briefcase, Gauge, Layers, CheckCircle2, Zap } from 'lucide-react';
 import { ROLES } from './RoleCardGroup';
 import { STYLES } from './InterviewStyleCardGroup';
 
@@ -8,6 +8,7 @@ interface InterviewPreviewCardProps {
   selectedTopics: string[];
   selectedStyle: string;
   enabledFeaturesCount: number;
+  timeLimitPerQuestion?: number;
 }
 
 export const InterviewPreviewCard = ({
@@ -16,9 +17,10 @@ export const InterviewPreviewCard = ({
   selectedTopics,
   selectedStyle,
   enabledFeaturesCount,
+  timeLimitPerQuestion = 0,
 }: InterviewPreviewCardProps) => {
-  const roleObj = ROLES.find((r) => r.id === selectedRole) || ROLES[1];
-  const styleObj = STYLES.find((s) => s.id === selectedStyle) || STYLES[2];
+  const roleObj = ROLES.find((r) => r.id === selectedRole) || ROLES[0];
+  const styleObj = STYLES.find((s) => s.id === selectedStyle) || STYLES[0];
 
   // Difficulty badge colors
   const difficultyColor =
@@ -37,7 +39,7 @@ export const InterviewPreviewCard = ({
           <span>Session Summary</span>
         </div>
         <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-bold">
-          Ready
+          Configured
         </span>
       </div>
 
@@ -67,6 +69,19 @@ export const InterviewPreviewCard = ({
             <span className="font-semibold text-foreground">{styleObj.name}</span>
             <span className="text-[10px] text-muted-foreground font-medium">({styleObj.duration})</span>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between py-1 border-b border-border/40">
+          <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+            <Zap className="w-3.5 h-3.5 text-muted-foreground" /> Timer Mode
+          </span>
+          <span className="font-semibold text-foreground">
+            {timeLimitPerQuestion > 0 ? (
+              <span className="text-amber-500 font-bold">{timeLimitPerQuestion}s / Question</span>
+            ) : (
+              <span className="text-muted-foreground">Untimed</span>
+            )}
+          </span>
         </div>
 
         <div className="flex items-center justify-between py-1 border-b border-border/40">

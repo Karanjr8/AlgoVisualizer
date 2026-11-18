@@ -7,6 +7,7 @@ import {
   endInterview,
   getInterviewReport,
   listUserInterviews,
+  retryReport,
 } from '../controllers/interviewController';
 
 const router = Router();
@@ -17,6 +18,7 @@ router.get('/', optionalAuth, listUserInterviews);
 router.get('/:id', optionalAuth, getInterview);
 router.post('/:id/answers', optionalAuth, submitAnswer);
 router.post('/:id/end', optionalAuth, endInterview);
+router.post('/:id/retry-report', optionalAuth, retryReport);
 router.get('/:id/report', optionalAuth, getInterviewReport);
 
 export default router;

@@ -16,10 +16,11 @@ export const ChatbotWidget = () => {
     setLoading(true);
 
     try {
-      const res = await api.post('/chatbot', { prompt: userMessage });
+      const res = await api.post('/chatbot', { prompt: userMessage, message: userMessage });
       setMessages(prev => [...prev, { role: 'bot', text: res.data.reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, I am having trouble connecting to my AI brain.' }]);
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.error || 'Sorry, I am having trouble connecting to my AI brain.';
+      setMessages(prev => [...prev, { role: 'bot', text: errMsg }]);
     } finally {
       setLoading(false);
     }
