@@ -1,8 +1,18 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
+const getApiBaseUrl = (): string => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:5000/api';
+  }
+  return '/api';
+};
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://algovisualizer-1.onrender.com/api',
+  baseURL: getApiBaseUrl(),
 });
 
 api.interceptors.request.use(

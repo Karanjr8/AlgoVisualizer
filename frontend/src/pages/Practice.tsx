@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
@@ -5,14 +6,16 @@ import {
   Crosshair, CheckCircle2, TrendingUp, Trophy, ChevronRight, BarChart3
 } from 'lucide-react';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { api } from '../lib/api';
+import { useAuthStore } from '../store/useAuthStore';
 
-const MOCK_STATS = {
-  attempts: 42,
-  accuracy: 87,
-  completionRate: 24,
+const DEFAULT_STATS = {
+  attempts: 0,
+  accuracy: 0,
+  completionRate: 0,
   totalAvailable: 150,
-  bestScore: 2450,
-  recentPerformance: [true, true, false, true, true, false, true] // true = success, false = fail
+  bestScore: 0,
+  recentPerformance: [true, true, true]
 };
 
 const PRACTICE_MODES = [
@@ -74,6 +77,37 @@ const PRACTICE_MODES = [
 ];
 
 export const Practice = () => {
+  const { user } = useAuthStore();
+  const [stats, setStats] = useState(DEFAULT_STATS);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const res = await api.get('/practice/history');
+        const attempts: any[] = res.data?.attempts || [];
+        if (attempts.length > 0) {
+          const totalAtts = attempts.length;
+          const avgAcc = Math.round(attempts.reduce((acc, cur) => acc + (cur.accuracy || 0), 0) / totalAtts);
+          const highest = Math.max(...attempts.map((a) => a.score || 0));
+          const recents = attempts.slice(0, 7).map((a) => (a.accuracy || 0) >= 60);
+
+          setStats({
+            attempts: totalAtts,
+            accuracy: avgAcc,
+            completionRate: attempts.filter((a) => (a.accuracy || 0) >= 60).length,
+            totalAvailable: 150,
+            bestScore: highest,
+            recentPerformance: recents.length > 0 ? recents : [true, true, true],
+          });
+        }
+      } catch (err) {
+        // Fallback gracefully to default
+      }
+    };
+
+    loadStats();
+  }, [user]);
+
   return (
     <WorkspaceLayout>
       {/* Widescreen Left-Aligned Hero */}
@@ -111,7 +145,7 @@ export const Practice = () => {
               <TrendingUp className="w-4 h-4 text-primary" />
               <h3 className="text-xs font-bold uppercase tracking-wider">Attempts</h3>
             </div>
-            <div className="text-3xl font-black text-foreground">{MOCK_STATS.attempts}</div>
+            <div className="text-3xl font-black text-foreground">{stats.attempts}</div>
           </div>
 
           {/* Accuracy */}
@@ -120,7 +154,7 @@ export const Practice = () => {
               <Crosshair className="w-4 h-4 text-emerald-400" />
               <h3 className="text-xs font-bold uppercase tracking-wider">Accuracy</h3>
             </div>
-            <div className="text-3xl font-black text-emerald-500">{MOCK_STATS.accuracy}%</div>
+            <div className="text-3xl font-black text-emerald-500">{stats.accuracy}%</div>
           </div>
 
           {/* Completion */}
@@ -130,8 +164,8 @@ export const Practice = () => {
               <h3 className="text-xs font-bold uppercase tracking-wider">Completion</h3>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-black text-foreground">{MOCK_STATS.completionRate}</span>
-              <span className="text-xs text-muted-foreground font-semibold">/{MOCK_STATS.totalAvailable}</span>
+              <span className="text-3xl font-black text-foreground">{stats.completionRate}</span>
+              <span className="text-xs text-muted-foreground font-semibold">/{stats.totalAvailable}</span>
             </div>
           </div>
 
@@ -141,7 +175,7 @@ export const Practice = () => {
               <Trophy className="w-4 h-4 text-amber-400" />
               <h3 className="text-xs font-bold uppercase tracking-wider">Best Score</h3>
             </div>
-            <div className="text-3xl font-black text-amber-400">{MOCK_STATS.bestScore}</div>
+            <div className="text-3xl font-black text-amber-400">{stats.bestScore}</div>
           </div>
 
           {/* Recent Performance */}
@@ -151,7 +185,7 @@ export const Practice = () => {
               <h3 className="text-xs font-bold uppercase tracking-wider">Recent</h3>
             </div>
             <div className="flex items-center gap-1.5 h-7">
-              {MOCK_STATS.recentPerformance.map((success, i) => (
+              {stats.recentPerformance.map((success, i) => (
                 <div 
                   key={i} 
                   className={`flex-1 h-full rounded-sm ${success ? 'bg-emerald-500/80' : 'bg-rose-500/60'}`}

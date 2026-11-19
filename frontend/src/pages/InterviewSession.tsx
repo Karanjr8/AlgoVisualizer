@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Bot,
-  Send,
   Clock,
   ArrowLeft,
   AlertCircle,
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { VoiceAnswerInput } from '../components/interview/VoiceAnswerInput';
 import { cn } from '../lib/utils';
 
 interface Message {
@@ -142,7 +142,6 @@ export const InterviewSession: React.FC = () => {
   const [questionTimeRemaining, setQuestionTimeRemaining] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-scroll to bottom of conversation
   const scrollToBottom = () => {
@@ -242,7 +241,12 @@ export const InterviewSession: React.FC = () => {
 
   // Submit Answer handler
   const doSubmitAnswer = useCallback(
-    async (forcedAnswer?: string, isTimeout: boolean = false) => {
+    async (
+      forcedAnswer?: string,
+      isTimeout: boolean = false,
+      modality: 'text' | 'voice' = 'text',
+      timeSpentSecondsOverride?: number
+    ) => {
       if (!session || isSubmitting) return;
 
       const answerText = forcedAnswer !== undefined ? forcedAnswer : candidateInput.trim();
@@ -253,12 +257,17 @@ export const InterviewSession: React.FC = () => {
       setIsSubmitting(true);
 
       const limit = session.timeLimitPerQuestion || 0;
-      const spent = limit > 0 && questionTimeRemaining !== null ? Math.max(1, limit - questionTimeRemaining) : undefined;
+      const spent =
+        timeSpentSecondsOverride !== undefined
+          ? timeSpentSecondsOverride
+          : limit > 0 && questionTimeRemaining !== null
+          ? Math.max(1, limit - questionTimeRemaining)
+          : undefined;
 
       try {
         const res = await api.post(`/interviews/${session.id}/answers`, {
           answer: answerText || (isTimeout ? '[Time Expired - No response submitted]' : '[No response submitted]'),
-          modality: 'text',
+          modality,
           timeSpentSeconds: spent,
           timedOut: isTimeout,
         });
@@ -357,19 +366,6 @@ export const InterviewSession: React.FC = () => {
 
     return () => clearInterval(timer);
   }, [session?.id, session?.status, session?.timeLimitPerQuestion, currentQuestionSeq, isSubmitting, doSubmitAnswer]);
-
-  const handleSubmitAnswer = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!candidateInput.trim()) return;
-    await doSubmitAnswer(candidateInput.trim(), false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault();
-      handleSubmitAnswer();
-    }
-  };
 
   // End Interview Early
   const handleConfirmEndInterview = async () => {
@@ -1188,41 +1184,16 @@ export const InterviewSession: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* CANDIDATE ANSWER INPUT FORM */}
-        <form onSubmit={handleSubmitAnswer} className="flex flex-col gap-2">
-          <div className="relative">
-            <textarea
-              ref={textareaRef}
-              rows={4}
-              value={candidateInput}
-              onChange={(e) => setCandidateInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isSubmitting}
-              placeholder={
-                isSubmitting
-                  ? 'Gemini AI is currently evaluating your answer...'
-                  : 'Type your technical response here. Walk through your approach, key concepts, trade-offs, and complexity... (Ctrl + Enter to submit)'
-              }
-              className="w-full p-4 rounded-2xl bg-card border border-border/80 text-foreground text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground/60 resize-y shadow-xs disabled:opacity-50"
-            />
-          </div>
-
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:inline">Press <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border font-mono text-[10px]">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border font-mono text-[10px]">Enter</kbd> to submit</span>
-              <span>{candidateInput.length} characters</span>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting || !candidateInput.trim()}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-xs sm:text-sm shadow-md hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Submit Answer</span>
-            </button>
-          </div>
-        </form>
+        {/* CANDIDATE ANSWER DUAL-MODE INPUT (TEXT + VOICE) */}
+        <VoiceAnswerInput
+          sessionId={session?.id || ''}
+          isSubmitting={isSubmitting}
+          disabled={!session || session.status !== 'IN_PROGRESS'}
+          onSubmit={async (answerText, modality, spent) => {
+            await doSubmitAnswer(answerText, false, modality, spent);
+          }}
+          timeRemaining={isTimePressureActive ? questionTimeRemaining : null}
+        />
 
         {/* END INTERVIEW CONFIRMATION MODAL */}
         {showEndModal && (

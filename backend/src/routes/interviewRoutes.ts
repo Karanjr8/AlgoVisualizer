@@ -4,6 +4,7 @@ import {
   createInterview,
   getInterview,
   submitAnswer,
+  transcribeAudio,
   endInterview,
   getInterviewReport,
   listUserInterviews,
@@ -17,6 +18,7 @@ router.post('/', optionalAuth, createInterview);
 router.get('/', optionalAuth, listUserInterviews);
 router.get('/:id', optionalAuth, getInterview);
 router.post('/:id/answers', optionalAuth, submitAnswer);
+router.post('/:id/transcribe-audio', optionalAuth, transcribeAudio);
 router.post('/:id/end', optionalAuth, endInterview);
 router.post('/:id/retry-report', optionalAuth, retryReport);
 router.get('/:id/report', optionalAuth, getInterviewReport);

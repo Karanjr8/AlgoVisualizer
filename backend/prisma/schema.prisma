@@ -201,13 +201,19 @@ model PracticeAttempt {
   id              String   @id @default(uuid())
   userId          String?  
   user            User?    @relation(fields: [userId], references: [id])
-  mode            String
+  mode            String   // 'debug' | 'speed-run' | 'complexity' | 'timed-challenges'
   difficulty      String
   score           Int
   accuracy        Float
-  completionTime  Int
+  completionTime  Int      // in seconds
+  totalQuestions  Int?     @default(1)
+  correctAnswers  Int?     @default(0)
+  topics          String?  // JSON string array of topics
+  sessionDetails  String?  // JSON string blob for question-by-question breakdown, AI evaluations, etc.
   
   createdAt       DateTime @default(now())
+
+  @@index([userId, mode, createdAt])
 }
 
 model InterviewSession {

@@ -31,13 +31,17 @@ export function reloadGeminiEnv(): void {
 export const geminiConfig = {
   get apiKey(): string {
     reloadGeminiEnv();
-    const key = process.env.GEMINI_API_KEY;
+    let key = process.env.GEMINI_API_KEY;
     if (!key || key === 'placeholder_key' || key.trim() === '') {
       throw new Error(
         'Gemini API key is not configured in backend environment variables (GEMINI_API_KEY). Please add your Google AI Studio API key to backend/.env.'
       );
     }
-    return key.trim();
+    key = key.trim();
+    if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+      key = key.slice(1, -1).trim();
+    }
+    return key;
   },
 
   get primaryModel(): string {

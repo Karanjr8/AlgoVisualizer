@@ -9,6 +9,7 @@ router.post('/', auth_1.optionalAuth, interviewController_1.createInterview);
 router.get('/', auth_1.optionalAuth, interviewController_1.listUserInterviews);
 router.get('/:id', auth_1.optionalAuth, interviewController_1.getInterview);
 router.post('/:id/answers', auth_1.optionalAuth, interviewController_1.submitAnswer);
+router.post('/:id/transcribe-audio', auth_1.optionalAuth, interviewController_1.transcribeAudio);
 router.post('/:id/end', auth_1.optionalAuth, interviewController_1.endInterview);
 router.post('/:id/retry-report', auth_1.optionalAuth, interviewController_1.retryReport);
 router.get('/:id/report', auth_1.optionalAuth, interviewController_1.getInterviewReport);

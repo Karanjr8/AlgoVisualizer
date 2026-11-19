@@ -458,4 +458,128 @@ export class GeminiService {
     const fullPrompt = dialogueParts.join('\n');
     return this.generateText(fullPrompt, { temperature: 0.6 });
   }
+
+  /**
+   * Transcribes spoken candidate audio using Gemini Multimodal Audio Understanding.
+   */
+  public static async transcribeAudio(
+    base64Audio: string,
+    mimeType: string = 'audio/webm',
+    context?: { questionText?: string; topic?: string; role?: string }
+  ): Promise<string> {
+    const apiKey = this.getApiKey();
+    
+    // Prioritize high-performance, ultra-reliable models that natively accept inline audio data
+    const primary = this.getModel();
+    const audioCapableModels = Array.from(
+      new Set([
+        primary,
+        'gemini-flash-lite-latest',
+        'gemini-3.1-flash-lite',
+        'gemini-flash-latest',
+        'gemini-3.5-flash-lite',
+      ])
+    );
+
+    let lastError: any = null;
+
+    // Clean mimeType (remove codecs=opus parameter if present for Gemini API compatibility)
+    const normalizedMime = mimeType.split(';')[0].trim().toLowerCase() || 'audio/webm';
+
+    const contextInstruction = context
+      ? `Interview Context:
+- Role: ${context.role || 'Software Engineer'}
+- Topic: ${context.topic || 'Data Structures & Algorithms'}
+- Current Interviewer Question: "${context.questionText || ''}"`
+      : '';
+
+    const promptText = `You are a high-accuracy technical speech recognition system for computer science and DSA technical coding interviews.
+${contextInstruction}
+
+TASK:
+Accurately transcribe the candidate's spoken response into clear, fluent English text.
+1. Transcribe the spoken words faithfully and verbatim.
+2. Accurately recognize Indian English accents, global ESL speech, and rapid technical delivery.
+3. Preserve all technical terminology, including:
+   - Data Structures: Array, String, LinkedList, Stack, Queue, HashMap, HashSet, Tree, BST, Heap, PriorityQueue, Graph, Trie, SegmentTree, BIT.
+   - Algorithms: Two Pointers, Sliding Window, Binary Search, QuickSort, MergeSort, BFS, DFS, Dijkstra, Bellman-Ford, Dynamic Programming, Greedy, Backtracking, Recursion.
+   - Complexity Notations: O(1), O(log n), O(n), O(n log n), O(n^2), O(2^n), O(V + E), O(V^2), O(E log V).
+   - Code concepts: loops, pointers, indices, base cases, recurrence, memoization, hash table collisions.
+4. If the candidate corrects themselves, transcribe their words naturally as spoken.
+5. If the audio contains only silence, static, or background noise with no words spoken, reply ONLY with: "[NO_SPEECH]".
+6. Do NOT add meta commentary, explanations, or greeting headers. Return ONLY the transcribed text.`;
+
+    for (const model of audioCapableModels) {
+      const modelName = model.startsWith('models/') ? model.replace(/^models\//, '') : model;
+      const url = geminiConfig.endpoints.generateContent(modelName, apiKey);
+
+      const payload = {
+        contents: [
+          {
+            parts: [
+              { text: promptText },
+              {
+                inlineData: {
+                  mimeType: normalizedMime,
+                  data: base64Audio,
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 2048,
+        },
+      };
+
+      try {
+        console.log(`[GeminiService] Transcribing audio with model ${modelName} (MIME: ${normalizedMime}, Base64: ${base64Audio.length} chars)...`);
+        const response = await axios.post(url, payload, {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 35000,
+        });
+
+        const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (typeof text === 'string') {
+          const cleaned = text.trim();
+          if (
+            cleaned === '[NO_SPEECH]' ||
+            cleaned === '[No audible speech detected]' ||
+            cleaned === '[SILENT]' ||
+            cleaned === '<noise>'
+          ) {
+            console.log(`[GeminiService] Audio contained no spoken speech on ${modelName}.`);
+            return '';
+          }
+          console.log(`[GeminiService] Audio successfully transcribed with ${modelName} (${cleaned.length} chars).`);
+          return cleaned;
+        }
+      } catch (err: any) {
+        lastError = err;
+        const status = err?.response?.status;
+        const msg = err?.response?.data?.error?.message || err.message;
+        console.warn(`[GeminiService] Audio transcription failed on ${modelName} (HTTP ${status}): ${msg}`);
+
+        // If auth error, do not retry other models
+        if (status === 401 || status === 403) {
+          throw new GeminiApiError(
+            `Gemini API authentication failed (${status}): ${msg}. Please verify your GEMINI_API_KEY in backend/.env.`,
+            status,
+            false
+          );
+        }
+      }
+    }
+
+    const errStatus = lastError?.response?.status || 500;
+    const errMessage = lastError?.response?.data?.error?.message || lastError?.message || 'Audio processing error';
+    
+    throw new GeminiApiError(
+      `Failed to transcribe audio with Gemini AI (${errStatus}): ${errMessage}`,
+      errStatus,
+      true,
+      lastError?.response?.data
+    );
+  }
 }

@@ -3,7 +3,7 @@ import { AuthRequest } from '../middlewares/auth';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
 import { AiInterviewService, SessionConfig, FinalReportData } from '../services/aiInterviewService';
-import { GeminiApiError } from '../services/geminiService';
+import { GeminiService, GeminiApiError } from '../services/geminiService';
 
 const CreateInterviewSchema = z.object({
   role: z.string().default('Software Engineer'),
@@ -16,6 +16,8 @@ const CreateInterviewSchema = z.object({
 
 const SubmitAnswerSchema = z.object({
   answer: z.string().default(''),
+  audioBase64: z.string().optional(),
+  mimeType: z.string().optional(),
   modality: z.enum(['text', 'voice']).default('text'),
   timeSpentSeconds: z.number().optional(),
   timedOut: z.boolean().default(false),
@@ -257,8 +259,31 @@ export const submitAnswer = async (req: AuthRequest, res: Response) => {
     const nextTurnCount = session.turnCount + 1;
     const lastSeq = session.messages.length > 0 ? session.messages[session.messages.length - 1].sequenceNumber : 0;
 
-    const finalAnswerText =
-      answer.trim() || (timedOut ? '[Time Expired - No response submitted]' : '[No response submitted]');
+    let finalAnswerText = answer.trim();
+
+    // If audioBase64 provided without text, transcribe it with Gemini first
+    if (!finalAnswerText && parseResult.data.audioBase64) {
+      const qMsg = [...session.messages].reverse().find((m) => m.sender === 'interviewer');
+      try {
+        console.log(`[InterviewController] Auto-transcribing audio response for session ${id}...`);
+        const transcribed = await GeminiService.transcribeAudio(
+          parseResult.data.audioBase64,
+          parseResult.data.mimeType || 'audio/webm',
+          {
+            questionText: qMsg?.content,
+            topic: qMsg?.questionTopic || session.role,
+            role: session.role,
+          }
+        );
+        finalAnswerText = transcribed.trim();
+      } catch (audioErr: any) {
+        console.warn('[InterviewController] Audio auto-transcription failed:', audioErr.message);
+      }
+    }
+
+    if (!finalAnswerText) {
+      finalAnswerText = timedOut ? '[Time Expired - No response submitted]' : '[No response submitted]';
+    }
 
     // Find the question being answered
     const questionMsg = [...session.messages].reverse().find((m) => m.sender === 'interviewer');
@@ -614,6 +639,134 @@ export const endInterview = async (req: AuthRequest, res: Response) => {
       error: error.message || 'Failed to generate AI assessment report. Please click retry.',
       canRetry: true,
       code: 'REPORT_GENERATION_FAILED',
+    });
+  }
+};
+
+/**
+ * POST /api/interviews/:id/transcribe-audio
+ * Transcribe candidate voice recording using Gemini Multimodal Audio API
+ */
+export const transcribeAudio = async (req: AuthRequest, res: Response) => {
+  try {
+    const id: string = getParamId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ error: 'Missing session ID' });
+    }
+
+    const { audioBase64, mimeType, durationSeconds } = req.body;
+    
+    // 1. Validate audio presence
+    if (!audioBase64 || typeof audioBase64 !== 'string' || audioBase64.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Missing or empty audio data (audioBase64 is required)',
+        code: 'MISSING_AUDIO_PAYLOAD',
+      });
+    }
+
+    // 2. Validate base64 buffer and size
+    let audioBuffer: Buffer;
+    try {
+      audioBuffer = Buffer.from(audioBase64, 'base64');
+    } catch {
+      return res.status(400).json({
+        error: 'Invalid audio encoding: failed to decode base64 buffer',
+        code: 'INVALID_BASE64_ENCODING',
+      });
+    }
+
+    if (audioBuffer.length === 0) {
+      return res.status(400).json({
+        error: 'Audio buffer is 0 bytes. Please ensure your microphone is capturing sound.',
+        code: 'EMPTY_AUDIO_BUFFER',
+      });
+    }
+
+    // Maximum 25MB check
+    if (audioBuffer.length > 25 * 1024 * 1024) {
+      return res.status(413).json({
+        error: 'Audio recording exceeds the 25MB limit. Please provide a more concise answer.',
+        code: 'AUDIO_TOO_LARGE',
+      });
+    }
+
+    // 3. Validate supported audio MIME types
+    const rawMime = (mimeType || 'audio/webm').trim();
+    const cleanMime = rawMime.split(';')[0].trim().toLowerCase();
+    const supportedMimes = [
+      'audio/webm',
+      'audio/mp4',
+      'audio/m4a',
+      'audio/wav',
+      'audio/wave',
+      'audio/x-wav',
+      'audio/ogg',
+      'audio/opus',
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/aac',
+      'audio/flac',
+    ];
+
+    if (!supportedMimes.includes(cleanMime)) {
+      return res.status(400).json({
+        error: `Unsupported audio format "${cleanMime}". Please use webm, mp4, wav, or ogg.`,
+        code: 'UNSUPPORTED_MIME_TYPE',
+      });
+    }
+
+    const session = await prisma.interviewSession.findUnique({
+      where: { id },
+      include: {
+        messages: { orderBy: { sequenceNumber: 'desc' }, take: 2 },
+      },
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Interview session not found', code: 'SESSION_NOT_FOUND' });
+    }
+
+    if (session.userId && req.userId && session.userId !== req.userId) {
+      return res.status(403).json({ error: 'Forbidden: You do not own this session', code: 'FORBIDDEN' });
+    }
+
+    const lastInterviewerMsg = session.messages.find((m) => m.sender === 'interviewer');
+
+    console.log(`[InterviewController] Transcribing audio for session ${id}:`);
+    console.log(`  - Raw MIME: "${rawMime}", Normalized MIME: "${cleanMime}"`);
+    console.log(`  - Audio Size: ${audioBuffer.length} bytes (${(audioBuffer.length / 1024).toFixed(1)} KB)`);
+    if (durationSeconds) {
+      console.log(`  - Estimated Duration: ${durationSeconds}s`);
+    }
+    console.log(`  - Target Model: ${GeminiService.getModel()}`);
+
+    const transcript = await GeminiService.transcribeAudio(
+      audioBase64,
+      cleanMime,
+      {
+        questionText: lastInterviewerMsg?.content,
+        topic: lastInterviewerMsg?.questionTopic || session.role,
+        role: session.role,
+      }
+    );
+
+    const hasSpeech = typeof transcript === 'string' && transcript.trim().length > 0;
+
+    return res.json({
+      success: true,
+      transcript: transcript || '',
+      emptySpeech: !hasSpeech,
+      audioMime: cleanMime,
+      audioBytes: audioBuffer.length,
+    });
+  } catch (error: any) {
+    console.error('[InterviewController] Audio transcription error:', error?.message);
+    const statusCode = error instanceof GeminiApiError ? error.statusCode : 500;
+    return res.status(statusCode).json({
+      error: error?.message || 'Failed to process voice response with Gemini AI',
+      canRetry: true,
+      code: 'AUDIO_TRANSCRIPTION_FAILED',
+      details: error?.details || undefined,
     });
   }
 };

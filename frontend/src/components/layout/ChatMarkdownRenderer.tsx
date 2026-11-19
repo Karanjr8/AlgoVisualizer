@@ -17,34 +17,36 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value }) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback
+      // clipboard fallback
     }
   };
 
   return (
-    <div className="my-2 rounded-lg overflow-hidden border border-border/60 bg-zinc-950 text-zinc-100 shadow-xs">
-      <div className="flex items-center justify-between px-3 py-1 bg-zinc-900 border-b border-zinc-800 text-[10px] font-mono text-zinc-400">
-        <span className="uppercase font-semibold tracking-wider">{language || 'code'}</span>
+    <div className="my-2.5 rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-md">
+      <div className="flex items-center justify-between px-3.5 py-1.5 bg-zinc-900/90 border-b border-zinc-800/80 text-[11px] font-mono text-zinc-400">
+        <span className="uppercase font-semibold tracking-wider text-zinc-300">
+          {language || 'code'}
+        </span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1 hover:text-zinc-200 transition-colors p-0.5 rounded cursor-pointer"
+          className="flex items-center gap-1.5 hover:text-zinc-100 bg-zinc-800/60 hover:bg-zinc-800 px-2 py-0.5 rounded-md transition-colors cursor-pointer text-[10px]"
           title="Copy code"
           type="button"
         >
           {copied ? (
             <>
               <Check className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400 font-sans">Copied!</span>
+              <span className="text-emerald-400 font-sans font-medium">Copied!</span>
             </>
           ) : (
             <>
-              <Copy className="w-3 h-3" />
-              <span className="font-sans">Copy</span>
+              <Copy className="w-3 h-3 text-zinc-400" />
+              <span className="font-sans font-medium">Copy</span>
             </>
           )}
         </button>
       </div>
-      <div className="overflow-x-auto p-3 text-[11px] font-mono leading-relaxed max-h-[300px] scrollbar-thin">
+      <div className="overflow-x-auto p-3.5 text-[11px] font-mono leading-relaxed max-h-[320px] custom-scrollbar">
         <pre className="m-0 p-0 whitespace-pre">
           <code>{value}</code>
         </pre>
@@ -55,12 +57,12 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, value }) => {
 
 export const ChatMarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
   return (
-    <div className="chat-markdown text-xs text-foreground leading-relaxed break-words">
+    <div className="chat-markdown text-xs text-foreground leading-relaxed break-words space-y-2">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className="text-xs font-bold text-foreground mt-3 mb-1.5 pb-1 border-b border-border/50 first:mt-0">
+            <h1 className="text-xs font-bold text-foreground mt-3 mb-1.5 pb-1 border-b border-border/50 first:mt-0 tracking-tight">
               {children}
             </h1>
           ),
@@ -99,19 +101,19 @@ export const ChatMarkdownRenderer: React.FC<{ content: string }> = ({ content })
             <li className="text-xs leading-relaxed">{children}</li>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-2 border-primary/70 pl-2.5 my-2 text-xs italic text-muted-foreground bg-muted/20 py-1 rounded-r">
+            <blockquote className="border-l-2 border-primary pl-2.5 my-2 text-xs italic text-muted-foreground bg-primary/5 py-1 rounded-r">
               {children}
             </blockquote>
           ),
           table: ({ children }) => (
-            <div className="overflow-x-auto my-2 rounded-lg border border-border/60 bg-muted/15 shadow-xs">
+            <div className="overflow-x-auto my-2.5 rounded-xl border border-border/80 bg-muted/20 shadow-xs custom-scrollbar">
               <table className="min-w-full divide-y divide-border/60 text-xs text-left">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-muted/40 font-semibold text-foreground">
+            <thead className="bg-muted/50 font-semibold text-foreground">
               {children}
             </thead>
           ),
@@ -119,15 +121,15 @@ export const ChatMarkdownRenderer: React.FC<{ content: string }> = ({ content })
             <tbody className="divide-y divide-border/30">{children}</tbody>
           ),
           tr: ({ children }) => (
-            <tr className="hover:bg-muted/25 transition-colors">{children}</tr>
+            <tr className="hover:bg-muted/30 transition-colors">{children}</tr>
           ),
           th: ({ children }) => (
-            <th className="px-2.5 py-1.5 text-[11px] font-semibold text-foreground border-b border-border/60 whitespace-nowrap">
+            <th className="px-3 py-1.5 text-[11px] font-semibold text-foreground border-b border-border/60 whitespace-nowrap">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-2.5 py-1.5 text-[11px] text-foreground/90 whitespace-nowrap">
+            <td className="px-3 py-1.5 text-[11px] text-foreground/90 whitespace-nowrap">
               {children}
             </td>
           ),
@@ -153,7 +155,7 @@ export const ChatMarkdownRenderer: React.FC<{ content: string }> = ({ content })
 
             return (
               <code
-                className="bg-muted px-1.5 py-0.5 rounded text-[11px] font-mono text-primary font-medium border border-border/40"
+                className="bg-muted/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded text-[11px] font-mono text-primary font-medium border border-border/50"
                 {...props}
               >
                 {children}

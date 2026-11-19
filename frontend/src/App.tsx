@@ -39,6 +39,9 @@ const Practice = lazy(() => import('./pages/Practice').then(m => ({ default: m.P
 const Progress = lazy(() => import('./pages/Progress').then(m => ({ default: m.Progress })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const TimedChallenges = lazy(() => import('./pages/practice/TimedChallenges').then(m => ({ default: m.TimedChallenges })));
+const DebugAlgorithm = lazy(() => import('./pages/practice/DebugAlgorithm').then(m => ({ default: m.DebugAlgorithm })));
+const SpeedRun = lazy(() => import('./pages/practice/SpeedRun').then(m => ({ default: m.SpeedRun })));
+const ComplexityChallenges = lazy(() => import('./pages/practice/ComplexityChallenges').then(m => ({ default: m.ComplexityChallenges })));
 const AlgorithmLab = lazy(() => import('./pages/playground/AlgorithmLab').then(m => ({ default: m.AlgorithmLab })));
 const DataStructureBuilder = lazy(() => import('./pages/playground/DataStructureBuilder').then(m => ({ default: m.DataStructureBuilder })));
 const AlgorithmArena = lazy(() => import('./pages/playground/AlgorithmArena').then(m => ({ default: m.AlgorithmArena })));
@@ -188,6 +191,24 @@ const AnimatedRoutes = () => {
               <ProtectedRoute>
                 <PageTransition><TimedChallenges /></PageTransition>
               </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/practice/debug" 
+            element={
+              <PageTransition><DebugAlgorithm /></PageTransition>
+            } 
+          />
+          <Route 
+            path="/practice/speed-run" 
+            element={
+              <PageTransition><SpeedRun /></PageTransition>
+            } 
+          />
+          <Route 
+            path="/practice/complexity" 
+            element={
+              <PageTransition><ComplexityChallenges /></PageTransition>
             } 
           />
           <Route 
