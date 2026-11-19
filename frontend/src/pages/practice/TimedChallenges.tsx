@@ -42,7 +42,7 @@ export const TimedChallenges = () => {
     setLoading(true);
     setApiError(null);
     try {
-      const res = await fetch('http://localhost:5000/api/questions');
+      const res = await fetch('https://algovisualizer-1.onrender.com/api/questions');
       if (!res.ok) throw new Error('Network response was not ok');
       const allQs: Question[] = await res.json();
       
@@ -88,7 +88,7 @@ export const TimedChallenges = () => {
     setScore(calcScore);
     
     try {
-      await fetch('http://localhost:5000/api/practice/attempts', {
+      await fetch('https://algovisualizer-1.onrender.com/api/practice/attempts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
