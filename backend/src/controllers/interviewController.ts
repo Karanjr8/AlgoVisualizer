@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middlewares/auth';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
-import { AiInterviewService, SessionConfig } from '../services/aiInterviewService';
+import { AiInterviewService, SessionConfig, FinalReportData } from '../services/aiInterviewService';
 import { GeminiApiError } from '../services/geminiService';
 
 const CreateInterviewSchema = z.object({
@@ -360,19 +360,10 @@ export const submitAnswer = async (req: AuthRequest, res: Response) => {
     });
 
     // 6. Handle Completion if indicated or turn budget reached
-    let reportData = null;
+    let reportData: FinalReportData | null = null;
     const isCompleted = turnResult.isComplete || nextTurnCount >= session.maxTurns;
 
     if (isCompleted) {
-      await prisma.interviewSession.update({
-        where: { id },
-        data: {
-          status: 'COMPLETED',
-          completedAt: new Date(),
-          turnCount: nextTurnCount,
-        },
-      });
-
       const allMessages = await prisma.interviewMessage.findMany({
         where: { sessionId: id },
         orderBy: { sequenceNumber: 'asc' },
@@ -382,45 +373,64 @@ export const submitAnswer = async (req: AuthRequest, res: Response) => {
       });
 
       try {
+        console.log(`[InterviewController] Auto-generating final report on interview completion for session ${id}...`);
         reportData = await AiInterviewService.generateFinalReport({
           sessionConfig,
           messages: allMessages,
           evaluations: allEvals,
         });
 
-        await prisma.interviewReport.upsert({
-          where: { sessionId: id },
-          create: {
-            sessionId: id,
-            overallScore: reportData.overallScore,
-            performanceGrade: reportData.performanceGrade,
-            summary: reportData.summary,
-            strengths: JSON.stringify(reportData.strengths),
-            improvementAreas: JSON.stringify(reportData.improvementAreas),
-            dimensionScores: JSON.stringify(reportData.dimensionScores),
-            topicScores: JSON.stringify(reportData.topicScores),
-            questionReviews: JSON.stringify(reportData.questionReviews),
-            recommendations: JSON.stringify(reportData.recommendations),
-            actionablePlan: JSON.stringify(reportData.actionablePlan),
-            interviewerFeedback: reportData.interviewerFeedback,
-          },
-          update: {
-            overallScore: reportData.overallScore,
-            performanceGrade: reportData.performanceGrade,
-            summary: reportData.summary,
-            strengths: JSON.stringify(reportData.strengths),
-            improvementAreas: JSON.stringify(reportData.improvementAreas),
-            dimensionScores: JSON.stringify(reportData.dimensionScores),
-            topicScores: JSON.stringify(reportData.topicScores),
-            questionReviews: JSON.stringify(reportData.questionReviews),
-            recommendations: JSON.stringify(reportData.recommendations),
-            actionablePlan: JSON.stringify(reportData.actionablePlan),
-            interviewerFeedback: reportData.interviewerFeedback,
+        await prisma.$transaction([
+          prisma.interviewReport.upsert({
+            where: { sessionId: id },
+            create: {
+              sessionId: id,
+              overallScore: reportData.overallScore,
+              performanceGrade: reportData.performanceGrade,
+              summary: reportData.summary,
+              strengths: JSON.stringify(reportData.strengths),
+              improvementAreas: JSON.stringify(reportData.improvementAreas),
+              dimensionScores: JSON.stringify(reportData.dimensionScores),
+              topicScores: JSON.stringify(reportData.topicScores),
+              questionReviews: JSON.stringify(reportData.questionReviews),
+              recommendations: JSON.stringify(reportData.recommendations),
+              actionablePlan: JSON.stringify(reportData.actionablePlan),
+              interviewerFeedback: reportData.interviewerFeedback,
+            },
+            update: {
+              overallScore: reportData.overallScore,
+              performanceGrade: reportData.performanceGrade,
+              summary: reportData.summary,
+              strengths: JSON.stringify(reportData.strengths),
+              improvementAreas: JSON.stringify(reportData.improvementAreas),
+              dimensionScores: JSON.stringify(reportData.dimensionScores),
+              topicScores: JSON.stringify(reportData.topicScores),
+              questionReviews: JSON.stringify(reportData.questionReviews),
+              recommendations: JSON.stringify(reportData.recommendations),
+              actionablePlan: JSON.stringify(reportData.actionablePlan),
+              interviewerFeedback: reportData.interviewerFeedback,
+            },
+          }),
+          prisma.interviewSession.update({
+            where: { id },
+            data: {
+              status: 'COMPLETED',
+              completedAt: new Date(),
+              turnCount: nextTurnCount,
+            },
+          }),
+        ]);
+        console.log(`[InterviewController] Report successfully auto-generated and saved for session ${id}`);
+      } catch (repErr: any) {
+        console.warn(`[InterviewController] Final report generation deferred for session ${id}: ${repErr.message}. Marking session completed for manual retry.`);
+        await prisma.interviewSession.update({
+          where: { id },
+          data: {
+            status: 'COMPLETED',
+            completedAt: new Date(),
+            turnCount: nextTurnCount,
           },
         });
-      } catch (repErr) {
-        console.error('Failed to generate final report via Gemini:', repErr);
-        // Do not crash turn submission; candidate can retry generating report
       }
     } else {
       await prisma.interviewSession.update({
@@ -493,15 +503,6 @@ export const endInterview = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Mark session as completed
-    await prisma.interviewSession.update({
-      where: { id },
-      data: {
-        status: 'COMPLETED',
-        completedAt: new Date(),
-      },
-    });
-
     let topics: string[] = [];
     let features: string[] = [];
     try {
@@ -530,34 +531,72 @@ export const endInterview = async (req: AuthRequest, res: Response) => {
       where: { sessionId: id },
     });
 
-    // Generate Final Report LIVE using Gemini API from actual evaluations
-    const reportData = await AiInterviewService.generateFinalReport({
-      sessionConfig,
-      messages,
-      evaluations,
-    });
+    // 1. Generate Final Report LIVE using Gemini API from actual evaluations BEFORE marking completed
+    let reportData: FinalReportData;
+    try {
+      console.log(`[InterviewController] Generating final report for session ${id} (Role: ${session.role}, Difficulty: ${session.difficulty}, Turns: ${messages.length})...`);
+      reportData = await AiInterviewService.generateFinalReport({
+        sessionConfig,
+        messages,
+        evaluations,
+      });
+    } catch (genErr: any) {
+      console.error(`[InterviewController] Gemini report generation failed for session ${id}:`, genErr.message);
+      const statusCode = genErr instanceof GeminiApiError ? genErr.statusCode : 502;
+      return res.status(statusCode).json({
+        error: genErr.message || 'Failed to generate AI assessment report. Your interview responses are saved. Please click Retry Report.',
+        canRetry: true,
+        code: 'REPORT_GENERATION_FAILED',
+      });
+    }
 
-    const createdReport = await prisma.interviewReport.create({
-      data: {
-        sessionId: id,
-        overallScore: reportData.overallScore,
-        performanceGrade: reportData.performanceGrade,
-        summary: reportData.summary,
-        strengths: JSON.stringify(reportData.strengths),
-        improvementAreas: JSON.stringify(reportData.improvementAreas),
-        dimensionScores: JSON.stringify(reportData.dimensionScores),
-        topicScores: JSON.stringify(reportData.topicScores),
-        questionReviews: JSON.stringify(reportData.questionReviews),
-        recommendations: JSON.stringify(reportData.recommendations),
-        actionablePlan: JSON.stringify(reportData.actionablePlan),
-        interviewerFeedback: reportData.interviewerFeedback,
-      },
-    });
+    // 2. Atomic persistence: Upsert report and mark session COMPLETED together
+    const [savedReport] = await prisma.$transaction([
+      prisma.interviewReport.upsert({
+        where: { sessionId: id },
+        create: {
+          sessionId: id,
+          overallScore: reportData.overallScore,
+          performanceGrade: reportData.performanceGrade,
+          summary: reportData.summary,
+          strengths: JSON.stringify(reportData.strengths),
+          improvementAreas: JSON.stringify(reportData.improvementAreas),
+          dimensionScores: JSON.stringify(reportData.dimensionScores),
+          topicScores: JSON.stringify(reportData.topicScores),
+          questionReviews: JSON.stringify(reportData.questionReviews),
+          recommendations: JSON.stringify(reportData.recommendations),
+          actionablePlan: JSON.stringify(reportData.actionablePlan),
+          interviewerFeedback: reportData.interviewerFeedback,
+        },
+        update: {
+          overallScore: reportData.overallScore,
+          performanceGrade: reportData.performanceGrade,
+          summary: reportData.summary,
+          strengths: JSON.stringify(reportData.strengths),
+          improvementAreas: JSON.stringify(reportData.improvementAreas),
+          dimensionScores: JSON.stringify(reportData.dimensionScores),
+          topicScores: JSON.stringify(reportData.topicScores),
+          questionReviews: JSON.stringify(reportData.questionReviews),
+          recommendations: JSON.stringify(reportData.recommendations),
+          actionablePlan: JSON.stringify(reportData.actionablePlan),
+          interviewerFeedback: reportData.interviewerFeedback,
+        },
+      }),
+      prisma.interviewSession.update({
+        where: { id },
+        data: {
+          status: 'COMPLETED',
+          completedAt: new Date(),
+        },
+      }),
+    ]);
+
+    console.log(`[InterviewController] Successfully generated and persisted report for session ${id}: Score ${reportData.overallScore}/100 (${reportData.performanceGrade})`);
 
     return res.json({
       success: true,
       report: {
-        ...createdReport,
+        ...savedReport,
         strengths: reportData.strengths,
         improvementAreas: reportData.improvementAreas,
         dimensionScores: reportData.dimensionScores,

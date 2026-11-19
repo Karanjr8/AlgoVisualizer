@@ -1,7 +1,6 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import {
   COMPLEXITY_DEFINITIONS,
-  ComplexityDefinition,
   ComplexityId,
   formatOperations,
   formatFromLog10,

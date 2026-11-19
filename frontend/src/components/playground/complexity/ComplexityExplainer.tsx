@@ -7,7 +7,6 @@ import {
 } from '../../../lib/complexityMath';
 import {
   BookOpen,
-  HelpCircle,
   Lightbulb,
   AlertTriangle,
   TrendingUp,

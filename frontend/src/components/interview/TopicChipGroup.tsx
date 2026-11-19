@@ -1,5 +1,5 @@
 import { cn } from '../../lib/utils';
-import { Check, Sparkles, X, Filter } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 
 export const ALL_TOPICS = [
   'Data Structures and Algorithms',

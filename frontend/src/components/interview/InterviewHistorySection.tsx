@@ -3,13 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import {
   History,
-  Award,
   ChevronRight,
-  Clock,
   Calendar,
-  AlertCircle,
-  RotateCcw,
-  Sparkles,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 

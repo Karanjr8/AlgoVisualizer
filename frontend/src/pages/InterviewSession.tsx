@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Bot,
   Send,
@@ -7,27 +7,18 @@ import {
   ArrowLeft,
   AlertCircle,
   CheckCircle2,
-  Trophy,
   Target,
   RefreshCw,
   LogOut,
-  HelpCircle,
   Layers,
   Award,
   ChevronDown,
   ChevronUp,
-  BrainCircuit,
-  MessageSquare,
   Printer,
   Sparkles,
   Zap,
   TrendingUp,
   BookOpen,
-  Check,
-  XCircle,
-  AlertTriangle,
-  Lightbulb,
-  ExternalLink,
   RotateCcw,
 } from 'lucide-react';
 import { api } from '../lib/api';
@@ -1068,8 +1059,15 @@ export const InterviewSession: React.FC = () => {
         {isTimePressureActive && (
           <div className="px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-medium flex items-center justify-between">
             <span className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5" /> Time Pressure Mode: {session.timeLimitPerQuestion}s per question. Answers auto-submit when the countdown hits zero.
+              <Zap className="w-3.5 h-3.5" /> Time Pressure Mode: {session?.timeLimitPerQuestion}s per question. Answers auto-submit when the countdown hits zero.
             </span>
+          </div>
+        )}
+
+        {(voiceNotice || missingConfigNotice) && (
+          <div className="px-4 py-2 rounded-xl bg-muted border border-border text-muted-foreground text-xs font-medium flex flex-col gap-1">
+            {voiceNotice && <div>🎙️ {voiceNotice}</div>}
+            {missingConfigNotice && <div>⚠️ {missingConfigNotice}</div>}
           </div>
         )}
 

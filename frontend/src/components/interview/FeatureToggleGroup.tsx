@@ -7,7 +7,6 @@ import {
   Gauge,
   CheckCircle2,
   HeartHandshake,
-  Clock,
 } from 'lucide-react';
 
 export interface FeatureSetting {
